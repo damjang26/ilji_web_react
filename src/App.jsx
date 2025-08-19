@@ -1,10 +1,25 @@
-import { useState } from 'react'
+import {useEffect, useState} from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import axios from "axios";
 
 function App() {
   const [count, setCount] = useState(0)
+
+    useEffect(() => {
+        axios.get("http://localhost:8090/api/test", {
+            withCredentials: true, // 쿠키/세션 인증 쓸 때 필요
+        })
+            .then((res) => {
+                console.log("응답 데이터:", res.data);
+            })
+            .catch((err) => {
+                console.error("에러 발생:", err);
+            });
+    }, []);
+
+
 
   return (
     <>
