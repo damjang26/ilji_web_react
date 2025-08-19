@@ -1,18 +1,10 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import UsersList from "./components/UsersList";
-import FullCalendarExample from "./components/FullCalendar";
+import { BrowserRouter } from "react-router-dom";
+import Main from "./components/Main.jsx";
 
 export default function App() {
     return (
         <BrowserRouter>
-            <Routes>
-                <Route path="/" element={
-                    <>
-                        {/*<UsersList />*/}
-                        <FullCalendarExample />
-                    </>
-                } />
-            </Routes>
+            <Main />
         </BrowserRouter>
     );
 }
