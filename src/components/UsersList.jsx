@@ -31,9 +31,9 @@ export default function UsersList() {
             ) : (
                 <ul>
                     {users.map(u => (
-                        <li key={u.id}>
-                            #{u.id} — {u.name}
-                        </li>
+                        <span key={u.id}>
+                            #{u.id} — {u.name} <br/>
+                        </span>
                     ))}
                 </ul>
             )}
