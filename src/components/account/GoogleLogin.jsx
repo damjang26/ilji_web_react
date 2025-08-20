@@ -11,7 +11,7 @@ const SocialLogin = () => {
             {user ? (
                 <div>
                     <h3>환영합니다, {user.name}님!</h3>
-                    <img src={user.picture} alt="프로필" width="50" />
+                    <img src={user.picture} alt="프로필" width="50" referrerPolicy="no-referrer" />
                     <button onClick={() => {
                         googleLogout();
                         setUser(null);
@@ -19,16 +19,11 @@ const SocialLogin = () => {
                 </div>
             ) : (
                 <GoogleLogin
-                    onSuccess={async (res) => {
-                        const idToken = res.credential; // ★ 서버 검증용 원본 토큰
-                        const r = await fetch(`${import.meta.env.VITE_API_BASE}/auth/google`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            credentials: "include", // (쿠키 사용하는 경우)
-                            body: JSON.stringify({ idToken }),
-                        });
-                        const data = await r.json();
-                        setUser(data.user); // 서버가 돌려준 "우리 서비스 기준 유저"
+                    onSuccess={(res) => {
+                        const idToken = res.credential;
+                        const userInfo = jwtDecode(idToken);
+                        console.log("Google Login Success. User Info:", userInfo);
+                        setUser(userInfo);
                     }}
                     onError={() => console.log("로그인 실패")}
                 />
