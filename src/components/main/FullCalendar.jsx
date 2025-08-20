@@ -17,7 +17,7 @@ export default function FullCalendarExample() {
     const [events, setEvents] = useState([
         { title: "Conference", date: "2025-07-07", id: createEventId() },
         { title: "Meeting", start: "2025-07-07T10:00:00", end: "2025-07-07T11:00:00", id: createEventId() }, // Overlapping event
-    ]);
+    ]);     // 캘린더에 저장할 일정 정보들 얘인거 같음!!!
 
     const handleDateSelect = (selectInfo) => {
         let title = prompt("Please enter a new title for your event");
@@ -90,8 +90,8 @@ export default function FullCalendarExample() {
                 plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin]}
                 initialView="dayGridMonth"
                 headerToolbar={{
-                    left: 'prev,next today',
-                    center: 'title',
+                    left: 'today',
+                    center: 'prev title next',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 }}
                 events={events}
