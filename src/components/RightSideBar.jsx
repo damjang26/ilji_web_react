@@ -1,7 +1,7 @@
 import styled from "styled-components";
-import MessageTab from "./RightSideBar/MessageTab.jsx";
-import ScheduleTab from "./RightSideBar/ScheduleTab.jsx";
-import QuickBar from "./RightSideBar/QuickBar.jsx";
+import MessageTab from "./right_side_bar/MessageTab.jsx";
+import ScheduleTab from "./right_side_bar/ScheduleTab.jsx";
+import QuickBar from "./right_side_bar/QuickBar.jsx";
 import SocialLogin from "./account/GoogleLogin.jsx";
 
 const RightSidebarContainer = styled.aside`
@@ -18,15 +18,17 @@ const RightSidebarContainer = styled.aside`
 `;
 
 const RightSideBar = () => {
-    return <div>
-          <RightSidebarContainer>
-              <div>right side bar</div>
-              <SocialLogin />
-              <MessageTab/>
-              <ScheduleTab/>
-          </RightSidebarContainer>
-           <QuickBar/>
-         </div>
-}
+  return (
+    <div>
+      <RightSidebarContainer>
+        <div>right side bar</div>
+        <SocialLogin />
+        <MessageTab />
+        <ScheduleTab />
+      </RightSidebarContainer>
+      <QuickBar />
+    </div>
+  );
+};
 
 export default RightSideBar;

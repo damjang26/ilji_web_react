@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "../../App.css"
+import { CalendarWrapper } from "../../styled_components/main/CalendarWrapper.jsx"
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -17,7 +17,7 @@ export default function FullCalendarExample() {
     const [events, setEvents] = useState([
         { title: "Conference", date: "2025-07-07", id: createEventId() },
         { title: "Meeting", start: "2025-07-07T10:00:00", end: "2025-07-07T11:00:00", id: createEventId() }, // Overlapping event
-    ]);
+    ]);     // 캘린더에 저장할 일정 정보들 얘인거 같음!!!
 
     const handleDateSelect = (selectInfo) => {
         let title = prompt("Please enter a new title for your event");
@@ -85,13 +85,13 @@ export default function FullCalendarExample() {
     };
 
     return (
-        <div style={{ maxWidth: '900px', margin: '20px auto' }}>
+        <CalendarWrapper>
             <FullCalendar
                 plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin]}
                 initialView="dayGridMonth"
                 headerToolbar={{
-                    left: 'prev,next today',
-                    center: 'title',
+                    left: 'today',
+                    center: 'prev title next',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 }}
                 events={events}
@@ -103,6 +103,6 @@ export default function FullCalendarExample() {
                 eventDrop={handleEventDrop}
                 eventResize={handleEventResize}
             />
-        </div>
+        </CalendarWrapper>
     );
 }

@@ -1,6 +1,6 @@
-import Profile from "./LeftSideBar/Profile.jsx";
-import CalendarMenu from "./LeftSideBar/CalendarMenu.jsx";
-import TabMenu from "./LeftSideBar/TabMenu.jsx";
+import Profile from "./left_side_bar/Profile.jsx";
+import CalendarMenu from "./left_side_bar/CalendarMenu.jsx";
+import TabMenu from "./left_side_bar/TabMenu.jsx";
 import styled from "styled-components";
 
 const SidebarContainer = styled.aside`
