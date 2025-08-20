@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "../../App.css"
+import { CalendarWrapper } from "../../styled_components/main/CalendarWrapper.jsx"
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -85,7 +85,7 @@ export default function FullCalendarExample() {
     };
 
     return (
-        <div style={{ maxWidth: '900px', margin: '20px auto' }}>
+        <CalendarWrapper>
             <FullCalendar
                 plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin]}
                 initialView="dayGridMonth"
@@ -103,6 +103,6 @@ export default function FullCalendarExample() {
                 eventDrop={handleEventDrop}
                 eventResize={handleEventResize}
             />
-        </div>
+        </CalendarWrapper>
     );
 }
