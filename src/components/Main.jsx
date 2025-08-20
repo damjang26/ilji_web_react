@@ -1,4 +1,4 @@
-import FullCalendarExample from "./main/FullCalendar.jsx";
+import FullCalendarExample from "./main/calendar/FullCalendar.jsx";
 import {Route, Routes} from "react-router-dom";
 import styled from "styled-components";
 
