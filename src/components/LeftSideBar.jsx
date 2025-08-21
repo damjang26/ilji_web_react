@@ -4,7 +4,7 @@ import TabMenu from "./left_side_bar/TabMenu.jsx";
 import styled from "styled-components";
 
 const SidebarContainer = styled.aside`
-  width: 280px; /* 사이드바 너비 지정 */
+  width: 200px; /* 사이드바 너비 지정 */
   flex-shrink: 0; /* 창 크기가 줄어들어도 사이드바 너비는 유지 */
   height: 100vh; /* 화면 전체 높이를 차지하도록 설정 */
   background-color: #f8f9fa; /* 배경색 */
