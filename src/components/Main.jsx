@@ -1,6 +1,7 @@
 import FullCalendarExample from "./main/calendar/FullCalendar.jsx";
 import {Route, Routes} from "react-router-dom";
 import styled from "styled-components";
+import MyPage from "./main/mypage/MyPage.jsx";
 
 const MainContent = styled.main`
   flex-grow: 1; /* 사이드바를 제외한 나머지 공간을 모두 차지합니다. */
@@ -18,6 +19,7 @@ const Main = () => {
         <MainContent>
             <Routes>
                 <Route path="/" element={<FullCalendarExample />} />
+                <Route path="/mypage" element={<MyPage />} />
             </Routes>
         </MainContent>
     );
