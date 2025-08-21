@@ -101,8 +101,15 @@ export default function FullCalendarExample() {
           center: "prev title next",
           right: "dayGridMonth,timeGridWeek,timeGridDay",
         }}
+        views={{
+          dayGridMonth: {
+            // 월(Month) 뷰의 제목을 주(Week) 뷰처럼 날짜 범위로 표시합니다.
+            titleFormat: { year: "numeric", month: "short", day: "numeric" },
+          },
+        }}
         events={events}
-        height="auto"
+        height="100%"
+        expandRows={true}
         selectable={true}
         select={handleDateSelect}
         eventClick={handleEventClick}
