@@ -6,9 +6,35 @@ import ScheduleEdit from "./schedule_tab/ScheduleEdit.jsx";
 import ScheduleDetail from "./schedule_tab/ScheduleDetail.jsx";
 // components
 
-const ScheduleTab= () => {
+const ScheduleTab = () => {
     const [mode, setMode] = useState("list"); // "list" | "create" | "edit"
     const [selectedId, setSelectedId] = useState(null);
+
+    // 임시 데이터(추후 삭제)===============================================================
+    const [schedules, setSchedules] = useState([
+        {
+            no: 1,
+            title: "일정1",
+            date: "2025-08-21",
+            description: "첫 번째 일정입니다.",
+            isRepeating: false,
+        },
+        {
+            no: 2,
+            title: "일정2",
+            date: "2025-08-21",
+            description: "두 번째 일정입니다.",
+            isRepeating: true,
+        },
+        {
+            no: 3,
+            title: "일정3",
+            date: "2025-08-21",
+            description: "세 번째 일정입니다.",
+            isRepeating: false,
+        }]
+    )
+    // ==================================================================================
 
 
     const selectedItem = useMemo(
@@ -20,46 +46,19 @@ const ScheduleTab= () => {
     // 생성 저장
     const createSchedule = (form) => {
         const nextNo = schedules.length ? Math.max(...schedules.map(s => s.no)) + 1 : 1;
-        const newItem = { no: nextNo, ...form };
+        const newItem = {no: nextNo, ...form};
         setSchedules((prev) => [...prev, newItem]);
     };
     // 수정 저장
     const updateSchedule = (form) => {
         setSchedules((prev) =>
-            prev.map((s) => (s.no === form.no ? { ...s, ...form } : s))
+            prev.map((s) => (s.no === form.no ? {...s, ...form} : s))
         );
     };
     // 삭제
     const deleteSchedule = (no) => {
         setSchedules((prev) => prev.filter((s) => s.no !== no));
     };
-
-
-    // 임시 데이터(추후 삭제)===============================================================
-    const [schedules, setSchedules] = useState(
-        {
-            no: 1,
-            title : "일정1",
-            date : "2025-08-21",
-            description : "첫 번째 일정입니다.",
-            isRepeating : false,
-        },
-        {
-            no: 2,
-            title : "일정2",
-            date : "2025-08-21",
-            description : "두 번째 일정입니다.",
-            isRepeating : true,
-        },
-        {
-            no: 3,
-            title : "일정3",
-            date : "2025-08-21",
-            description : "세 번째 일정입니다.",
-            isRepeating : false,
-        },
-    )
-    // ==================================================================================
 
 
     return (
@@ -80,7 +79,7 @@ const ScheduleTab= () => {
                     schedules={schedules}
                     onCancel={() => setMode("list")}
                     onSave={(newData) => {
-                        // TODO: 저장 로직
+                        createSchedule(newData);
                         setMode("list");
                     }}
                 />
@@ -89,16 +88,12 @@ const ScheduleTab= () => {
             {mode === "edit" && (
                 <ScheduleEdit
                     schedules={schedules}
-                    id={selectedId}
+                    item={selectedItem}
                     onDetail={() => setMode("detail")}
                     onSave={(updated) => {
-                        // TODO: 수정 로직
+                        updateSchedule(updated);
                         setMode("list");
                     }}
-                    // onDelete={() => {
-                    //     // TODO: 삭제 로직
-                    //     setMode("list");
-                    // }}
                 />
             )}
 
