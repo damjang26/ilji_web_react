@@ -5,6 +5,19 @@ export const CalendarWrapper = styled.div`
     flex-grow: 1; /* 남는 공간 모두 채움 */
     display: flex;
     flex-direction: column;
+    color: #8394a6;
+
+    /* week/day view 스크롤 숨김 */
+    .fc-timegrid-scroller,
+    .fc-scroller {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .fc-timegrid-scroller::-webkit-scrollbar,
+    .fc-scroller::-webkit-scrollbar {
+        display: none;
+    }
 
     /* FullCalendar 헤더 중앙 정렬을 위한 CSS */
 
@@ -33,7 +46,6 @@ export const CalendarWrapper = styled.div`
         font-family: 'Inter', sans-serif;
         font-size: 15px; /* 원하는 크기로 조정 */
         font-weight: 600; /* 글자 두께 */
-        color: #8394a6; /* 색상 */
         margin: 0 12px; /* prev/next 사이 간격 */
     }
 
@@ -98,7 +110,6 @@ export const CalendarWrapper = styled.div`
     /* 요일 헤더 전체 */
 
     .fc-col-header-cell {
-        color: #8394a6;
         text-align: center;
         padding: 10px 0;
         border-right: none;
@@ -135,7 +146,7 @@ export const CalendarWrapper = styled.div`
     .fc-daygrid-day {
         border: 1px solid #e4eaf1; /* 버튼 테두리와 동일한 색상으로 통일감 */
     }
-
+    
 
     .fc .fc-daygrid-day-top {
         display: flex;
@@ -143,12 +154,55 @@ export const CalendarWrapper = styled.div`
     }
 
     .fc .fc-daygrid-day-number {
-        color: #8394a6;
         font-size: 14px;
+    }
+
+    .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+        border-radius: 50%;
+        background: #9781ff;
+        width: 26px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+
     }
 
     .fc .fc-daygrid-day-frame {
         min-height: 90px;
     }
-    
+
+    // 오늘 날짜 배경 색상 변경!
+    .fc .fc-daygrid-day.fc-day-today {
+        background: #fff7e7;
+    }
+    /* Week / Day view - today 컬럼 전체 */
+    .fc-timegrid-col.fc-day-today {
+        background-color: #fff7e7;
+    }
+
+    /* Week / Day view - all-day 영역 */
+    .fc-timegrid-all-day.fc-day-today {
+        background-color: #fff7e7;
+    }
+
+    // 일정 컨테이너 디자인 나중에 일정 카테고리 생기면 그거별로 나눠야 함
+
+    .fc-event {
+        border: none !important; /* 기본 파란 테두리 제거 */
+        background: transparent !important; /* 필요 없으면 배경도 투명 */
+        box-shadow: none !important; /* 혹시 그림자 있으면 제거 */
+    }
+
+    .fc-event .fc-event-main {
+        background: rgba(255, 247, 251, 0.79);
+        border: 1.5px solid #ff7eb9;
+        border-radius: 3px;
+        color: #ff7eb9;
+    }
+    .fc-event-time {
+        text-transform: uppercase;
+    }
+
 `;
