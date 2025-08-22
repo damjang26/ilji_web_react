@@ -20,7 +20,6 @@ const TabMenu = () => {
           <hr/>
           <div>TabMenu</div>
           <Link to="/">Home</Link>
-          <div>검색</div>
        </TabMenuContainer>
     );
 }
