@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import {CalendarWrapper } from "../../../styled_components/main/CalendarWrapper.jsx";
+import {CalendarWrapper } from "../../../styled_components/CalendarWrapper.jsx";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -108,8 +108,7 @@ export default function FullCalendarExample() {
           },
         }}
         events={events}
-        height="100%"
-        expandRows={true}
+        height="100%" // 캘린더 자체의 높이는 부모를 꽉 채우도록 유지
         selectable={true}
         select={handleDateSelect}
         eventClick={handleEventClick}
@@ -123,6 +122,13 @@ export default function FullCalendarExample() {
           meridiem: 'short', // 'AM' / 'PM'
           hour12: true
         }}
+        slotDuration="00:10:00"  // 10분 단위
+        slotLabelInterval="01:00:00"   // 좌측 라벨 1시간 간격
+        slotLabelFormat={{
+          hour: 'numeric',
+          meridiem: 'short'
+        }}
+        slotMinHeight={10} // 10분 단위 슬롯의 최소 높이를 px단위로 지정하여 전체 길이를 압축합니다.
       />
     </CalendarWrapper>
   );

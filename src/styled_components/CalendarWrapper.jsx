@@ -6,7 +6,7 @@ export const CalendarWrapper = styled.div`
     display: flex;
     flex-direction: column;
     color: #8394a6;
-
+    
     /* week/day view 스크롤 숨김 */
     .fc-timegrid-scroller,
     .fc-scroller {
