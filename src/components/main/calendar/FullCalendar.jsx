@@ -116,6 +116,13 @@ export default function FullCalendarExample() {
         editable={true}
         eventDrop={handleEventDrop}
         eventResize={handleEventResize}
+        eventDisplay="block"  // month에서 시간 지정되어있는 일정의 스타일 없앴음 나중에 개발하면서 조정할 예정
+        eventTimeFormat={{ // 시간 표시 형식
+          hour: 'numeric',
+          minute: '2-digit',
+          meridiem: 'short', // 'AM' / 'PM'
+          hour12: true
+        }}
       />
     </CalendarWrapper>
   );
