@@ -1,74 +1,91 @@
 import styled from "styled-components";
-import {Link} from "react-router-dom";
-import React from 'react';
+import { useAuth } from "../../AuthContext";
+import SocialLogin from "../account/GoogleLogin";
+import React, { useState } from 'react';
+import { FaSearch } from "react-icons/fa";
+import {
+    CloseButton,
+    Email,
+    IconContainer,
+    ImageWrapper,
+    InfoWrapper,
+    ModalHeader,
+    Nickname,
+    ProfileContainer,
+    ProfileImageArea,
+    SearchInput,
+    SearchModal,
+} from "../../styled_components/left_side_bar/Profile.styles.jsx";
 
-const ProfileContainer = styled.div`
+// Local styled components
+const ButtonContainer = styled.div`
   display: flex;
-  flex-direction: column; /* 자식 요소들을 수직(위->아래)으로 정렬합니다. */
-  align-items: center;
-  width: 100%;
-  padding: 20px 0; /* 컴포넌트 상하 여유 공간을 더 줍니다. */
+  gap: 5px; // 간격 조절
 `;
 
-const ImageWrapper = styled(Link)`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 15px; /* 이미지와 아래 정보 사이에 간격을 줍니다. */
-
-  /* 실제 이미지를 위한 임시 스타일 */
-  & > div {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    background-color: #ddd;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 12px;
-  }
-`;
-
-const InfoWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* 닉네임과 버튼을 수평 중앙에 배치합니다. */
-  gap: 10px; /* 닉네임과 버튼 사이에 간격을 줍니다. */
-`;
-
-const Nickname = styled.div`
-  font-weight: 600;
-  font-size: 1.1rem;
-  margin-bottom: 1px; /* 버튼과의 간격을 살짝 더 줍니다. */
-`
-const Email = styled.div`
-  font-weight: 300;
-  font-size: 0.9rem;
-  margin-bottom: 3px; /* 버튼과의 간격을 살짝 더 줍니다. */
-`;
-
-// Link 컴포넌트에 직접 스타일을 적용하여 버튼처럼 만듭니다.
-const MyPageLink = styled(Link)`
+const BaseButton = styled.button`
   padding: 6px 12px;
   font-size: 0.9rem;
   border: 1px solid #ccc;
   border-radius: 5px;
   background-color: white;
   cursor: pointer;
-  text-decoration: none; /* 링크의 기본 밑줄을 제거합니다. */
-  color: #333; /* 링크의 기본 색상을 변경합니다. */
+`;
+
+const LogoutButton = styled(BaseButton)`
+  /* Inherits styles from BaseButton */
+`;
+
+const LoginWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const Profile = () => {
-    return  (
+    const { user, loading, logout } = useAuth();
+    const [isModalSearch, setIsModalSearch] = useState(false);
+
+    if (loading) {
+        return <ProfileContainer><div>로딩 중...</div></ProfileContainer>;
+    }
+
+    return (
         <ProfileContainer>
-            <ImageWrapper to="/mypage">
-                <div>profile-img</div>
-            </ImageWrapper>
-            <InfoWrapper>
-                <Nickname>nickname</Nickname>
-                <Email>email</Email>
-            </InfoWrapper>
+            {user ? (
+                <>
+                    <IconContainer>
+                        <FaSearch onClick={() => setIsModalSearch(!isModalSearch)} />
+                        <div>....</div>
+                    </IconContainer>
+                    {isModalSearch && (
+                        <SearchModal>
+                            <ModalHeader>
+                                <span>검색</span>
+                                <CloseButton onClick={() => setIsModalSearch(false)}>닫기</CloseButton>
+                            </ModalHeader>
+                            <SearchInput type="text" placeholder="검색어를 입력하세요" />
+                        </SearchModal>
+                    )}
+                    <ProfileImageArea>
+                        <ImageWrapper to="/mypage">
+                            <img src={user.picture} alt={`${user.name} 프로필`} referrerPolicy="no-referrer" />
+                        </ImageWrapper>
+                    </ProfileImageArea>
+                    <InfoWrapper>
+                        <Nickname>{user.name}</Nickname>
+                        <Email>{user.email}</Email>
+                        <ButtonContainer>
+                            <LogoutButton onClick={logout}>로그아웃</LogoutButton>
+                        </ButtonContainer>
+                    </InfoWrapper>
+                </>
+            ) : (
+                <LoginWrapper>
+                    <SocialLogin />
+                </LoginWrapper>
+            )}
         </ProfileContainer>
     );
 }

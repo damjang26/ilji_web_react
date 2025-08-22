@@ -10,8 +10,7 @@ const RightSidebarContainer = styled.aside`
   background-color: #f8f9fa;
   padding: 20px;
   border-left: 1px solid #e9ecef;
-  box-sizing: border-box;  
-    
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -19,14 +18,16 @@ const RightSidebarContainer = styled.aside`
 `;
 
 const RightSideBar = () => {
-    return <div>
-          <RightSidebarContainer>
-              <div>right side bar</div>
-              <MessageTab/>
-              <ScheduleTab/>
-          </RightSidebarContainer>
-           <QuickBar/>
-         </div>
-}
+  return (
+    <div>
+      <RightSidebarContainer>
+        <div>right side bar</div>
+        <MessageTab />
+        <ScheduleTab />
+      </RightSidebarContainer>
+      {/*<QuickBar/>*/}
+    </div>
+  );
+};
 
 export default RightSideBar;
