@@ -4,15 +4,12 @@ import React, {useEffect, useRef, useState} from "react";
 import {Overlay, SidebarWrapper, ToggleButton} from "../../styled_components/MainStyled.jsx";
 
 const TabMenuContainer = styled.div`
-    /* 부모(LeftSideBar)의 남는 세로 공간을 모두 차지하도록 만드는 핵심 속성 */
     flex-grow: 1;
-
-    /* 내부 아이템(div, Link)들을 정렬하기 위한 flex 설정 */
     display: flex;
     flex-direction: column;
-    justify-content: center; /* 자식 요소들을 수직 중앙에 배치합니다. */
-    align-items: center; /* 자식 요소들을 수평 중앙에 배치합니다. */
-    gap: 15px; /* 요소들 사이의 간격을 줍니다. */
+    justify-content: center; /* 자식 요소들을 수직 중앙에 배치 */
+    align-items: center; /* 자식 요소들을 수평 중앙에 배치 */
+    gap: 15px; /* 요소들 사이의 간격 */
 `;
 
 const TabMenu = () => {
@@ -31,7 +28,6 @@ const TabMenu = () => {
     }, [open]);
 
     return (
-
         <TabMenuContainer>
             <hr/>
             <div>TabMenu</div>
