@@ -3,6 +3,8 @@ import Main from "./components/Main.jsx";
 import LeftSideBar from "./components/LeftSideBar.jsx";
 import RightSideBar from "./components/RightSideBar.jsx";
 import styled from "styled-components";
+import { useAuth } from "./AuthContext.jsx";
+import LoginPage from "./components/login/LoginPage.jsx";
 
 const AppContainer = styled.div`
   display: flex;
@@ -11,13 +13,23 @@ const AppContainer = styled.div`
 
 
 export default function App() {
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
     return (
         <BrowserRouter>
-            <AppContainer>
-                <LeftSideBar />
-                <Main />
-                <RightSideBar/>
-            </AppContainer>
+            {user ? (
+                <AppContainer>
+                    <LeftSideBar />
+                    <Main />
+                    <RightSideBar/>
+                </AppContainer>
+            ) : (
+                <LoginPage />
+            )}
         </BrowserRouter>
     );
 }

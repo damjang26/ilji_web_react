@@ -1,44 +1,49 @@
 import styled from "styled-components";
+import { useAuth } from "../../AuthContext";
+import SocialLogin from "../account/GoogleLogin";
 
 const ProfileContainer = styled.div`
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   width: 100%;
   padding: 10px 0; /* 컴포넌트 상하에 약간의 여유 공간을 줍니다. */
+  height: 90px; // 컨테이너 높이를 고정하여 로그인/아웃 시 레이아웃 변경을 최소화합니다.
 `;
 
 const ImageWrapper = styled.div`
-  flex-basis: 50%; /* 컨테이너 너비의 50%를 차지합니다. */
+  flex-basis: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
 
-  /* 실제 이미지를 위한 임시 스타일 */
-  & > div {
+  & > img {
     width: 70px;
     height: 70px;
     border-radius: 50%;
-    background-color: #ddd;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 12px;
+    object-fit: cover; // 이미지가 컨테이너에 맞게 잘 표시되도록 합니다.
   }
 `;
 
 const InfoWrapper = styled.div`
-  flex-basis: 50%; /* 나머지 50% 너비를 차지합니다. */
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between; /* 닉네임을 위로, 버튼을 아래로 밀어냅니다. */
-  height: 70px; /* 이미지 높이와 맞춰 정렬을 돕습니다. */
-  padding-left: 10px; /* 이미지와 텍스트 사이에 간격을 줍니다. */
+    flex-basis: 50%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; // 세로 중앙 정렬
+    text-align: center;
+    height: 70px;
+    margin-top: 10px;
 `;
 
 const Nickname = styled.div`
   font-weight: 600;
   font-size: 1.1rem;
+  margin-bottom: 8px; // 버튼과의 간격
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  gap: 5px; // 간격 조절
 `;
 
 const MyPageButton = styled.button`
@@ -50,16 +55,46 @@ const MyPageButton = styled.button`
   cursor: pointer;
 `;
 
+const LogoutButton = styled(MyPageButton)`
+  /* Inherits styles from MyPageButton */
+`;
+
+const LoginWrapper = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
 const Profile = () => {
-    return  (
+    const { user, loading, logout } = useAuth(); // Destructure logout
+
+    if (loading) {
+        return <ProfileContainer><div>로딩 중...</div></ProfileContainer>;
+    }
+
+    return (
         <ProfileContainer>
-            <ImageWrapper>
-                <div>profile-img</div>
-            </ImageWrapper>
-            <InfoWrapper>
-                <Nickname>nickname</Nickname>
-                <MyPageButton>mypage</MyPageButton>
-            </InfoWrapper>
+            {user ? (
+                // 로그인된 경우: 사용자 정보 표시
+                <>
+                    <ImageWrapper>
+                        <img src={user.picture} alt={`${user.name} 프로필`} referrerPolicy="no-referrer" />
+                    </ImageWrapper>
+                    <InfoWrapper>
+                        <Nickname>{user.name}</Nickname>
+                        <ButtonContainer>
+                            <MyPageButton>마이페이지</MyPageButton>
+                            <LogoutButton onClick={logout}>로그아웃</LogoutButton>
+                        </ButtonContainer>
+                    </InfoWrapper>
+                </>
+            ) : (
+                // 로그인되지 않은 경우: 로그인 버튼 표시
+                <LoginWrapper>
+                    <SocialLogin />
+                </LoginWrapper>
+            )}
         </ProfileContainer>
     );
 }

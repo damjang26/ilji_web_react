@@ -2,7 +2,6 @@ import styled from "styled-components";
 import MessageTab from "./right_side_bar/MessageTab.jsx";
 import ScheduleTab from "./right_side_bar/ScheduleTab.jsx";
 import QuickBar from "./right_side_bar/QuickBar.jsx";
-import SocialLogin from "./account/GoogleLogin.jsx";
 
 const RightSidebarContainer = styled.aside`
   width: 280px;
@@ -22,7 +21,6 @@ const RightSideBar = () => {
     <div>
       <RightSidebarContainer>
         <div>right side bar</div>
-        <SocialLogin />
         <MessageTab />
         <ScheduleTab />
       </RightSidebarContainer>
