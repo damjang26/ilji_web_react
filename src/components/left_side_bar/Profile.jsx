@@ -10,8 +10,7 @@ const Profile = () => {
     return  (
         <ProfileContainer>
             <IconContainer>
-                {/*==돋보기 아이콘*/}
-                <FaSearch onClick={()=>setIsModalSearch(!isModalSearch)}/>
+                <FaSearch onClick={()=>setIsModalSearch(!isModalSearch)}/>{/*==돋보기 아이콘*/}
                 <div>....</div>
             </IconContainer>
             {isModalSearch && (
