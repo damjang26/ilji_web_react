@@ -54,6 +54,10 @@ const MyPageButton = styled.button`
   background-color: white;
   cursor: pointer;
 `;
+import React, {useState} from 'react';
+import { FaSearch } from "react-icons/fa";
+import { CloseButton, Email, IconContainer, ImageWrapper, InfoWrapper, ModalHeader, Nickname, ProfileContainer, ProfileImageArea,
+    SearchInput, SearchModal,} from "../../styled_components/left_side_bar/Profile.styles.jsx";
 
 const LogoutButton = styled(MyPageButton)`
   /* Inherits styles from MyPageButton */
@@ -73,28 +77,41 @@ const Profile = () => {
         return <ProfileContainer><div>로딩 중...</div></ProfileContainer>;
     }
 
-    return (
+    const [isModalSearch, setIsModalSearch] =useState(false);
+
+    return  (
         <ProfileContainer>
-            {user ? (
-                // 로그인된 경우: 사용자 정보 표시
-                <>
-                    <ImageWrapper>
-                        <img src={user.picture} alt={`${user.name} 프로필`} referrerPolicy="no-referrer" />
-                    </ImageWrapper>
-                    <InfoWrapper>
-                        <Nickname>{user.name}</Nickname>
-                        <ButtonContainer>
-                            <MyPageButton>마이페이지</MyPageButton>
-                            <LogoutButton onClick={logout}>로그아웃</LogoutButton>
-                        </ButtonContainer>
-                    </InfoWrapper>
-                </>
-            ) : (
+            {user ? 
+            (<IconContainer>
+                <FaSearch onClick={()=>setIsModalSearch(!isModalSearch)}/>{/*==돋보기 아이콘*/}
+                <div>....</div>
+            </IconContainer>
+            {isModalSearch && (
+                <SearchModal>
+                    <ModalHeader>
+                        <span>검색</span>
+                        <CloseButton onClick={()=>setIsModalSearch(false)}>닫기</CloseButton>
+                    </ModalHeader>
+                    <SearchInput type="text" placeholder="검색어를 입력하세요" />
+                </SearchModal>
+            )};
+            <ProfileImageArea>
+                <ImageWrapper to="/mypage">
+                  <img src={user.picture} alt={`${user.name} 프로필`} referrerPolicy="no-referrer" />
+                </ImageWrapper>
+            </ProfileImageArea>
+            <InfoWrapper>
+                <Nickname>{user.name}</Nickname>
+                <Email>{user.email}</Email>
+                <ButtonContainer>
+                    <LogoutButton onClick={logout}>로그아웃</LogoutButton>
+                </ButtonContainer>
+            </InfoWrapper>):(
                 // 로그인되지 않은 경우: 로그인 버튼 표시
                 <LoginWrapper>
                     <SocialLogin />
                 </LoginWrapper>
-            )}
+            )};
         </ProfileContainer>
     );
 }
