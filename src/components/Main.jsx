@@ -2,7 +2,7 @@ import FullCalendarExample from "./main/calendar/FullCalendar.jsx";
 import {Route, Routes} from "react-router-dom";
 import styled from "styled-components";
 import MyPage from "./main/mypage/MyPage.jsx";
-import Journal from "./main/journal/Journal.jsx";
+import Post from "./main/post/Post.jsx";
 import MyPageSet from "./main/mypage/MyPageSet.jsx";
 
 
@@ -22,8 +22,7 @@ const Main = () => {
                 <Route path="/" element={<FullCalendarExample/>}/>
                 <Route path="/mypage" element={<MyPage/>}/>
                 <Route path="/mypageset" element={<MyPageSet/>}/>
-                <Route path="/journal" element={<Journal/>}/>
-
+                <Route path="/post/*" element={<Post/>}/>
             </Routes>
         </MainContent>
     );
