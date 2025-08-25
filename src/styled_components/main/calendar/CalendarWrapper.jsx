@@ -158,6 +158,8 @@ export const CalendarWrapper = styled.div`
         font-size: 14px;
     }
 
+    /* 오늘 날짜 보라색 동그라미 */
+
     .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
         border-radius: 50%;
         background: #9781ff;
@@ -211,4 +213,42 @@ export const CalendarWrapper = styled.div`
         text-transform: uppercase;
     }
 
+`;
+
+// 날짜에 호버했을 때 나타나는 일기 메뉴(모달) 스타일
+export const DiaryPopoverContainer = styled.div`
+    position: fixed; /* Portal을 사용하므로 fixed로 위치를 잡습니다. */
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1100; /* 다른 모든 요소 위에 오도록 높은 z-index 설정 */
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    /* 마우스가 팝오버 위로 이동할 수 있도록 설정 */
+    pointer-events: auto;
+    transition: opacity 0.15s ease-in-out;
+    opacity: ${({ visible }) => (visible ? 1 : 0)};
+    visibility: ${({ visible }) => (visible ? 'visible' : 'hidden')};
+`;
+
+// 팝오버 안의 개별 버튼 스타일
+export const DiaryPopoverButton = styled.button`
+    background: none;
+    border: none;
+    padding: 8px 12px;
+    width: 100%;
+    text-align: left;
+    font-size: 14px;
+    color: #333;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+        background-color: #f0f2f5;
+    }
 `;
