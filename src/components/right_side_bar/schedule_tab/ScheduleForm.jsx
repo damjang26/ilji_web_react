@@ -4,6 +4,8 @@ const ScheduleForm = ({onSave, onCancel, initialData}) => {
     const [form, setForm] = useState({
         title: "",
         date: "",
+        location: "",
+        tags: "",
         description: "",
         isRepeating: false,
     });
@@ -15,6 +17,8 @@ const ScheduleForm = ({onSave, onCancel, initialData}) => {
                 title: initialData.title || "",
                 // FullCalendar의 날짜 형식(startStr)을 YYYY-MM-DD로 변환
                 date: (initialData.startStr || "").split("T")[0],
+                location: initialData.extendedProps?.location || "",
+                tags: initialData.extendedProps?.tags || "",
                 description: initialData.extendedProps?.description || "",
                 isRepeating: initialData.extendedProps?.isRepeating || false,
             });
@@ -34,6 +38,8 @@ const ScheduleForm = ({onSave, onCancel, initialData}) => {
             <div style={{ display: "grid", gap: 8 }}>
                 <input placeholder="Title" value={form.title} onChange={set("title")} />
                 <input type="date" placeholder="Date" value={form.date} onChange={set("date")} />
+                <input placeholder="Location" value={form.location} onChange={set("location")} />
+                <input placeholder="Tags (comma-separated)" value={form.tags} onChange={set("tags")} />
                 <input
                     placeholder="Description"
                     value={form.description}

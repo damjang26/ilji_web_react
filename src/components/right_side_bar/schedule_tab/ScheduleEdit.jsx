@@ -6,6 +6,8 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
         id: null, // id를 상태에 포함
         title: "",
         date: "",
+        location: "",
+        tags: "",
         description: "",
         isRepeating: false,
     });
@@ -17,6 +19,8 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
                 id: item.id,
                 title: item.title,
                 date: item.date,
+                location: item.location,
+                tags: item.tags,
                 description: item.description,
                 isRepeating: item.isRepeating,
             });
@@ -38,6 +42,8 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
             <div style={{ display: "grid", gap: 8 }}>
                 <input placeholder="Title" value={form.title} onChange={set("title")} />
                 <input type="date" placeholder="Date" value={form.date} onChange={set("date")} />
+                <input placeholder="Location" value={form.location} onChange={set("location")} />
+                <input placeholder="Tags (comma-separated)" value={form.tags} onChange={set("tags")} />
                 <input
                     placeholder="Description"
                     value={form.description}
