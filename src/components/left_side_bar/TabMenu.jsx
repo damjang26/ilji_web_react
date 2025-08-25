@@ -1,7 +1,7 @@
 import {Link} from "react-router-dom";
 import styled from "styled-components";
-import React, {useEffect, useRef, useState} from "react";
-import {Overlay, SidebarWrapper, ToggleButton} from "../../styled_components/MainStyled.jsx";
+import React from "react";
+import {ToggleButton} from "../../styled_components/left_side_bar/TabMenuStyled.jsx";
 
 const TabMenuContainer = styled.div`
     flex-grow: 1;
@@ -12,36 +12,18 @@ const TabMenuContainer = styled.div`
     gap: 15px; /* 요소들 사이의 간격 */
 `;
 
-const TabMenu = () => {
-    const [open, setOpen] = useState(false);
-    const sidebarRef = useRef(null);
-
-    // 외부 클릭 감지
-    useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (open && sidebarRef.current && !sidebarRef.current.contains(e.target)) {
-                setOpen(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [open]);
-
+const TabMenu = ({toggleButtonRef, onToggle}) => {
     return (
         <TabMenuContainer>
             <hr/>
-            <div>TabMenu</div>
+            <div>Tab Menu</div>
             <Link to="/">Calendar</Link>
-            <Link to="/journal">Journal</Link>
-            <ToggleButton onClick={() => setOpen(true)}>Notifications</ToggleButton>
-            <Overlay open={open}/>
-            <SidebarWrapper ref={sidebarRef} open={open}>
-                <h2>사이드바</h2>
-                <p>여기에 내용 넣기</p>
-                <button onClick={() => setOpen(false)}>닫기</button>
-            </SidebarWrapper>
+            <Link to="/post">Post</Link>
+            <ToggleButton ref={toggleButtonRef} onClick={onToggle}>
+                Notifications
+            </ToggleButton>
         </TabMenuContainer>
     );
-}
+};
 
 export default TabMenu;

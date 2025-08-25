@@ -6,8 +6,9 @@ export const CalendarWrapper = styled.div`
     display: flex;
     flex-direction: column;
     color: #8394a6;
-    
+
     /* week/day view 스크롤 숨김 */
+
     .fc-timegrid-scroller,
     .fc-scroller {
         scrollbar-width: none;
@@ -146,7 +147,7 @@ export const CalendarWrapper = styled.div`
     .fc-daygrid-day {
         border: 1px solid #e4eaf1; /* 버튼 테두리와 동일한 색상으로 통일감 */
     }
-    
+
 
     .fc .fc-daygrid-day-top {
         display: flex;
@@ -174,15 +175,19 @@ export const CalendarWrapper = styled.div`
     }
 
     // 오늘 날짜 배경 색상 변경!
+
     .fc .fc-daygrid-day.fc-day-today {
         background: #fff7e7;
     }
+
     /* Week / Day view - today 컬럼 전체 */
+
     .fc-timegrid-col.fc-day-today {
         background-color: #fff7e7;
     }
 
     /* Week / Day view - all-day 영역 */
+
     .fc-timegrid-all-day.fc-day-today {
         background-color: #fff7e7;
     }
@@ -201,6 +206,7 @@ export const CalendarWrapper = styled.div`
         border-radius: 3px;
         color: #ff7eb9;
     }
+
     .fc-event-time {
         text-transform: uppercase;
     }
