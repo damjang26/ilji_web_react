@@ -2,6 +2,7 @@ import {Link} from "react-router-dom";
 import styled from "styled-components";
 import React from "react";
 import {ToggleButton} from "../../styled_components/left_side_bar/TabMenuStyled.jsx";
+import {FaBell, FaCalendarAlt} from "react-icons/fa";
 
 const TabMenuContainer = styled.div`
     flex-grow: 1;
@@ -17,10 +18,10 @@ const TabMenu = ({toggleButtonRef, onToggle}) => {
         <TabMenuContainer>
             <hr/>
             <div>Tab Menu</div>
-            <Link to="/">Calendar</Link>
+            <Link to="/"><FaCalendarAlt/> Calendar</Link>
             <Link to="/post">Post</Link>
             <ToggleButton ref={toggleButtonRef} onClick={onToggle}>
-                Notifications
+                <FaBell/> Notifications
             </ToggleButton>
         </TabMenuContainer>
     );
