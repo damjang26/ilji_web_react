@@ -46,7 +46,7 @@ const LoginWrapper = styled.div`
 const Profile = () => {
     const { user, loading, logout } = useAuth();
     const [isModalSearch, setIsModalSearch] = useState(false);
-
+    console.log(user);
     if (loading) {
         return <ProfileContainer><div>로딩 중...</div></ProfileContainer>;
     }

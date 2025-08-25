@@ -1,27 +1,29 @@
 import { useState, useEffect } from "react";
 
 const ScheduleForm = ({onSave, onCancel, initialData}) => {
+    // 백엔드 데이터 구조에 맞게 폼 상태를 상세하게 변경
     const [form, setForm] = useState({
         title: "",
-        date: "",
         location: "",
         tags: "",
         description: "",
-        isRepeating: false,
+        allDay: true,
+        startDate: "",
+        startTime: "09:00",
+        endDate: "",
+        endTime: "10:00",
+        calendarId: 1, // 기본 캘린더 ID
     });
 
     // initialData가 변경될 때 폼의 상태를 업데이트합니다.
     useEffect(() => {
         if (initialData) {
-            setForm({
-                title: initialData.title || "",
-                // FullCalendar의 날짜 형식(startStr)을 YYYY-MM-DD로 변환
-                date: (initialData.startStr || "").split("T")[0],
-                location: initialData.extendedProps?.location || "",
-                tags: initialData.extendedProps?.tags || "",
-                description: initialData.extendedProps?.description || "",
-                isRepeating: initialData.extendedProps?.isRepeating || false,
-            });
+            const startDate = (initialData.startStr || "").split("T")[0];
+            setForm(prev => ({
+                ...prev,
+                startDate: startDate,
+                endDate: startDate, // 기본적으로 시작일과 종료일을 같게 설정
+            }));
         }
     }, [initialData]);
 
@@ -30,6 +32,27 @@ const ScheduleForm = ({onSave, onCancel, initialData}) => {
         setForm((prev) => ({ ...prev, [k]: v }));
     };
 
+    const handleSave = () => {
+        const { title, description, allDay, startDate, startTime, endDate, endTime, location, tags, calendarId } = form;
+
+        // FullCalendar가 이해할 수 있는 형식으로 start, end 값을 조립합니다.
+        const finalStart = allDay ? startDate : `${startDate}T${startTime}`;
+        const finalEnd = allDay ? endDate : `${endDate}T${endTime}`;
+
+        onSave({
+            title,
+            start: finalStart,
+            end: finalEnd,
+            allDay,
+            extendedProps: {
+                description,
+                location,
+                tags,
+                calendarId,
+                // rrule: ... // 반복 로직 추가 시
+            }
+        });
+    };
 
     return (
         <>
@@ -37,7 +60,18 @@ const ScheduleForm = ({onSave, onCancel, initialData}) => {
             <hr />
             <div style={{ display: "grid", gap: 8 }}>
                 <input placeholder="Title" value={form.title} onChange={set("title")} />
-                <input type="date" placeholder="Date" value={form.date} onChange={set("date")} />
+                <label style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+                    <input type="checkbox" checked={form.allDay} onChange={set("allDay")} />
+                    하루 종일
+                </label>
+                <div style={{display: 'flex', gap: '4px'}}>
+                    <input type="date" value={form.startDate} onChange={set("startDate")} style={{width: '100%'}} />
+                    {!form.allDay && <input type="time" value={form.startTime} onChange={set("startTime")} />}
+                </div>
+                <div style={{display: 'flex', gap: '4px'}}>
+                    <input type="date" value={form.endDate} onChange={set("endDate")} style={{width: '100%'}} />
+                    {!form.allDay && <input type="time" value={form.endTime} onChange={set("endTime")} />}
+                </div>
                 <input placeholder="Location" value={form.location} onChange={set("location")} />
                 <input placeholder="Tags (comma-separated)" value={form.tags} onChange={set("tags")} />
                 <input
@@ -45,13 +79,9 @@ const ScheduleForm = ({onSave, onCancel, initialData}) => {
                     value={form.description}
                     onChange={set("description")}
                 />
-                <label style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
-                    <input type="checkbox" checked={form.isRepeating} onChange={set("isRepeating")} />
-                    반복 여부
-                </label>
             </div>
             <div style={{ marginTop: 12 }}>
-                <button onClick={() => onSave(form)}>저장</button>
+                <button onClick={handleSave}>저장</button>
             </div>
 
         </>)

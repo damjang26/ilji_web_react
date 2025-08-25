@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { CalendarWrapper } from "../../../styled_components/main/calendar/CalendarWrapper.jsx";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
