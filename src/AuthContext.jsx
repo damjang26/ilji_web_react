@@ -1,6 +1,6 @@
 // src/contexts/AuthContext.jsx
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import { api } from "./api"; // axios 대신 우리가 만든 api 인스턴스를 가져옵니다.
 import { googleLogout } from "@react-oauth/google";
 
 const AuthContext = createContext(null);
@@ -17,34 +17,35 @@ export default function AuthProvider({ children }) {
         const t = localStorage.getItem("token");
         if (!t) { setLoading(false); return; }
 
-        setToken(t);
-        axios.get("/api/auth/me", { headers: { Authorization: `Bearer ${t}` } })
+        // 인터셉터가 헤더를 자동으로 추가해주므로, 헤더 설정이 필요 없습니다.
+        api.get("/api/auth/me")
             .then(res => setUser(res.data.user))
             .catch(() => { localStorage.removeItem("token"); setToken(null); setUser(null); })
             .finally(() => setLoading(false));
     }, []);
 
-    // 토큰이 바뀔 때 axios 기본 헤더 세팅(공통)
-    useEffect(() => {
-        if (token) {
-            axios.defaults.headers.common.Authorization = `Bearer ${token}`;
-        } else {
-            delete axios.defaults.headers.common.Authorization;
-        }
-    }, [token]);
-
     // 구글 ID 토큰으로 로그인(서버 인증)
     const loginWithGoogle = async (googleIdToken) => {
         setError(null);
         try {
-            const res = await axios.post("/api/auth/google", { token: googleIdToken });
-            const { appToken, user } = res.data;     // 서버가 준 우리 서비스 토큰 + 유저
+            // 1. 구글 ID 토큰을 서버로 보내 우리 앱의 토큰(appToken)을 받습니다.
+            const res = await api.post("/api/auth/google", { token: googleIdToken });
+            const { appToken } = res.data; // user 객체는 여기서 사용하지 않습니다.
             localStorage.setItem("token", appToken);
             setToken(appToken);
+
+            // 2. 방금 받은 appToken을 사용하여, 서버에서 완전한 사용자 정보를 다시 조회합니다.
+            const meResponse = await api.get("/api/auth/me");
+            const user = meResponse.data.user;
             setUser(user);
+
             return user;
         } catch (e) {
             setError(e.response?.data || e.message);
+            // 로그인 실패 시 토큰/사용자 정보 정리
+            localStorage.removeItem("token");
+            setToken(null);
+            setUser(null);
             throw e;
         }
     };
