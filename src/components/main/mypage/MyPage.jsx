@@ -1,11 +1,13 @@
 import {Link} from "react-router-dom";
-import {useState} from "react";
+import React, {useState} from "react";
+import { useAuth } from "../../../AuthContext";
 import {
     ContentBox, FeatureBox, FeatureContent, HeaderContent, ImageWrapper,
     MyPageContainer, MyPageHeader, MypageImg, MyPageMain, Tab, TabMenuContainer, UserActions, UserInfo
 } from "../../../styled_components/main/mypage/MyPage.styles.jsx";
 
 const MyPage = () => {
+    const { user } = useAuth();
 
     const [activeTab,setActiveTab] = useState('feature1');
 
@@ -15,13 +17,15 @@ const MyPage = () => {
             <ContentBox>
                 <MyPageHeader>
                     <ImageWrapper>
-                        <div>profile-photo</div>
+                        <div>
+                            <img src={user.picture} alt={`${user.name} 프로필`} referrerPolicy="no-referrer" />
+                        </div>
                     </ImageWrapper>
                     <HeaderContent>
                         <UserInfo>
-                            <div className="nickname">nickname</div>
-                            <div className="email">email</div>
-                            <div>name</div>
+                            <div className="nickname">{user?.name || 'Guest'}</div>
+                            <div className="email">{user?.email || 'guest@example.com'}</div>
+                            <div>{user?.name || 'Guest'}</div>
                         </UserInfo>
                         <UserActions>
                             <div>post</div>
