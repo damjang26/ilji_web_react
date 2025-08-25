@@ -1,12 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const ScheduleForm = ({onSave, onCancel}) => {
+const ScheduleForm = ({onSave, onCancel, initialData}) => {
     const [form, setForm] = useState({
         title: "",
         date: "",
         description: "",
         isRepeating: false,
     });
+
+    // initialData가 변경될 때 폼의 상태를 업데이트합니다.
+    useEffect(() => {
+        if (initialData) {
+            setForm({
+                title: initialData.title || "",
+                // FullCalendar의 날짜 형식(startStr)을 YYYY-MM-DD로 변환
+                date: (initialData.startStr || "").split("T")[0],
+                description: initialData.extendedProps?.description || "",
+                isRepeating: initialData.extendedProps?.isRepeating || false,
+            });
+        }
+    }, [initialData]);
 
     const set = (k) => (e) => {
         const v = e?.target?.type === "checkbox" ? e.target.checked : e.target.value;

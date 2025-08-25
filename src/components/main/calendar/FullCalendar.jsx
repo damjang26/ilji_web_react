@@ -4,91 +4,40 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
+import { useSchedule } from "../../../contexts/ScheduleContext.jsx";
 /*
  (FullCalendar와 관련 플러그인 설치)
  npm install @fullcalendar/react @fullcalendar/daygrid @fullcalendar/interaction @fullcalendar/timegrid
 */
-let eventGuid = 0;
-const createEventId = () => {
-  return String(eventGuid++);
-};
 
 export default function FullCalendarExample() {
-  const [events, setEvents] = useState([
-    { title: "Conference", date: "2025-07-07", id: createEventId() },
-    {
-      title: "Meeting",
-      start: "2025-07-07T10:00:00",
-      end: "2025-07-07T11:00:00",
-      id: createEventId(),
-    }, // Overlapping event
-  ]); // 캘린더에 저장할 일정 정보들 얘인거 같음!!!
+  // ✅ Context에서 데이터와 함수를 직접 가져옴
+  const { events, openSidebarForDate, openSidebarForDetail, updateEvent } = useSchedule();
 
   const handleDateSelect = (selectInfo) => {
-    let title = prompt("Please enter a new title for your event");
-    let calendarApi = selectInfo.view.calendar;
-
-    calendarApi.unselect(); // clear date selection
-
-    if (title) {
-      const newEvent = {
-        id: createEventId(),
-        title,
-        start: selectInfo.startStr,
-        end: selectInfo.endStr,
-        allDay: selectInfo.allDay,
-      };
-      setEvents((prevEvents) => [...prevEvents, newEvent]);
-    }
+    // ✅ '새 일정 추가' 대신 '날짜 목록 보기' 신호를 보냅니다.
+    openSidebarForDate(selectInfo);
+    selectInfo.view.calendar.unselect(); // 날짜 선택 효과 해제
   };
 
   const handleEventClick = (clickInfo) => {
-    if (
-      confirm(
-        `Do you want to edit or delete the event '${clickInfo.event.title}'? Click OK to delete, Cancel to edit.`
-      )
-    ) {
-      // Delete logic
-      setEvents((prevEvents) =>
-        prevEvents.filter((event) => event.id !== clickInfo.event.id)
-      );
-    } else {
-      // Edit logic
-      let newTitle = prompt(
-        `Edit title for '${clickInfo.event.title}':`,
-        clickInfo.event.title
-      );
-      if (newTitle !== null) {
-        // Check if user didn't cancel prompt
-        setEvents((prevEvents) =>
-          prevEvents.map((event) =>
-            event.id === clickInfo.event.id
-              ? { ...event, title: newTitle }
-              : event
-          )
-        );
-      }
-    }
+    // 기존 일정을 클릭하면 수정 모드로 사이드바를 엽니다.
+    // (삭제 로직은 사이드바 내부에서 처리하는 것이 더 좋습니다)
+    openSidebarForDetail(clickInfo.event);
   };
 
   // Handle event drop (drag and drop)
   const handleEventDrop = (info) => {
     const { event } = info;
-    setEvents((prevEvents) =>
-      prevEvents.map((e) =>
-        e.id === event.id ? { ...e, start: event.start, end: event.end } : e
-      )
-    );
+    // ✅ Context의 업데이트 함수를 호출
+    updateEvent({ ...event.toPlainObject(), start: event.start, end: event.end });
   };
 
   // Handle event resize
   const handleEventResize = (info) => {
     const { event } = info;
-    setEvents((prevEvents) =>
-      prevEvents.map((e) =>
-        e.id === event.id ? { ...e, start: event.start, end: event.end } : e
-      )
-    );
+    // ✅ Context의 업데이트 함수를 호출
+    updateEvent({ ...event.toPlainObject(), start: event.start, end: event.end });
   };
 
   return (

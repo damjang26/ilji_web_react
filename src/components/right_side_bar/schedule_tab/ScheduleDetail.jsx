@@ -1,4 +1,9 @@
 const ScheduleDetail = ({item, onEdit, onCancel, onDelete}) => {
+    // item이 로드되기 전에 렌더링되는 것을 방지 (오류의 근본 원인)
+    if (!item) {
+        return null; // 또는 로딩 스피너를 보여줄 수 있습니다.
+    }
+
     return (
         <>
             <button onClick={onCancel}>뒤로</button>
@@ -11,8 +16,8 @@ const ScheduleDetail = ({item, onEdit, onCancel, onDelete}) => {
                 반복 여부
             </label>
             <div style={{ marginTop: 12 }}>
-                <button onClick={() => onEdit(item.no)}>Edit</button>
-                <button onClick={() => onDelete(item.no)} style={{ marginLeft: 8, color: "#e11d48" }}>
+                <button onClick={() => onEdit(item.id)}>Edit</button>
+                <button onClick={() => onDelete(item.id)} style={{ marginLeft: 8, color: "#e11d48" }}>
                     Delete
                 </button>
             </div>

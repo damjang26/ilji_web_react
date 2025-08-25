@@ -1,9 +1,9 @@
 import {useEffect, useState} from "react";
 
-const ScheduleEdit = ({item, onSave, onDelete, onCancel}) => {
+const ScheduleEdit = ({item, onSave, onCancel}) => {
     // item이 아직 없을 수도 있으니 방어
     const [form, setForm] = useState({
-        no: null,
+        id: null, // id를 상태에 포함
         title: "",
         date: "",
         description: "",
@@ -13,7 +13,8 @@ const ScheduleEdit = ({item, onSave, onDelete, onCancel}) => {
     useEffect(() => {
         if (item) {
             setForm({
-                no: item.no,
+                // no 대신 id를 사용합니다.
+                id: item.id,
                 title: item.title,
                 date: item.date,
                 description: item.description,
@@ -49,9 +50,6 @@ const ScheduleEdit = ({item, onSave, onDelete, onCancel}) => {
             </div>
             <div style={{ marginTop: 12 }}>
                 <button onClick={() => onSave(form)}>저장</button>
-                <button onClick={() => onDelete(form.no)} style={{ marginLeft: 8, color: "#e11d48" }}>
-                    삭제
-                </button>
             </div>
         </>
     )
