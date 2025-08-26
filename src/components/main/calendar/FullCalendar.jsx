@@ -1,4 +1,4 @@
-import React, {useState, useRef} from "react";
+import React, {useState, useRef, useEffect} from "react";
 import ReactDOM from "react-dom";
 import {
     CalendarWrapper,
@@ -29,7 +29,7 @@ export default function FullCalendarExample() {
 
     // 일기 데이터 예시 (나중에는 API로 가져와야 합니다)
     // 날짜 문자열(YYYY-MM-DD)을 키로 사용하는 Set을 사용합니다.
-    const [diaries, setDiaries] = useState(
+    const [journal, setJournal] = useState(
         new Set(["2025-08-15", "2025-08-22"])
     );
 
@@ -41,6 +41,10 @@ export default function FullCalendarExample() {
         left: 0,
     });
     const popoverHideTimer = useRef(null);
+
+    useEffect(() => {
+        // console.log("✅ diaryPopover 상태 업데이트 완료:", diaryPopover);
+    }, [diaryPopover]); // diaryPopover 상태가 변할 때마다 실행
 
     const handleDateSelect = (selectInfo) => {
         // ✅ '새 일정 추가' 대신 '날짜 목록 보기' 신호를 보냅니다.
@@ -120,12 +124,22 @@ export default function FullCalendarExample() {
             dayNumberEl.addEventListener("mouseenter", (e) => {
                 clearHideTimer(); // 숨기기 타이머 취소
                 const rect = e.target.getBoundingClientRect();
+
+                // 🚨 중요: arg.date는 Date 객체이므로, "YYYY-MM-DD" 형식의 문자열로 변환해야 합니다.
+                const date = arg.date;
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0'); // 월은 0부터 시작하므로 +1
+                const day = String(date.getDate()).padStart(2, '0');
+                const dateString = `${year}-${month}-${day}`;
+
                 setDiaryPopover({
                     visible: true,  // "이제 팝오버를 보여줘!"
-                    date: arg.dateStr,  // "이 팝오버는 아까 선물 상자에서 받은 그 날짜 거야!"
+                    date: dateString,  // ✅ 변환된 날짜 문자열을 사용합니다.
                     top: rect.bottom + 5, // 위치는 숫자 바로 아래
                     left: rect.left + rect.width / 2, // 숫자의 가로 중앙
                 });
+                // console.log("오늘의 날짜 :", diaryPopover.date)
+                // console.log("변환된 날짜 문자열:", dateString);
             });
 
             // 마우스가 떠났을 때
@@ -146,7 +160,7 @@ export default function FullCalendarExample() {
                     onMouseEnter={clearHideTimer} // 팝오버 위에 마우스가 올라가면 숨기기 취소
                     onMouseLeave={startHideTimer} // 팝오버에서 마우스가 떠나면 숨기기 시작
                 >
-                    {diaries.has(diaryPopover.date) ? (
+                    {journal.has(diaryPopover.date) ? (
                         <>
                             <DiaryPopoverButton>
                                 <FaBookOpen/> 일기 보기
@@ -160,15 +174,15 @@ export default function FullCalendarExample() {
                         </>
                     ) : (
                         <DiaryPopoverButton
-                            onClick={() =>
-                                // '/journal/write'로 이동하면서, 현재 location을 state에 담아 전달합니다.
-                                // 이것이 모달 라우팅의 핵심입니다.
+                            onClick={() => {
+                                // console.log('FullCalendar에서 보내는 날짜:', diaryPopover.date);
                                 navigate("/journal/write", {
                                     state: {
                                         backgroundLocation: location,
                                         selectedDate: diaryPopover.date, // 선택한 날짜 정보 추가
                                     },
                                 })
+                            }
                             }>
                             <FaPencilAlt/> 일기 작성
                         </DiaryPopoverButton>
