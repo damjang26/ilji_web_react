@@ -1,47 +1,47 @@
-import styled from "styled-components";
+import React, { useState } from "react";
 import MessageTab from "./right_side_bar/MessageTab.jsx";
 import ScheduleTab from "./right_side_bar/ScheduleTab.jsx";
 import QuickBar from "./right_side_bar/QuickBar.jsx";
+import { FaTimes } from "react-icons/fa";
+import {
+    CloseButton,
+    PanelBody,
+    PanelHeader,
+    RightSectionContainer,
+    SidebarPanelWrapper,
+} from "../styled_components/RightSideBarStyled.jsx";
 
-const RightSidebarContainer = styled.aside`
-    width: 320px; /* 너비를 조금 넓혀서 내용이 답답하지 않게 합니다. */
-    flex-shrink: 0;
-    height: 100vh;
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-left: 1px solid #e9ecef;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-    position: fixed;
-    top: 0;
-    right: 0;
-    z-index: 10;
-`;
-
-const Section = styled.section`
-    width: 100%;
-    background-color: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* 내부 컨텐츠가 넘칠 경우를 대비 */
-`;
+// 사이드바 패널의 전체 내용을 담는 컴포넌트
+const SidebarPanel = ({ onToggle }) => (
+    <>
+        <PanelHeader>
+            <span>사이드바</span>
+            <CloseButton onClick={onToggle} title="닫기">
+                <FaTimes />
+            </CloseButton>
+        </PanelHeader>
+        <PanelBody>
+            <MessageTab />
+            <ScheduleTab />
+        </PanelBody>
+    </>
+);
 
 const RightSideBar = () => {
+    const [isPanelOpen, setPanelOpen] = useState(true);
+
+    const togglePanel = () => setPanelOpen((prev) => !prev);
+
     return (
-        <div>
-            <RightSidebarContainer>
-                {/* 각 탭을 시각적으로 구분되는 섹션으로 만듭니다. */}
-                <Section style={{ flex: '2 1 400px' }}><ScheduleTab/></Section>
-                <Section style={{ flex: '1 1 200px' }}><MessageTab/></Section>
-            </RightSidebarContainer>
-            {/*<QuickBar/>*/}
-        </div>
+        <RightSectionContainer $isPanelOpen={isPanelOpen}>
+            {/* 사이드바 패널은 상태에 따라 슬라이드 인/아웃 됩니다. */}
+            <SidebarPanelWrapper $isPanelOpen={isPanelOpen}>
+                <SidebarPanel onToggle={togglePanel} />
+            </SidebarPanelWrapper>
+
+            {/* QuickBar는 항상 렌더링되며, 스타일 컴포넌트 내부에서 위치가 동적으로 변경됩니다. */}
+            <QuickBar onToggle={togglePanel} $isPanelOpen={isPanelOpen} />
+        </RightSectionContainer>
     );
 };
 
