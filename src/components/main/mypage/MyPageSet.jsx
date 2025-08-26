@@ -1,7 +1,7 @@
 import {Link} from "react-router-dom";
 import { useAuth } from "../../../AuthContext"; // Added import
 import { Check, ContentBox, Divider, ImgWrapper, MyPageSetContainer, MypageImg, UserInfo
-} from "../../../styled_components/main/mypage/MyPageSet.styles.jsx";
+} from "../../../styled_components/main/mypage/MyPageSetStyled.jsx";
 
 const MyPageSet = () =>{
     const { user } = useAuth(); // Added useAuth hook

@@ -29,7 +29,7 @@ const RightSideBar = () => {
                 <MessageTab/>
                 <ScheduleTab/>
             </RightSidebarContainer>
-            {/*<QuickBar/>*/}
+            <QuickBar/>
         </div>
     );
 };
