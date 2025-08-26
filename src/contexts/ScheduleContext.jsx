@@ -22,20 +22,45 @@ export function ScheduleProvider({ children }) {
     const [error, setError] = useState(null);
 
     // 백엔드 데이터를 FullCalendar 형식으로 변환하는 헬퍼 함수
-    const formatEventForCalendar = (event) => ({
-        id: event.id,
-        title: event.title,
-        start: event.startTime,
-        end: event.endTime,
-        allDay: event.isAllDay,
-        extendedProps: {
-            description: event.description,
-            location: event.location,
-            tags: event.tags,
-            calendarId: event.calendarId,
-            rrule: event.rrule,
-        },
-    });
+    const formatEventForCalendar = (event) => {
+        // ✅ [핵심 수정] 백엔드가 isAllDay 플래그를 false로 잘못 보내더라도,
+        // 시간 형식을 보고 '하루 종일' 여부를 다시 판단합니다.
+        const isAllDayEvent = event.isAllDay ||
+            (event.startTime?.endsWith('T00:00:00') && event.endTime?.endsWith('T23:59:59'));
+
+        const commonProps = {
+            id: event.id,
+            title: event.title,
+            // ✅ 위에서 판단한 정확한 값을 사용합니다.
+            allDay: isAllDayEvent,
+            extendedProps: {
+                description: event.description,
+                location: event.location,
+                tags: event.tags,
+                calendarId: event.calendarId,
+                rrule: event.rrule,
+            },
+        };
+
+        // ✅ 위에서 판단한 정확한 값을 기준으로 분기합니다.
+        if (isAllDayEvent) {
+            // FullCalendar에서 하루 종일 일정의 종료일은 '포함되지 않는(exclusive)' 날짜입니다.
+            // 백엔드는 '포함하는(inclusive)' 날짜(예: 8월 2일 23:59)를 저장하므로, 날짜를 하루 더해줍니다.
+            // new Date() 생성자의 시간대 오류를 피하기 위해 UTC 기준으로 날짜를 계산합니다.
+            const endDateStr = event.endTime.split('T')[0];
+            const parts = endDateStr.split('-').map(Number);
+            const exclusiveEndDate = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+            exclusiveEndDate.setUTCDate(exclusiveEndDate.getUTCDate() + 1);
+
+            return {
+                ...commonProps,
+                start: event.startTime.split('T')[0],
+                end: exclusiveEndDate.toISOString().split('T')[0],
+            };
+        }
+
+        return { ...commonProps, start: event.startTime, end: event.endTime };
+    };
 
     /**
      * 날짜/시간 데이터를 백엔드가 요구하는 'YYYY-MM-DDTHH:mm:ss' 형식의 문자열로 변환합니다.
@@ -53,26 +78,38 @@ export function ScheduleProvider({ children }) {
         if (dateTime instanceof Date) {
             if (isNaN(dateTime.getTime())) return null;
 
+            let dateToFormat = dateTime;
+            // ✅ [핵심 수정] '하루 종일' 일정을 드래그/리사이즈한 경우,
+            // FullCalendar의 '포함되지 않는(exclusive)' 종료일을 백엔드가 요구하는
+            // '포함하는(inclusive)' 종료일로 변환합니다. (하루 빼기)
+            if (isAllDay && isEnd) {
+                const inclusiveEndDate = new Date(dateToFormat.getTime());
+                inclusiveEndDate.setDate(inclusiveEndDate.getDate() - 1);
+                dateToFormat = inclusiveEndDate;
+            }
+
             const pad = (num) => String(num).padStart(2, '0');
-            const year = dateTime.getFullYear();
-            const month = pad(dateTime.getMonth() + 1);
-            const day = pad(dateTime.getDate());
+            const year = dateToFormat.getFullYear();
+            const month = pad(dateToFormat.getMonth() + 1);
+            const day = pad(dateToFormat.getDate());
 
             if (isAllDay) {
                 const time = isEnd ? '23:59:59' : '00:00:00';
                 return `${year}-${month}-${day}T${time}`;
             }
 
-            const hours = pad(dateTime.getHours());
-            const minutes = pad(dateTime.getMinutes());
-            const seconds = pad(dateTime.getSeconds());
+            const hours = pad(dateToFormat.getHours());
+            const minutes = pad(dateToFormat.getMinutes());
+            const seconds = pad(dateToFormat.getSeconds());
             return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
         }
 
         // Case 2: Input is already a string (from form submission)
         if (typeof dateTime === 'string') {
             const datePart = dateTime.split('T')[0];
-            if (isAllDay) return isEnd ? `${datePart}T23:59:59` : `${datePart}T00:00:00`;
+            if (isAllDay) {
+                return isEnd ? `${datePart}T23:59:59` : `${datePart}T00:00:00`;
+            }
             if (dateTime.length === 16) return `${dateTime}:00`; // Append seconds if missing
             return dateTime;
         }

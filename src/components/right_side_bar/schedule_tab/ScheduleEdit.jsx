@@ -19,12 +19,23 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
     useEffect(() => {
         if (item) {
             // 백엔드에서 온 start, end (ISO 문자열)를 날짜와 시간으로 분리합니다.
-            const start = item.start ? new Date(item.start) : new Date();
-            // all-day event might not have an end date in some cases.
-            // We'll default to the start date if end is not present.
-            const end = item.end ? new Date(item.end) : new Date(start);
+            const start = new Date(item.start);
 
-            const toYYYYMMDD = (d) => d.toISOString().split('T')[0];
+            // "하루 종일" 일정의 경우, FullCalendar의 end는 exclusive(포함 안됨)이므로
+            // 폼에 표시하기 위해 inclusive(포함됨) 날짜로 다시 변환해야 합니다. (하루 빼기)
+            let inclusiveEnd;
+            if (item.allDay && item.end) {
+                inclusiveEnd = new Date(item.end);
+                inclusiveEnd.setDate(inclusiveEnd.getDate() - 1);
+            } else {
+                inclusiveEnd = item.end ? new Date(item.end) : new Date(start);
+            }
+
+            // 시간대 오류를 피하기 위해 toISOString() 대신 get...() 메서드를 사용합니다.
+            const toYYYYMMDD = (d) => {
+                const pad = (num) => String(num).padStart(2, '0');
+                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+            };
             const toHHMM = (d) => d.toTimeString().substring(0, 5);
 
             setForm({
@@ -36,8 +47,8 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
                 allDay: item.allDay,
                 startDate: toYYYYMMDD(start),
                 startTime: item.allDay ? '09:00' : toHHMM(start),
-                endDate: toYYYYMMDD(end),
-                endTime: item.allDay ? '10:00' : toHHMM(end),
+                endDate: toYYYYMMDD(inclusiveEnd),
+                endTime: item.allDay ? '10:00' : toHHMM(inclusiveEnd),
                 calendarId: item.extendedProps?.calendarId || 1,
             });
         }

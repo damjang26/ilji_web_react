@@ -19,11 +19,26 @@ const ScheduleForm = ({onSave, onCancel, initialData}) => {
     useEffect(() => {
         if (initialData) {
             // initialData가 없거나 날짜 정보가 없으면 오늘 날짜를 기본값으로 사용합니다.
-            const startDate = (initialData.startStr || new Date().toISOString()).split("T")[0];
+            const startDateStr = (initialData.startStr || new Date().toISOString()).split("T")[0];
+
+            // FullCalendar의 select 정보는 endStr이 exclusive(포함 안됨)이므로,
+            // 폼에 표시하기 위해 inclusive(포함됨) 날짜로 변환합니다. (하루 빼기)
+            let endDateStr = startDateStr; // 기본적으로 종료일을 시작일과 같게 설정
+
+            if (initialData.endStr) {
+                const inclusiveEndDate = new Date(initialData.endStr);
+                // new Date()가 유효한 날짜를 반환했는지 확인합니다.
+                if (!isNaN(inclusiveEndDate.getTime())) {
+                    inclusiveEndDate.setDate(inclusiveEndDate.getDate() - 1);
+                    endDateStr = inclusiveEndDate.toISOString().split('T')[0];
+                }
+            }
+
             setForm(prev => ({
                 ...prev,
-                startDate: startDate,
-                endDate: startDate, // 기본적으로 시작일과 종료일을 같게 설정
+                startDate: startDateStr,
+                // 사용자가 선택한 날짜 범위를 정확히 반영합니다.
+                endDate: endDateStr,
             }));
         }
     }, [initialData]);
