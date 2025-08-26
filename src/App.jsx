@@ -7,6 +7,8 @@ import {useAuth} from "./AuthContext.jsx";
 import LoginPage from "./components/login/LoginPage.jsx";
 import Main from "./components/Main.jsx";
 import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
+import {JournalProvider} from "./contexts/JournalContext.jsx";
+import JournalViewModal from "./components/main/journal/JournalViewModal.jsx";
 
 const AppContainer = styled.div`
     display: flex;
@@ -48,6 +50,7 @@ const AppContent = () => {
                 {background && (
                     <Routes>
                         <Route path="/journal/write" element={<JournalWriteModal/>}/>
+                        <Route path="/journal/view/:date" element={<JournalViewModal/>}/>
                     </Routes>
                 )}
             </MainContentContainer>
@@ -61,7 +64,9 @@ const AppContent = () => {
 export default function App() {
     return (
         <BrowserRouter>
-            <AppContent/>
+            <JournalProvider>
+                <AppContent/>
+            </JournalProvider>
         </BrowserRouter>
     );
 }
