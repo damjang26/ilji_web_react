@@ -37,6 +37,48 @@ export function ScheduleProvider({ children }) {
         },
     });
 
+    /**
+     * 날짜/시간 데이터를 백엔드가 요구하는 'YYYY-MM-DDTHH:mm:ss' 형식의 문자열로 변환합니다.
+     * 이 함수는 Timezone 변환 문제를 해결하는 핵심입니다.
+     * @param {Date|string} dateTime - Date 객체 또는 날짜/시간 문자열
+     * @param {boolean} isAllDay - 하루 종일 일정 여부
+     * @param {boolean} isEnd - 종료 시간인지 여부 (하루 종일 일정의 시간을 23:59:59로 설정하기 위함)
+     * @returns {string|null} 포맷된 날짜/시간 문자열
+     */
+    const formatDateTimeForBackend = (dateTime, isAllDay = false, isEnd = false) => {
+        if (!dateTime) return null;
+
+        // Case 1: Input is a Date object (from drag/drop or resize)
+        // We manually build the string from local components to avoid UTC conversion.
+        if (dateTime instanceof Date) {
+            if (isNaN(dateTime.getTime())) return null;
+
+            const pad = (num) => String(num).padStart(2, '0');
+            const year = dateTime.getFullYear();
+            const month = pad(dateTime.getMonth() + 1);
+            const day = pad(dateTime.getDate());
+
+            if (isAllDay) {
+                const time = isEnd ? '23:59:59' : '00:00:00';
+                return `${year}-${month}-${day}T${time}`;
+            }
+
+            const hours = pad(dateTime.getHours());
+            const minutes = pad(dateTime.getMinutes());
+            const seconds = pad(dateTime.getSeconds());
+            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+        }
+
+        // Case 2: Input is already a string (from form submission)
+        if (typeof dateTime === 'string') {
+            const datePart = dateTime.split('T')[0];
+            if (isAllDay) return isEnd ? `${datePart}T23:59:59` : `${datePart}T00:00:00`;
+            if (dateTime.length === 16) return `${dateTime}:00`; // Append seconds if missing
+            return dateTime;
+        }
+        return null; // Fallback for unexpected types
+    };
+
     // 사용자 정보(user)가 변경될 때마다 데이터 다시 로드
     useEffect(() => {
         const fetchSchedules = async () => {
@@ -49,8 +91,8 @@ export function ScheduleProvider({ children }) {
 
             setLoading(true);
             try {
-                // 로그인한 사용자의 ID를 사용하여 스케줄을 요청합니다.
-                const response = await api.get(`/api/schedules/user/${user.id}`);
+                // 백엔드가 토큰에서 사용자 정보를 얻으므로 URL에 ID를 포함할 필요가 없습니다.
+                const response = await api.get(`/api/schedules`);
                 const formattedEvents = response.data.map(formatEventForCalendar);
                 setEvents(formattedEvents);
                 setError(null);
@@ -71,20 +113,14 @@ export function ScheduleProvider({ children }) {
 
         // 프론트엔드 폼 데이터를 백엔드 DTO 형식으로 변환
         const requestData = {
-            userId: user.id, // ✅ 실제 사용자 ID로 교체
-            calendarId: eventData.extendedProps.calendarId || 1, // 기본 캘린더 ID
+            calendarId: eventData.extendedProps.calendarId || 1,
             title: eventData.title,
             location: eventData.extendedProps.location,
             tags: eventData.extendedProps.tags,
             description: eventData.extendedProps.description,
-            // 폼에서 '하루 종일' 선택 시 'T'가 없는 날짜 문자열이 오므로,
-            // 백엔드(LocalDateTime)가 파싱할 수 있도록 시간을 붙여줍니다.
-            startTime: (typeof eventData.start === 'string' && !eventData.start.includes('T'))
-                ? `${eventData.start}T00:00:00`
-                : eventData.start,
-            endTime: (typeof eventData.end === 'string' && !eventData.end.includes('T'))
-                ? `${eventData.end}T23:59:59`
-                : eventData.end,
+            // ✅ 새로운 헬퍼 함수를 사용하여 시간을 안전하게 포맷합니다.
+            startTime: formatDateTimeForBackend(eventData.start, eventData.allDay, false),
+            endTime: formatDateTimeForBackend(eventData.end, eventData.allDay, true),
             isAllDay: eventData.allDay,
             rrule: eventData.extendedProps.rrule,
         };
@@ -105,14 +141,10 @@ export function ScheduleProvider({ children }) {
             location: eventData.extendedProps.location,
             tags: eventData.extendedProps.tags,
             description: eventData.extendedProps.description,
-            // 드래그앤드롭(Date 객체)과 폼 수정(문자열) 모두 처리합니다.
-            // end가 null일 수 있는 드래그앤드롭을 대비해 eventData.start로 대체합니다.
-            startTime: (typeof eventData.start === 'string' && !eventData.start.includes('T'))
-                ? `${eventData.start}T00:00:00`
-                : eventData.start,
-            endTime: (typeof (eventData.end || eventData.start) === 'string' && !(eventData.end || eventData.start).includes('T'))
-                ? `${(eventData.end || eventData.start)}T23:59:59`
-                : (eventData.end || eventData.start),
+            // ✅ 새로운 헬퍼 함수를 사용하여 시간을 안전하게 포맷합니다.
+            startTime: formatDateTimeForBackend(eventData.start, eventData.allDay, false),
+            // 드래그앤드롭 시 end가 null일 수 있으므로 start로 대체합니다.
+            endTime: formatDateTimeForBackend(eventData.end || eventData.start, eventData.allDay, true),
             isAllDay: eventData.allDay,
             rrule: eventData.extendedProps.rrule,
         };
