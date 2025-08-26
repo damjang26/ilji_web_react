@@ -20,12 +20,6 @@ export const FormContent = styled.div`
     flex-direction: column;
 `;
 
-export const DateDisplay = styled.p`
-    font-size: 14px;
-    color: #888;
-    margin: 0 0 12px 0;
-`;
-
 export const StyledTextarea = styled.textarea`
     width: 100%;
     min-height: 120px;

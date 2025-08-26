@@ -59,7 +59,9 @@ const ScheduleTab = () => {
 
     const selectedItem = useMemo(
         // FullCalendar의 id와 ScheduleTab의 no를 통일해야 합니다.
-        () => events.find((s) => s.id === selectedId) || null,
+        // FullCalendar의 id(문자열)와 List의 id(숫자) 모두를 처리하기 위해
+        // 타입 변환을 허용하는 '==' 비교 연산자를 사용합니다.
+        () => events.find((s) => s.id == selectedId) || null,
         [events, selectedId]
     );
     
