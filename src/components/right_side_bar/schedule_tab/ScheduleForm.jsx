@@ -1,4 +1,15 @@
 import { useState, useEffect } from "react";
+import {
+    ActionButtons,
+    Button,
+    CheckboxWrapper,
+    DateTimeRow,
+    FieldSet,
+    FormBody,
+    FormWrapper,
+    Input,
+    Label
+} from "../../../styled_components/right_side_bar/schedule_tab/ScheduleFormStyled.jsx";
 
 const ScheduleForm = ({onSave, onCancel, initialData}) => {
     // 백엔드 데이터 구조에 맞게 폼 상태를 상세하게 변경
@@ -19,11 +30,26 @@ const ScheduleForm = ({onSave, onCancel, initialData}) => {
     useEffect(() => {
         if (initialData) {
             // initialData가 없거나 날짜 정보가 없으면 오늘 날짜를 기본값으로 사용합니다.
-            const startDate = (initialData.startStr || new Date().toISOString()).split("T")[0];
+            const startDateStr = (initialData.startStr || new Date().toISOString()).split("T")[0];
+
+            // FullCalendar의 select 정보는 endStr이 exclusive(포함 안됨)이므로,
+            // 폼에 표시하기 위해 inclusive(포함됨) 날짜로 변환합니다. (하루 빼기)
+            let endDateStr = startDateStr; // 기본적으로 종료일을 시작일과 같게 설정
+
+            if (initialData.endStr) {
+                const inclusiveEndDate = new Date(initialData.endStr);
+                // new Date()가 유효한 날짜를 반환했는지 확인합니다.
+                if (!isNaN(inclusiveEndDate.getTime())) {
+                    inclusiveEndDate.setDate(inclusiveEndDate.getDate() - 1);
+                    endDateStr = inclusiveEndDate.toISOString().split('T')[0];
+                }
+            }
+
             setForm(prev => ({
                 ...prev,
-                startDate: startDate,
-                endDate: startDate, // 기본적으로 시작일과 종료일을 같게 설정
+                startDate: startDateStr,
+                // 사용자가 선택한 날짜 범위를 정확히 반영합니다.
+                endDate: endDateStr,
             }));
         }
     }, [initialData]);
@@ -72,46 +98,56 @@ const ScheduleForm = ({onSave, onCancel, initialData}) => {
     };
 
     return (
-        <>
-            <button onClick={onCancel}>취소</button>
-            <hr />
-            <div style={{ display: "grid", gap: 8 }}>
-                <input placeholder="Title" value={form.title} onChange={set("title")} />
-                <label style={{ display: "inline-flex", gap: 6, alignItems: "center", cursor: "pointer" }}>
-                    <input type="checkbox" checked={form.allDay} onChange={set("allDay")} />
-                    하루 종일
-                </label>
-                <div style={{display: 'flex', gap: '4px', alignItems: 'center'}}>
-                    <input type="date" value={form.startDate} onChange={set("startDate")} style={{width: '100%'}} />
-                    {!form.allDay && <input type="time" value={form.startTime} onChange={set("startTime")} />}
-                </div>
-                <div style={{display: 'flex', gap: '4px', alignItems: 'center'}}>
-                    <input
-                        type="date"
-                        value={form.endDate}
-                        min={form.startDate} // ✅ 시작 날짜 이전은 선택 불가
-                        onChange={set("endDate")}
-                        style={{width: '100%'}} />
-                    {!form.allDay && <input
-                        type="time"
-                        value={form.endTime}
-                        min={form.startDate === form.endDate ? form.startTime : undefined} // ✅ 같은 날이면 시작 시간 이전은 선택 불가
-                        onChange={set("endTime")}
-                    />}
-                </div>
-                <input placeholder="Location" value={form.location} onChange={set("location")} />
-                <input placeholder="Tags (comma-separated)" value={form.tags} onChange={set("tags")} />
-                <input
-                    placeholder="Description"
-                    value={form.description}
-                    onChange={set("description")}
-                />
-            </div>
-            <div style={{ marginTop: 12 }}>
-                <button onClick={handleSave}>저장</button>
-            </div>
+        <FormWrapper>
+            <FormBody>
+                <FieldSet>
+                    <Label htmlFor="title">제목</Label>
+                    <Input id="title" placeholder="일정 제목" value={form.title} onChange={set("title")} />
+                </FieldSet>
 
-        </>)
+                <CheckboxWrapper>
+                    <input type="checkbox" id="all-day" checked={form.allDay} onChange={set("allDay")} />
+                    <Label htmlFor="all-day" style={{fontWeight: 'normal', cursor: 'pointer'}}>하루 종일</Label>
+                </CheckboxWrapper>
+
+                <FieldSet>
+                    <Label>시작</Label>
+                    <DateTimeRow>
+                        <Input type="date" value={form.startDate} onChange={set("startDate")} />
+                        {!form.allDay && <Input type="time" value={form.startTime} onChange={set("startTime")} />}
+                    </DateTimeRow>
+                </FieldSet>
+
+                <FieldSet>
+                    <Label>종료</Label>
+                    <DateTimeRow>
+                        <Input type="date" value={form.endDate} min={form.startDate} onChange={set("endDate")} />
+                        {!form.allDay && <Input type="time" value={form.endTime} min={form.startDate === form.endDate ? form.startTime : undefined} onChange={set("endTime")} />}
+                    </DateTimeRow>
+                </FieldSet>
+
+                <FieldSet>
+                    <Label htmlFor="location">장소</Label>
+                    <Input id="location" placeholder="장소" value={form.location} onChange={set("location")} />
+                </FieldSet>
+
+                <FieldSet>
+                    <Label htmlFor="tags">태그</Label>
+                    <Input id="tags" placeholder="태그 (쉼표로 구분)" value={form.tags} onChange={set("tags")} />
+                </FieldSet>
+
+                <FieldSet>
+                    <Label htmlFor="description">설명</Label>
+                    <Input as="textarea" id="description" rows="5" placeholder="설명" value={form.description} onChange={set("description")} />
+                </FieldSet>
+            </FormBody>
+
+            <ActionButtons>
+                <Button className="secondary" onClick={onCancel}>취소</Button>
+                <Button className="primary" onClick={handleSave}>저장</Button>
+            </ActionButtons>
+        </FormWrapper>
+    )
 
 }
 
