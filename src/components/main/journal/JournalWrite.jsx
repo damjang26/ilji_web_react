@@ -5,7 +5,6 @@ import {
     FormContainer,
     ProfilePicture,
     FormContent,
-    DateDisplay,
     StyledTextarea,
     ImagePreviewContainer,
     ImagePreviewWrapper,
@@ -72,13 +71,15 @@ const JournalWrite = ({onClose, selectedDate}) => {
     return (
         <>
             <ModalHeader>
-                <h2></h2> {/* 제목은 비워두거나 다른 용도로 사용 */}
+                <h2>{formattedDate}</h2> {/* 제목은 비워두거나 다른 용도로 사용 */}
                 <button onClick={onClose}>×</button>
             </ModalHeader>
             <FormContainer>
-                <ProfilePicture src={user?.photoURL || 'https://via.placeholder.com/48'} alt="profile"/>
+                <ProfilePicture
+                    src={user?.picture || 'https://via.placeholder.com/48'}
+                    alt={`${user?.name || 'user'} profile`}
+                    referrerPolicy="no-referrer"/>
                 <FormContent>
-                    {formattedDate && <DateDisplay>{formattedDate}</DateDisplay>}
                     <StyledTextarea
                         value={content}
                         onChange={handleContentChange}
