@@ -14,10 +14,10 @@ export const SidebarContainer = styled.aside`
     align-items: center; /* 아이템을 가로축의 중앙에 배치 */
     gap: 30px; /* 헤더와 메뉴 아이템 그룹 사이의 간격 */
     display: flex;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 10;
+    //position: fixed; //maind을 중앙 정렬 방해 요소 : 나중에 확인용으로 일단 주석처리함
+    //top: 0;
+    //left: 0;
+    //z-index: 10;
 `;
 
 // Profile, TabMenu, CalendarMenu 감싸는 컨테이너

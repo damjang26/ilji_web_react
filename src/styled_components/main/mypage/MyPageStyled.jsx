@@ -73,7 +73,7 @@ export const HeaderContent = styled.div`
   display: flex;
   justify-content: flex-start; /*<UserInfo> 와 <UserActions>를 양 끝으로 보냄 */
   align-items: center;
-  gap:300px; /* <UserInfo> 와 <UserActions>의 사이의 간격 */
+  gap: 200px; /* <UserInfo> 와 <UserActions>의 사이의 간격 (기존 300px에서 줄임) */
   flex-grow: 1; /* 헤더의 남은 공간을 모두 차지 */
   min-width: 0; /* flex item이 부모를 넘어가는 것을 방지 */
 `;
@@ -96,7 +96,7 @@ export const UserInfo = styled.div`
 export const UserActions = styled.div`
    display: flex;
    align-items: center;
-   gap: 25px; /* 액션 아이템들 사이의 간격 */
+   gap: 10px; /* 액션 아이템들 사이의 간격 */
  `;
 
 // 탭 메뉴를 감싸는 컨테이너

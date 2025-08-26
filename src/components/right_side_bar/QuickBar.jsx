@@ -1,18 +1,30 @@
 import React from 'react';
 import {QuickBarButton, QuickBarContainer} from "../../styled_components/right_side_bar/QuickBarStyled.jsx";
-import {FaCommentDots, FaPlus} from "react-icons/fa";
+import {FaPlus, FaChevronLeft, FaChevronRight} from "react-icons/fa";
 
-const QuickBar = () => {
+const QuickBar = ({ onToggle, isPanelOpen }) => {
 
     return (
-        <QuickBarContainer>
-        <QuickBarButton title="새 메시지">
-            <FaCommentDots />
-        </QuickBarButton>
-        <QuickBarButton title="새 일정">
+        <QuickBarContainer isPanelOpen={isPanelOpen}>
+            <QuickBarButton onClick={onToggle} title={isPanelOpen ? "사이드바 닫기" : "사이드바 열기"}>
+                {isPanelOpen ? <FaChevronRight /> : <FaChevronLeft />}
+            </QuickBarButton>
+        <QuickBarButton title="친구 스토리">
             <FaPlus />
         </QuickBarButton>
-    </QuickBarContainer>
+        <QuickBarButton title="친구 스토리">
+            <FaPlus />
+        </QuickBarButton>
+        <QuickBarButton title="친구 스토리">
+            <FaPlus />
+        </QuickBarButton>
+        <QuickBarButton title="친구 스토리">
+            <FaPlus />
+        </QuickBarButton>
+        <QuickBarButton title="친구 스토리">
+            <FaPlus />
+        </QuickBarButton>
+        </QuickBarContainer>
     );
 }
 
