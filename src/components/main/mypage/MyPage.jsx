@@ -4,7 +4,7 @@ import {useAuth} from "../../../AuthContext";
 import {
     ContentBox, FeatureBox, FeatureContent, HeaderContent, ImageWrapper,
     MyPageContainer, MyPageHeader, MypageImg, MyPageMain, Tab, TabMenuContainer, UserActions, UserInfo
-} from "../../../styled_components/main/mypage/MyPage.styles.jsx";
+} from "../../../styled_components/main/mypage/MyPageStyled.jsx";
 
 const MyPage = () => {
     const {user} = useAuth();
