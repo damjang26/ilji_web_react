@@ -13,12 +13,12 @@ export const MypageImg = styled.div`
   height: 250px; /* 헤더,메인 박스가 겹칠 수 있도록 높이 확보 */
   margin: -40px 0 0; /* 부모의 여백 무시, 좌우 채우기*/
   width: 100%; 
-  background-color: #e9ecef; /*  임시 배경색 */
+  background-color: #e9ecef; /* 임시 배경색 */
   flex-shrink: 0; /* 컨테이너 크기 유지. */
   z-index: 0; /* 가장 낮은 레이어에 위치 */
 
-  /* 나중에 실제 이미지를 넣을 때  */
-  /* background-image: url(여기에 이미지 주소); */
+  /* 나중에 사용자가 설정한 커버(배경) 이미지를 넣을 때 사용 */
+  /* background-image: url(이미지 주소); */
   /* background-size: cover; */
   /* background-position: center; */
 `;
@@ -49,31 +49,31 @@ export const MyPageHeader = styled.header`
   gap: 60px;
 `;
 
-// 프로필 이미지를 감싸는 컨테이너
+// 사용자 프로필 이미지를 감싸는 컨테이너
 export const ImageWrapper = styled.div`
     margin-left: 100px; /*이미지와 왼쪽 끝의 간격 */
     width: 90px; /* 이미지 크기를 변경 */
     height: 90px;
     border-radius: 50%; /* 원형으로 만듭니다 */
-    overflow: hidden; /* 이미지가 컨테이너를 벗어나지 않도록 합니다 */
+    overflow: hidden; /* 이미지가 컨테이너를 벗어나지 않도록 함 */
     display: flex; /* 이미지를 중앙에 배치하기 위해 */
     justify-content: center;
     align-items: center;
     flex-shrink: 0; /* 컨테이너가 줄어들어도 이미지 크기는 유지 */
   
   & > img {  /* 실제 이미지 스타일 */
-    width: 100%; /* 부모 컨테이너에 꽉 채웁니다 */
-    height: 100%; /* 부모 컨테이너에 꽉 채웁니다 */
-    object-fit: cover; /* 이미지가 비율을 유지하며 컨테이너를 채우도록 합니다 */
+    width: 100%; /* 부모 컨테이너에 꽉 채우기 */
+    height: 100%; /* 부모 컨테이너에 꽉 채우기 */
+    object-fit: cover; /* 이미지가 비율을 유지하며 컨테이너를 채우기 */
   }
 `;
 
 // 이미지 오른쪽의 모든 정보를 감싸는 컨테이너
 export const HeaderContent = styled.div`
   display: flex;
-  justify-content: flex-start; /* 헤더 info과 헤더 action을 양 끝으로 보냄 */
+  justify-content: flex-start; /*<UserInfo> 와 <UserActions>를 양 끝으로 보냄 */
   align-items: center;
-  gap:300px; /* 헤더 info 와 헤더 action의 사이의 간격 */
+  gap:300px; /* <UserInfo> 와 <UserActions>의 사이의 간격 */
   flex-grow: 1; /* 헤더의 남은 공간을 모두 차지 */
   min-width: 0; /* flex item이 부모를 넘어가는 것을 방지 */
 `;
@@ -83,11 +83,11 @@ export const UserInfo = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px; /* 이름들 사이의 간격 */
-  & > .nickname {
+  & > .nickname { /* UserInfo의 직계 자식 중 className이 'nickname'인 요소에 적용 */
     font-size: 1.5rem;
     font-weight: 600;
   }
-  & > .email {
+  & > .email { /* UserInfo의 직계 자식 중 className이 'email'인 요소에 적용 */
     color: #6c757d;
   }
 `;
@@ -111,18 +111,18 @@ export const TabMenuContainer = styled.div`
 export const Tab = styled.button`
    padding: 12px 20px;
    font-size: 1rem;
-   font-weight: ${props => (props.active ? '600' : '500')};
-   color: ${props => (props.active ? '#343a40' : '#868e96')};
-   background-color: transparent;
-   border: none;
-   border-bottom: 3px solid ${props => (props.active ? '#343a40' : 'transparent')};
+   font-weight: ${props => (props.active ? '600' : '500')}; /* active prop에 따라 글자 굵기 변경 (활성/비활성) */
+   color: ${props => (props.active ? '#343a40' : '#868e96')}; /* active prop에 따라 글자 색상 변경 */
+   background-color: transparent; /* 버튼의 기본 배경을 투명하게 설정 */
+   border: none; /* 버튼의 기본 테두리 제거 */
+   border-bottom: 3px solid ${props => (props.active ? '#343a40' : 'transparent')}; /* active prop에 따라 하단 테두리 표시 여부 결정 */
    cursor: pointer;
-   margin-bottom: -1px; /* 탭의 border-bottom이 TabMenuContainer의 border-bottom과 겹치기 */
-   transition: all 0.2s ease-in-out;
+   margin-bottom: -1px; /* 탭의 하단 테두리가 부모(TabMenuContainer)의 하단 테두리와 겹쳐 보이도록 설정 */
+   transition: all 0.2s ease-in-out; /* 색상, 배경 등 모든 속성 변경에 0.2초 동안 부드러운 전환 효과 적용 */
  
-   &:hover {
-     color: #343a40;
-     background-color: #f8f9fa;
+   &:hover { /* 마우스를 올렸을 때의 스타일 */
+     color: #343a40; /* 마우스를 올리면 글자색을 활성 탭과 동일 변경 */
+     background-color: #f8f9fa; /* 마우스를 올리면 배경색을 살짝 추가, 시각적 피드백 제공 */
    }
  `;
 
