@@ -52,17 +52,19 @@ export const MyPageHeader = styled.header`
 // 프로필 이미지를 감싸는 컨테이너
 export const ImageWrapper = styled.div`
     margin-left: 100px; /*이미지와 왼쪽 끝의 간격 */
-  
-  & > div {  /* 실제 이미지를 위한 임시 스타일 */
-    width: 120px; /* 이미지 크기를 변경 */
-    height: 120px;
-    border-radius: 50%;
-    background-color: #ddd;
-    display: flex;
+    width: 90px; /* 이미지 크기를 변경 */
+    height: 90px;
+    border-radius: 50%; /* 원형으로 만듭니다 */
+    overflow: hidden; /* 이미지가 컨테이너를 벗어나지 않도록 합니다 */
+    display: flex; /* 이미지를 중앙에 배치하기 위해 */
     justify-content: center;
     align-items: center;
-    font-size: 1rem;
     flex-shrink: 0; /* 컨테이너가 줄어들어도 이미지 크기는 유지 */
+  
+  & > img {  /* 실제 이미지 스타일 */
+    width: 100%; /* 부모 컨테이너에 꽉 채웁니다 */
+    height: 100%; /* 부모 컨테이너에 꽉 채웁니다 */
+    object-fit: cover; /* 이미지가 비율을 유지하며 컨테이너를 채우도록 합니다 */
   }
 `;
 
