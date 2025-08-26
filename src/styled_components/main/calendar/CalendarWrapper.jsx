@@ -229,8 +229,8 @@ export const DiaryPopoverContainer = styled.div`
     /* 마우스가 팝오버 위로 이동할 수 있도록 설정 */
     pointer-events: auto;
     transition: opacity 0.15s ease-in-out;
-    opacity: ${({ visible }) => (visible ? 1 : 0)};
-    visibility: ${({ visible }) => (visible ? 'visible' : 'hidden')};
+    opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+    visibility: ${({ $visible }) => ($visible ? 'visible' : 'hidden')};
 `;
 
 // 팝오버 안의 개별 버튼 스타일

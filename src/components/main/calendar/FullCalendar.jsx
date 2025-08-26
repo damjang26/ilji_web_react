@@ -49,20 +49,44 @@ export default function FullCalendarExample() {
     };
 
     const handleEventClick = (clickInfo) => {
-        // 기존 일정을 클릭하면 수정 모드로 사이드바를 엽니다.
-        // (삭제 로직은 사이드바 내부에서 처리하는 것이 더 좋습니다)
+        // 기존 일정을 클릭하면 상세 정보/수정용 사이드바를 엽니다.
         openSidebarForDetail(clickInfo.event);
     };
 
     // Handle event drop (drag and drop)
-    const handleEventDrop = (info) => {
-        const {event} = info;
-        // ✅ Context의 업데이트 함수를 호출
-        updateEvent({
-            ...event.toPlainObject(),
-            start: event.start,
-            end: event.end,
-        });
+    const handleEventDrop = (dropInfo) => {
+        const { event, oldEvent } = dropInfo;
+
+        // '하루 종일'이 아닌 시간 지정 일정의 경우, 월(Month) 뷰에서 드래그 시 시간이 초기화되는 것을 방지합니다.
+        if (!event.allDay) {
+            // 드롭된 새 날짜 정보 (시간은 00:00으로 초기화되었을 수 있음)
+            const newDate = event.start;
+            // 시간 정보가 보존된 원래 이벤트의 날짜 정보
+            const originalDate = oldEvent.start;
+
+            // 새 날짜의 '일'과 원래 날짜의 '시간'을 조합하여 새로운 시작 시간을 생성합니다.
+            const newStart = new Date(
+                newDate.getFullYear(),
+                newDate.getMonth(),
+                newDate.getDate(),
+                originalDate.getHours(),
+                originalDate.getMinutes(),
+                originalDate.getSeconds()
+            );
+
+            let newEnd = null;
+            // 원래 종료 시간이 있었다면, 원래의 지속시간을 보존하여 새 종료 시간을 계산합니다.
+            if (oldEvent.end) {
+                const duration = oldEvent.end.getTime() - originalDate.getTime();
+                newEnd = new Date(newStart.getTime() + duration);
+            }
+
+            // 보정된 시간으로 업데이트를 요청합니다.
+            updateEvent({ ...event.toPlainObject(), start: newStart, end: newEnd });
+        } else {
+            // '하루 종일' 일정은 기본 동작을 그대로 사용합니다.
+            updateEvent({ ...event.toPlainObject(), start: event.start, end: event.end });
+        }
     };
 
     // Handle event resize
@@ -118,7 +142,7 @@ export default function FullCalendarExample() {
             {ReactDOM.createPortal(
                 <DiaryPopoverContainer
                     style={{top: diaryPopover.top, left: diaryPopover.left, transform: 'translateX(-50%)'}}
-                    visible={diaryPopover.visible}
+                    $visible={diaryPopover.visible}
                     onMouseEnter={clearHideTimer} // 팝오버 위에 마우스가 올라가면 숨기기 취소
                     onMouseLeave={startHideTimer} // 팝오버에서 마우스가 떠나면 숨기기 시작
                 >
