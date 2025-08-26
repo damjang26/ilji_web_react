@@ -206,7 +206,17 @@ export function ScheduleProvider({ children }) {
     // ✅ 날짜를 클릭했을 때 목록을 보여주기 위한 새로운 함수
     const openSidebarForDate = useCallback(
         (dateInfo) => {
+            console.log(dateInfo)
             setSelectedInfo({ type: "list_for_date", data: dateInfo });
+            setIsSidebarOpen(true);
+        },
+        []
+    );
+
+    // ✅ 날짜를 드래그해서 새 일정을 만들 때 사이드바를 여는 함수
+    const openSidebarForNew = useCallback(
+        (dateInfo) => {
+            setSelectedInfo({ type: "new", data: dateInfo });
             setIsSidebarOpen(true);
         },
         []
@@ -233,7 +243,8 @@ export function ScheduleProvider({ children }) {
         loading,
         error,
         selectedInfo,
-        openSidebarForDate, // openSidebarForNew 대신 이 함수를 사용
+        openSidebarForDate,
+        openSidebarForNew,
         openSidebarForDetail,
         closeSidebar,
         // ✅ 데이터와 함수를 외부로 노출
@@ -242,7 +253,7 @@ export function ScheduleProvider({ children }) {
         updateEvent,
         deleteEvent,
     // ✅ events가 변경될 때마다 value를 새로 만들도록 의존성 배열에 추가합니다.
-    }), [isSidebarOpen, loading, error, selectedInfo, events, addEvent, updateEvent, deleteEvent, openSidebarForDate, openSidebarForDetail, closeSidebar]);
+    }), [isSidebarOpen, loading, error, selectedInfo, events, addEvent, updateEvent, deleteEvent, openSidebarForDate, openSidebarForNew, openSidebarForDetail, closeSidebar]);
 
     return (
         <ScheduleContext.Provider value={value}>

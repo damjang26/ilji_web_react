@@ -1,44 +1,94 @@
+import {
+    ActionButtons,
+    BackButton,
+    DetailHeader,
+    DetailWrapper,
+    InfoLabel,
+    InfoSection,
+    InfoValue,
+    Title
+} from "../../../styled_components/right_side_bar/schedule_tab/ScheduleDetailStyled.jsx";
+import { Button } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleFormStyled.jsx";
+
 const ScheduleDetail = ({item, onEdit, onCancel, onDelete}) => {
     // item이 로드되기 전에 렌더링되는 것을 방지 (오류의 근본 원인)
     if (!item) {
-        return null; // 또는 로딩 스피너를 보여줄 수 있습니다.
+        return <div>일정을 선택해주세요.</div>;
     }
 
-    const formatDetailTime = (item) => {
-        if (!item.start) return "시간 정보 없음";
-        const start = new Date(item.start);
-        const end = item.end ? new Date(item.end) : null;
+    // 날짜와 시간을 상황에 맞게 표시하는 함수
+    const formatDateRange = () => {
+        if (!item.start) return "날짜 정보 없음";
 
-        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        const start = new Date(item.start);
+        const end = item.end ? new Date(item.end) : start; // end가 없으면 start로 대체
+
+        // Case 1: '하루 종일' 일정
         if (item.allDay) {
-            // 하루 종일 일정은 날짜만 표시
-            return start.toLocaleDateString('ko-KR', options);
+            // FullCalendar의 end는 exclusive(포함 안됨)이므로,
+            // 화면 표시는 inclusive(포함됨)으로 바꿔야 합니다. (하루 빼기)
+            const inclusiveEnd = new Date(end.getTime());
+            inclusiveEnd.setDate(inclusiveEnd.getDate() - 1);
+
+            const startDateStr = start.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+            const inclusiveEndDateStr = inclusiveEnd.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            // 시작일과 (보정된)종료일이 같으면 날짜 하나만 표시
+            if (startDateStr === inclusiveEndDateStr) {
+                return startDateStr;
+            }
+            // 여러 날에 걸친 경우
+            return `${startDateStr} ~ ${inclusiveEndDateStr}`;
         }
 
-        // 시간 지정 일정은 날짜와 시간 모두 표시
-        options.hour = '2-digit';
-        options.minute = '2-digit';
+        // Case 2: 시간 지정 일정
+        const startDateStr = start.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+        const startTimeStr = start.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-        return `${start.toLocaleString('ko-KR', options)}${end ? ` - ${end.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'})}`: ''}`;
-    }
+        const endDateStr = end.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+        const endTimeStr = end.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+        // 같은 날에 시작하고 끝나는 경우
+        if (startDateStr === endDateStr) {
+            return `${startDateStr} ${startTimeStr} - ${endTimeStr}`;
+        }
+        // 여러 날에 걸쳐 진행되는 경우
+        return `${startDateStr} ${startTimeStr} - ${endDateStr} ${endTimeStr}`;
+    };
 
     return (
-        <>
-            <button onClick={onCancel}>뒤로</button>
-            <hr />
-            <div><b>Title</b> : {item.title}</div>
-            <div><b>Time</b> : {formatDetailTime(item)}</div>
-            <div><b>Location</b> : {item.extendedProps?.location || '지정 안 함'}</div>
-            <div><b>Tags</b> : {item.extendedProps?.tags || '없음'}</div>
-            <div><b>Description</b> : {item.extendedProps?.description}</div>
-            <div style={{ marginTop: 12 }}>
-                <button onClick={() => onEdit(item.id)}>Edit</button>
-                <button onClick={() => onDelete(item.id)} style={{ marginLeft: 8, color: "#e11d48" }}>
-                    Delete
-                </button>
-            </div>
+        <DetailWrapper>
+            <DetailHeader>
+                <BackButton onClick={onCancel}>← 목록으로</BackButton>
+            </DetailHeader>
 
-        </>)
+            <Title>{item.title}</Title>
+
+            <InfoSection>
+                <div>
+                    <InfoLabel>날짜</InfoLabel>
+                    <InfoValue>{formatDateRange()}</InfoValue>
+                </div>
+                {item.extendedProps?.location && <div>
+                    <InfoLabel>장소</InfoLabel>
+                    <InfoValue>{item.extendedProps.location}</InfoValue>
+                </div>}
+                {item.extendedProps?.tags && <div>
+                    <InfoLabel>태그</InfoLabel>
+                    <InfoValue>{item.extendedProps.tags}</InfoValue>
+                </div>}
+                {item.extendedProps?.description && <div>
+                    <InfoLabel>설명</InfoLabel>
+                    <InfoValue>{item.extendedProps.description}</InfoValue>
+                </div>}
+            </InfoSection>
+
+            <ActionButtons>
+                <Button className="secondary" onClick={() => onDelete(item.id)}>삭제</Button>
+                <Button className="primary" onClick={() => onEdit(item.id)}>수정</Button>
+            </ActionButtons>
+        </DetailWrapper>
+    )
 }
 
 export default ScheduleDetail;
