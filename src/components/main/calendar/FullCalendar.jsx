@@ -21,8 +21,8 @@ import {useNavigate, useLocation} from "react-router-dom";
 
 export default function FullCalendarExample() {
     // ✅ Context에서 데이터와 함수를 직접 가져옴
-    const {events, openSidebarForDate, openSidebarForDetail, updateEvent} =
-        useSchedule();
+    const {events, openSidebarForDate, openSidebarForNew, openSidebarForDetail, updateEvent} =
+        useSchedule(); // openSidebarForNew 추가
 
     // 네비게이터
     const navigate = useNavigate();
@@ -43,8 +43,30 @@ export default function FullCalendarExample() {
     }, [diaryPopover]); // diaryPopover 상태가 변할 때마다 실행
 
     const handleDateSelect = (selectInfo) => {
-        // ✅ '새 일정 추가' 대신 '날짜 목록 보기' 신호를 보냅니다.
-        openSidebarForDate(selectInfo);
+        const { startStr, endStr } = selectInfo;
+
+        // UTC 기준으로 날짜를 계산하여 시간대(Timezone) 문제를 회피합니다.
+        const start_parts = startStr.split('-').map(Number);
+        const startUTC = new Date(Date.UTC(start_parts[0], start_parts[1] - 1, start_parts[2]));
+
+        const end_parts = endStr.split('-').map(Number);
+        const endUTC = new Date(Date.UTC(end_parts[0], end_parts[1] - 1, end_parts[2]));
+
+        // 두 날짜의 차이를 일(day) 단위로 계산합니다.
+        const oneDayInMs = 24 * 60 * 60 * 1000;
+        const diffInDays = (endUTC.getTime() - startUTC.getTime()) / oneDayInMs;
+
+        // ✅ [디버깅] 계산된 날짜 차이를 콘솔에 출력합니다.
+        console.log(`[디버깅] 날짜 차이: ${diffInDays}일 (시작: ${startStr}, 종료: ${endStr})`);
+
+        if (diffInDays > 1) {
+            // 차이가 하루를 초과하면, 여러 날을 드래그한 것입니다.
+            openSidebarForNew(selectInfo);
+        } else {
+            // 차이가 정확히 하루이면, 하루만 클릭한 것입니다.
+            openSidebarForDate(selectInfo);
+        }
+
         selectInfo.view.calendar.unselect(); // 날짜 선택 효과 해제
     };
 

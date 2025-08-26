@@ -1,3 +1,13 @@
+import {
+    AddButton,
+    DateTitle,
+    EventItem,
+    EventList,
+    ListHeader,
+    ListWrapper,
+    NoEventsMessage
+} from "../../../styled_components/right_side_bar/schedule_tab/ScheduleListStyled.jsx";
+
 const ScheduleList = ({schedules, onAdd, onDetail, selectedDate}) => {
     const formatDate = (dateString) => {
         if (!dateString) {
@@ -20,25 +30,25 @@ const ScheduleList = ({schedules, onAdd, onDetail, selectedDate}) => {
     };
 
     return (
-        <>
-            <div>{formatDate(selectedDate)}</div>
-            <hr />
-            <ul style={{ paddingLeft: 16 }}>
-                {schedules.map((s) => (
-                    <li
-                        key={s.id}
-                        style={{ cursor: "pointer", marginBottom: 8 }}
-                        onClick={() => onDetail(s.id)}
-                        title="클릭하면 상세 보기"
-                    >
-                        <div><b>{s.title}</b></div>
-                        <small>{s.date}</small>
-                    </li>
-                ))}
-            </ul>
-            <button onClick={onAdd}>일정 추가</button>
+        <ListWrapper>
+            <ListHeader>
+                <DateTitle>{formatDate(selectedDate)}</DateTitle>
+            </ListHeader>
 
-        </>
+            {schedules.length > 0 ? (
+                <EventList>
+                    {schedules.map((s) => (
+                        <EventItem key={s.id} onClick={() => onDetail(s.id)} title="클릭하면 상세 보기">
+                            {s.title}
+                        </EventItem>
+                    ))}
+                </EventList>
+            ) : (
+                <NoEventsMessage>등록된 일정이 없습니다.</NoEventsMessage>
+            )}
+
+            <AddButton onClick={onAdd}>일정 추가</AddButton>
+        </ListWrapper>
     )
 }
 

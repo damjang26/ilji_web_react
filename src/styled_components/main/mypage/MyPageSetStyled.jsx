@@ -51,17 +51,13 @@ export const UserInfo = styled.header`
 
 // 프로필 이미지를 감싸는 컨테이너
 export const ImgWrapper = styled.div`
-    margin-left: -900px; /*이미지와 왼쪽 끝의 간격 */
+    margin-left: -800px; /*이미지와 왼쪽 끝의 간격 */
 
-  & > div {/* 실제 이미지를 위한 임시 스타일 */
+  & > img {/* <img> 태그에 직접 스타일을 적용합니다. */
     width: 120px; /* 이미지 크기를 변경. */
     height: 120px;
-    border-radius: 50%;
-    background-color: #ddd;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 1rem;
+    border-radius: 50%; /* 이미지를 원형으로 만듭니다. */
+    object-fit: cover; /* 이미지 비율을 유지하면서 원을 채웁니다. */
     flex-shrink: 0; /* 컨테이너가 줄어도 이미지 크기 유지 */
   }
 `;

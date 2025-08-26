@@ -1,4 +1,5 @@
-import {BrowserRouter, useLocation, Routes, Route} from "react-router-dom";
+import React, { useState } from "react";
+import { BrowserRouter, useLocation, Routes, Route } from "react-router-dom";
 
 import LeftSideBar from "./components/LeftSideBar.jsx";
 import RightSideBar from "./components/RightSideBar.jsx";
@@ -10,19 +11,19 @@ import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
 import {JournalProvider} from "./contexts/JournalContext.jsx";
 import JournalViewModal from "./components/main/journal/JournalViewModal.jsx";
 
-const AppContainer = styled.div`
+const AppWrapper = styled.div`
     display: flex;
-    position: relative; /* 자식 요소들의 position 기준이 될 수 있도록 설정 */
+    width: 100%;
+    height: 100vh;
+    overflow: hidden; /* 전체 페이지의 스크롤바를 방지 */
 `;
 
-const MainContentContainer = styled.div`
+const ContentWrapper = styled.div`
     flex-grow: 1; /* 남는 공간을 모두 차지 */
-    /* 고정된 사이드바들 밑으로 컨텐츠가 깔리지 않도록 양쪽에 여백을 줍니다. */
-    margin-left: 230px; /* LeftSideBar 너비만큼 */
-    margin-right: 230px; /* RightSideBar 너비만큼 */
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    overflow-y: auto; /* 내용이 많아지면 이 영역만 스크롤되도록 설정 */
+    position: relative; /* 모달을 위한 position 기준점 */
 `;
 
 const AppContent = () => {
@@ -38,9 +39,9 @@ const AppContent = () => {
     }
 
     return user ? (
-        <AppContainer>
+        <AppWrapper>
             <LeftSideBar/>
-            <MainContentContainer>
+            <ContentWrapper>
                 {/* 1. 배경이 될 메인 라우트를 항상 렌더링합니다. */}
                 <Routes location={background || location}>
                     <Route path="/*" element={<Main/>}/>
@@ -53,9 +54,9 @@ const AppContent = () => {
                         <Route path="/journal/view/:date" element={<JournalViewModal/>}/>
                     </Routes>
                 )}
-            </MainContentContainer>
-            <RightSideBar/>
-        </AppContainer>
+            </ContentWrapper>
+            <RightSideBar />
+        </AppWrapper>
     ) : (
         <LoginPage/>
     );
