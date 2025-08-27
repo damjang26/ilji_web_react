@@ -1,6 +1,9 @@
 import React, {useState, useRef, useMemo} from 'react';
 import {useAuth} from '../../../AuthContext';
 import {useJournal} from '../../../contexts/JournalContext.jsx';
+import Cropper from 'react-cropper';
+import 'cropperjs/dist/cropper.min.css';
+import * as fabric from 'fabric'; // ✅ fabric.js 라이브러리 임포트
 import {FaArrowLeft, FaImage, FaSmile, FaUserTag} from 'react-icons/fa';
 import {
     FormContainer,
@@ -17,7 +20,7 @@ import {
     PostButton,
     ImageEditorContainer,
 } from '../../../styled_components/main/journal/JournalWriteStyled';
-import {ModalHeader} from '../../../styled_components/main/journal/ModalStyled';
+import {CloseButton, ModalHeader} from '../../../styled_components/main/journal/ModalStyled';
 
 const MAX_CHAR_LIMIT = 3000;
 const MAX_IMAGE_LIMIT = 3;
@@ -27,10 +30,12 @@ const JournalWrite = ({onClose, selectedDate}) => {
     const {addJournal} = useJournal(); // ✅ JournalContext에서 저장 함수 가져오기
     const [isSubmitting, setIsSubmitting] = useState(false); // ✅ 제출 중 상태 추가
     const [editingImageInfo, setEditingImageInfo] = useState(null); // ✅ 이미지 편집 상태 관리
+    const [editingStep, setEditingStep] = useState('crop'); // 'crop' | 'fabric'
     const [isDragging, setIsDragging] = useState(false); // ✅ 드래그 상태를 관리할 state 추가
     const [content, setContent] = useState('');
     const [images, setImages] = useState([]);
     const fileInputRef = useRef(null);
+    const cropperRef = useRef(null); // ✅ Cropper 인스턴스를 참조할 ref 생성
 
     // 날짜 포맷팅 (e.g., "8월 25일")
     const formattedDate = useMemo(() => {
@@ -74,6 +79,7 @@ const JournalWrite = ({onClose, selectedDate}) => {
     // ✅ 이미지 미리보기를 클릭하면 편집 모드로 전환하는 핸들러
     const handleImagePreviewClick = (image, index) => {
         setEditingImageInfo({image, index});
+        setEditingStep('crop'); // 편집 시작 시 항상 첫 단계(crop)로 설정
     };
 
     const handleImageButtonClick = () => {
@@ -119,15 +125,47 @@ const JournalWrite = ({onClose, selectedDate}) => {
         }
     };
 
-    const handleSaveEdit = () => {
-        // TODO: Cropper.js/Fabric.js 로직이 적용된 후,
-        // 수정된 이미지 데이터를 images 배열에 업데이트해야 합니다.
-        // 예: const newImages = [...images];
-        //     newImages[editingImageInfo.index] = editedImageObject;
-        //     setImages(newImages);
+    // 단계 1: Crop -> Fabric으로 넘어가는 핸들러
+    const handleNextStep = () => {
+        const cropper = cropperRef.current?.cropper;
+        if (typeof cropper !== 'undefined') {
+            // ✅ 원본 해상도 기준으로 자르기 위해, 자른 영역의 실제 픽셀 정보를 가져옵니다.
+            const cropData = cropper.getData(true); // 반올림된 정수 값으로 가져옵니다.
 
-        alert('이미지 편집 내용이 저장되었습니다. (현재는 시뮬레이션)');
-        setEditingImageInfo(null); // 편집 모드 종료
+            // ✅ getCroppedCanvas에 옵션을 전달하여 고화질 결과물을 생성합니다.
+            const croppedCanvas = cropper.getCroppedCanvas({
+                width: cropData.width,
+                height: cropData.height,
+            });
+
+            // ✅ toDataURL을 'image/png'로 설정하여 다음 단계(fabric)로 넘길 때 화질 손실을 최소화합니다.
+            const croppedImageUrl = croppedCanvas.toDataURL('image/png');
+
+            setEditingImageInfo(prev => ({
+                ...prev,
+                croppedImage: croppedImageUrl,
+            }));
+            setEditingStep('fabric');
+        }
+    };
+
+    // 단계 2: Fabric.js에서 최종 저장하는 핸들러
+    const handleSaveFabricEdit = () => {
+        // 지금은 Cropper.js에서 자른 이미지를 바로 저장하는 로직으로 구현합니다.
+        const newImages = [...images];
+
+        // ✅ preview를 자른 이미지의 데이터 URL(base64)로 교체합니다.
+        newImages[editingImageInfo.index] = {
+            ...newImages[editingImageInfo.index],
+            preview: editingImageInfo.croppedImage,
+            // 원본 파일 정보는 더 이상 유효하지 않으므로,
+            // 필요하다면 나중에 base64를 File 객체로 변환하여 업로드해야 합니다.
+            file: null,
+        };
+
+        setImages(newImages);
+        setEditingImageInfo(null); // 모든 편집 모드 종료
+        alert('이미지가 성공적으로 편집되었습니다.');
     };
 
     // 일기 저장
@@ -158,30 +196,59 @@ const JournalWrite = ({onClose, selectedDate}) => {
 
     // --- 렌더링 분기: 편집 모드일 경우 편집기 UI를 보여줍니다. ---
     if (editingImageInfo) {
-        return (
-            <>
-                <ModalHeader>
-                    {/* IconButton을 재사용하여 뒤로가기 버튼 생성 */}
-                    <IconButton onClick={handleCancelEdit} style={{color: '#555'}}><FaArrowLeft/></IconButton>
-                    <h2>이미지 편집</h2>
-                    <PostButton onClick={handleSaveEdit}>저장</PostButton>
-                </ModalHeader>
-                <ImageEditorContainer>
-                    <img
+        // 편집 단계에 따라 다른 UI를 렌더링
+        if (editingStep === 'crop') {
+            return (
+                <>
+                    <ModalHeader>
+                        <IconButton onClick={handleCancelEdit} style={{color: '#555'}}><FaArrowLeft/></IconButton>
+                        <h2>이미지 자르기</h2>
+                        <PostButton onClick={handleNextStep}>다음</PostButton>
+                    </ModalHeader>
+                    {/* ✅ 기존 img 태그를 Cropper 컴포넌트로 교체 */}
+                    <Cropper
+                        ref={cropperRef}
                         src={editingImageInfo.image.preview}
-                        alt={`편집 중인 이미지 ${editingImageInfo.index + 1}`}
+                        style={{height: 400, width: '100%'}}
+                        // Cropper.js 옵션들
+                        viewMode={1} // 자르기 영역을 이미지 밖으로 나가지 않도록 제한
+                        guides={true} // 자르기 영역에 안내선 표시
+                        background={false} // 격자무늬 배경 비활성화
+                        responsive={true} // 컨테이너 크기가 변경될 때 캔버스 크기 조정
+                        checkOrientation={false} // 일부 브라우저의 EXIF 데이터 오류 방지
+                        minCropBoxHeight={100}
+                        minCropBoxWidth={100}
                     />
-                    <p>여기에 Cropper.js 또는 Fabric.js 편집 도구가 표시됩니다.</p>
-                </ImageEditorContainer>
-            </>
-        );
+                </>
+            );
+        } else if (editingStep === 'fabric') {
+            return (
+                <>
+                    <ModalHeader>
+                        {/* 이전 단계(crop)로 돌아가는 버튼 */}
+                        <IconButton onClick={() => setEditingStep('crop')}
+                                    style={{color: '#555'}}><FaArrowLeft/></IconButton>
+                        <h2>이미지 꾸미기</h2>
+                        <PostButton onClick={handleSaveFabricEdit}>저장</PostButton>
+                    </ModalHeader>
+                    <ImageEditorContainer>
+                        <img
+                            src={editingImageInfo.croppedImage}
+                            alt="자르기 완료된 이미지"
+                            style={{maxWidth: '100%', maxHeight: '300px', objectFit: 'contain'}}
+                        />
+
+                    </ImageEditorContainer>
+                </>
+            );
+        }
     }
 
     return (
         <>
             <ModalHeader>
                 <h2>{formattedDate}</h2> {/* 제목은 비워두거나 다른 용도로 사용 */}
-                <button onClick={onClose}>×</button>
+                <CloseButton onClick={onClose}>×</CloseButton>
             </ModalHeader>
             <FormContainer>
                 <ProfilePicture
@@ -201,7 +268,12 @@ const JournalWrite = ({onClose, selectedDate}) => {
                     />
 
                     {images.length > 0 && (
-                        <ImagePreviewContainer>
+                        <ImagePreviewContainer
+                            onDragEnter={handleDragEnter}
+                            onDragLeave={handleDragLeave}
+                            onDragOver={handleDragOver}
+                            onDrop={handleDrop}
+                            isDragging={isDragging}>
                             {images.map((image, index) => (
                                 <ImagePreviewWrapper key={index} onClick={() => handleImagePreviewClick(image, index)}>
                                     <img src={image.preview} alt={`preview ${index}`}/>
@@ -248,3 +320,4 @@ const JournalWrite = ({onClose, selectedDate}) => {
 };
 
 export default JournalWrite;
+JournalWrite;

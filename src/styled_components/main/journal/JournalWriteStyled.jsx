@@ -33,7 +33,6 @@ export const StyledTextarea = styled.textarea`
 
     transition: border-color 0.2s, background-color 0.2s;
     background-color: ${props => props.isDragging ? "#ede9ff" : "#fff"};
-    color: ${props => props.isDragging ? "#fff" : "#000"};
 
     &:focus {
         outline: none;
