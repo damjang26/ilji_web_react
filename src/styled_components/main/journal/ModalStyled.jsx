@@ -26,6 +26,17 @@ export const ModalContainer = styled.div`
     flex-direction: column;
 `;
 
+export const CloseButton = styled.button`
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+    &:hover {
+        color: #333;
+    }
+`;
+
 // 모달 헤더 (제목, 닫기 버튼)
 export const ModalHeader = styled.div`
     display: flex;
@@ -36,17 +47,6 @@ export const ModalHeader = styled.div`
     h2 {
         margin: 0;
         font-size: 20px;
-    }
-
-    button {
-        background: none;
-        border: none;
-        font-size: 24px;
-        cursor: pointer;
-        color: #888;
-        &:hover {
-            color: #333;
-        }
     }
 `;
 

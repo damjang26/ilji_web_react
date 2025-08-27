@@ -41,9 +41,7 @@ const LeftSideBar = () => {
                     <MenuItemWrapper>
                         <TabMenu toggleButtonRef={toggleButtonRef} onToggle={() => setNotiOpen(!isNotiOpen)}/>
                     </MenuItemWrapper>
-                    {/*<ConfigProvider theme={{hashed: false}}> /!** ConfigProvider 추가 **!/*/}
                     <MenuItemWrapper><CalendarMenu/></MenuItemWrapper>
-                    {/*</ConfigProvider>*/}
                 </MenuItemsContainer>
             </SidebarContainer>
 
