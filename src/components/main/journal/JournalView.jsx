@@ -43,15 +43,15 @@ const JournalView = () => {
                     <DateDisplay>{formattedDate}</DateDisplay>
                 </AuthorInfo>
             </ProfileSection>
-            <ContentSection>
-                <p>{journal.content}</p>
-            </ContentSection>
             {journal.images && journal.images.length > 0 && (
                 <ImageGrid imageCount={journal.images.length}>
                     {journal.images.map((imgSrc, index) => <JournalImage key={index} src={imgSrc}
                                                                          alt={`journal image ${index + 1}`}/>)}
                 </ImageGrid>
             )}
+            <ContentSection>
+                <p>{journal.content}</p>
+            </ContentSection>
         </ViewContainer>
     );
 };
