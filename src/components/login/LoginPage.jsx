@@ -7,7 +7,7 @@ import {
     Input,
     Button,
     Separator
-} from "../../styled_components/login/LoginPage_styles.jsx";
+} from "../../styled_components/login/LoginPageStyled.jsx";
 
 const LoginPage = () => {
   return (

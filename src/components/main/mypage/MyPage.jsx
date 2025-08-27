@@ -1,24 +1,24 @@
 import {Link} from "react-router-dom";
 import React, {useState} from "react";
-import { useAuth } from "../../../AuthContext";
+import {useAuth} from "../../../AuthContext";
 import {
     ContentBox, FeatureBox, FeatureContent, HeaderContent, ImageWrapper,
     MyPageContainer, MyPageHeader, MypageImg, MyPageMain, Tab, TabMenuContainer, UserActions, UserInfo
-} from "../../../styled_components/main/mypage/MyPage.styles.jsx";
+} from "../../../styled_components/main/mypage/MyPageStyled.jsx";
 
 const MyPage = () => {
-    const { user } = useAuth();
+    const {user} = useAuth();
 
-    const [activeTab,setActiveTab] = useState('feature1');
+    const [activeTab, setActiveTab] = useState('feature1');
 
-    return(
+    return (
         <MyPageContainer>
-            <MypageImg />
+            <MypageImg/>
             <ContentBox>
                 <MyPageHeader>
                     <ImageWrapper>
                         <div>
-                            <img src={user.picture} alt={`${user.name} 프로필`} referrerPolicy="no-referrer" />
+                            <img src={user.picture} alt={`${user.name} 프로필`} referrerPolicy="no-referrer"/>
                         </div>
                     </ImageWrapper>
                     <HeaderContent>
@@ -37,10 +37,10 @@ const MyPage = () => {
                 </MyPageHeader>
                 <MyPageMain>
                     <TabMenuContainer>
-                        <Tab active ={activeTab ==='feature1'} onClick={() => setActiveTab('feature1')}>기능1</Tab>
-                        <Tab active ={activeTab ==='feature2'} onClick={() => setActiveTab('feature2')}>기능2</Tab>
-                        <Tab active ={activeTab ==='feature3'} onClick={() => setActiveTab('feature3')}>기능3</Tab>
-                        <Tab active ={activeTab ==='feature4'} onClick={() => setActiveTab('feature4')}>기능4</Tab>
+                        <Tab active={activeTab === 'feature1'} onClick={() => setActiveTab('feature1')}>journal</Tab>
+                        <Tab active={activeTab === 'feature2'} onClick={() => setActiveTab('feature2')}>기능2</Tab>
+                        <Tab active={activeTab === 'feature3'} onClick={() => setActiveTab('feature3')}>기능3</Tab>
+                        <Tab active={activeTab === 'feature4'} onClick={() => setActiveTab('feature4')}>기능4</Tab>
                     </TabMenuContainer>
                     <FeatureContent>
                         {activeTab === 'feature1' && <FeatureBox>기능1</FeatureBox>}

@@ -22,20 +22,99 @@ export function ScheduleProvider({ children }) {
     const [error, setError] = useState(null);
 
     // 백엔드 데이터를 FullCalendar 형식으로 변환하는 헬퍼 함수
-    const formatEventForCalendar = (event) => ({
-        id: event.id,
-        title: event.title,
-        start: event.startTime,
-        end: event.endTime,
-        allDay: event.isAllDay,
-        extendedProps: {
-            description: event.description,
-            location: event.location,
-            tags: event.tags,
-            calendarId: event.calendarId,
-            rrule: event.rrule,
-        },
-    });
+    const formatEventForCalendar = (event) => {
+        // ✅ [핵심 수정] 백엔드가 isAllDay 플래그를 false로 잘못 보내더라도,
+        // 시간 형식을 보고 '하루 종일' 여부를 다시 판단합니다.
+        const isAllDayEvent = event.isAllDay ||
+            (event.startTime?.endsWith('T00:00:00') && event.endTime?.endsWith('T23:59:59'));
+
+        const commonProps = {
+            id: event.id,
+            title: event.title,
+            // ✅ 위에서 판단한 정확한 값을 사용합니다.
+            allDay: isAllDayEvent,
+            extendedProps: {
+                description: event.description,
+                location: event.location,
+                tags: event.tags,
+                calendarId: event.calendarId,
+                rrule: event.rrule,
+            },
+        };
+
+        // ✅ 위에서 판단한 정확한 값을 기준으로 분기합니다.
+        if (isAllDayEvent) {
+            // FullCalendar에서 하루 종일 일정의 종료일은 '포함되지 않는(exclusive)' 날짜입니다.
+            // 백엔드는 '포함하는(inclusive)' 날짜(예: 8월 2일 23:59)를 저장하므로, 날짜를 하루 더해줍니다.
+            // new Date() 생성자의 시간대 오류를 피하기 위해 UTC 기준으로 날짜를 계산합니다.
+            const endDateStr = event.endTime.split('T')[0];
+            const parts = endDateStr.split('-').map(Number);
+            const exclusiveEndDate = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+            exclusiveEndDate.setUTCDate(exclusiveEndDate.getUTCDate() + 1);
+
+            return {
+                ...commonProps,
+                start: event.startTime.split('T')[0],
+                end: exclusiveEndDate.toISOString().split('T')[0],
+            };
+        }
+
+        return { ...commonProps, start: event.startTime, end: event.endTime };
+    };
+
+    /**
+     * 날짜/시간 데이터를 백엔드가 요구하는 'YYYY-MM-DDTHH:mm:ss' 형식의 문자열로 변환합니다.
+     * 이 함수는 Timezone 변환 문제를 해결하는 핵심입니다.
+     * @param {Date|string} dateTime - Date 객체 또는 날짜/시간 문자열
+     * @param {boolean} isAllDay - 하루 종일 일정 여부
+     * @param {boolean} isEnd - 종료 시간인지 여부 (하루 종일 일정의 시간을 23:59:59로 설정하기 위함)
+     * @returns {string|null} 포맷된 날짜/시간 문자열
+     */
+    const formatDateTimeForBackend = (dateTime, isAllDay = false, isEnd = false) => {
+        if (!dateTime) return null;
+
+        // Case 1: Input is a Date object (from drag/drop or resize)
+        // We manually build the string from local components to avoid UTC conversion.
+        if (dateTime instanceof Date) {
+            if (isNaN(dateTime.getTime())) return null;
+
+            let dateToFormat = dateTime;
+            // ✅ [핵심 수정] '하루 종일' 일정을 드래그/리사이즈한 경우,
+            // FullCalendar의 '포함되지 않는(exclusive)' 종료일을 백엔드가 요구하는
+            // '포함하는(inclusive)' 종료일로 변환합니다. (하루 빼기)
+            if (isAllDay && isEnd) {
+                const inclusiveEndDate = new Date(dateToFormat.getTime());
+                inclusiveEndDate.setDate(inclusiveEndDate.getDate() - 1);
+                dateToFormat = inclusiveEndDate;
+            }
+
+            const pad = (num) => String(num).padStart(2, '0');
+            const year = dateToFormat.getFullYear();
+            const month = pad(dateToFormat.getMonth() + 1);
+            const day = pad(dateToFormat.getDate());
+
+            if (isAllDay) {
+                const time = isEnd ? '23:59:59' : '00:00:00';
+                return `${year}-${month}-${day}T${time}`;
+            }
+
+            const hours = pad(dateToFormat.getHours());
+            const minutes = pad(dateToFormat.getMinutes());
+            const seconds = pad(dateToFormat.getSeconds());
+            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+        }
+
+        // Case 2: Input is already a string (from form submission)
+        if (typeof dateTime === 'string') {
+            const datePart = dateTime.split('T')[0];
+            if (isAllDay) {
+                return isEnd ? `${datePart}T23:59:59` : `${datePart}T00:00:00`;
+            }
+            if (dateTime.length === 16) return `${dateTime}:00`; // Append seconds if missing
+            return dateTime;
+        }
+        return null; // Fallback for unexpected types
+    };
 
     // 사용자 정보(user)가 변경될 때마다 데이터 다시 로드
     useEffect(() => {
@@ -49,8 +128,8 @@ export function ScheduleProvider({ children }) {
 
             setLoading(true);
             try {
-                // 로그인한 사용자의 ID를 사용하여 스케줄을 요청합니다.
-                const response = await api.get(`/api/schedules/user/${user.id}`);
+                // 백엔드가 토큰에서 사용자 정보를 얻으므로 URL에 ID를 포함할 필요가 없습니다.
+                const response = await api.get(`/api/schedules`);
                 const formattedEvents = response.data.map(formatEventForCalendar);
                 setEvents(formattedEvents);
                 setError(null);
@@ -71,20 +150,14 @@ export function ScheduleProvider({ children }) {
 
         // 프론트엔드 폼 데이터를 백엔드 DTO 형식으로 변환
         const requestData = {
-            userId: user.id, // ✅ 실제 사용자 ID로 교체
-            calendarId: eventData.extendedProps.calendarId || 1, // 기본 캘린더 ID
+            calendarId: eventData.extendedProps.calendarId || 1,
             title: eventData.title,
             location: eventData.extendedProps.location,
             tags: eventData.extendedProps.tags,
             description: eventData.extendedProps.description,
-            // 폼에서 '하루 종일' 선택 시 'T'가 없는 날짜 문자열이 오므로,
-            // 백엔드(LocalDateTime)가 파싱할 수 있도록 시간을 붙여줍니다.
-            startTime: (typeof eventData.start === 'string' && !eventData.start.includes('T'))
-                ? `${eventData.start}T00:00:00`
-                : eventData.start,
-            endTime: (typeof eventData.end === 'string' && !eventData.end.includes('T'))
-                ? `${eventData.end}T23:59:59`
-                : eventData.end,
+            // ✅ 새로운 헬퍼 함수를 사용하여 시간을 안전하게 포맷합니다.
+            startTime: formatDateTimeForBackend(eventData.start, eventData.allDay, false),
+            endTime: formatDateTimeForBackend(eventData.end, eventData.allDay, true),
             isAllDay: eventData.allDay,
             rrule: eventData.extendedProps.rrule,
         };
@@ -105,14 +178,10 @@ export function ScheduleProvider({ children }) {
             location: eventData.extendedProps.location,
             tags: eventData.extendedProps.tags,
             description: eventData.extendedProps.description,
-            // 드래그앤드롭(Date 객체)과 폼 수정(문자열) 모두 처리합니다.
-            // end가 null일 수 있는 드래그앤드롭을 대비해 eventData.start로 대체합니다.
-            startTime: (typeof eventData.start === 'string' && !eventData.start.includes('T'))
-                ? `${eventData.start}T00:00:00`
-                : eventData.start,
-            endTime: (typeof (eventData.end || eventData.start) === 'string' && !(eventData.end || eventData.start).includes('T'))
-                ? `${(eventData.end || eventData.start)}T23:59:59`
-                : (eventData.end || eventData.start),
+            // ✅ 새로운 헬퍼 함수를 사용하여 시간을 안전하게 포맷합니다.
+            startTime: formatDateTimeForBackend(eventData.start, eventData.allDay, false),
+            // 드래그앤드롭 시 end가 null일 수 있으므로 start로 대체합니다.
+            endTime: formatDateTimeForBackend(eventData.end || eventData.start, eventData.allDay, true),
             isAllDay: eventData.allDay,
             rrule: eventData.extendedProps.rrule,
         };
@@ -137,7 +206,17 @@ export function ScheduleProvider({ children }) {
     // ✅ 날짜를 클릭했을 때 목록을 보여주기 위한 새로운 함수
     const openSidebarForDate = useCallback(
         (dateInfo) => {
+            console.log(dateInfo)
             setSelectedInfo({ type: "list_for_date", data: dateInfo });
+            setIsSidebarOpen(true);
+        },
+        []
+    );
+
+    // ✅ 날짜를 드래그해서 새 일정을 만들 때 사이드바를 여는 함수
+    const openSidebarForNew = useCallback(
+        (dateInfo) => {
+            setSelectedInfo({ type: "new", data: dateInfo });
             setIsSidebarOpen(true);
         },
         []
@@ -164,7 +243,8 @@ export function ScheduleProvider({ children }) {
         loading,
         error,
         selectedInfo,
-        openSidebarForDate, // openSidebarForNew 대신 이 함수를 사용
+        openSidebarForDate,
+        openSidebarForNew,
         openSidebarForDetail,
         closeSidebar,
         // ✅ 데이터와 함수를 외부로 노출
@@ -173,7 +253,7 @@ export function ScheduleProvider({ children }) {
         updateEvent,
         deleteEvent,
     // ✅ events가 변경될 때마다 value를 새로 만들도록 의존성 배열에 추가합니다.
-    }), [isSidebarOpen, loading, error, selectedInfo, events, addEvent, updateEvent, deleteEvent, openSidebarForDate, openSidebarForDetail, closeSidebar]);
+    }), [isSidebarOpen, loading, error, selectedInfo, events, addEvent, updateEvent, deleteEvent, openSidebarForDate, openSidebarForNew, openSidebarForDetail, closeSidebar]);
 
     return (
         <ScheduleContext.Provider value={value}>
