@@ -5,7 +5,7 @@ export const RightSectionContainer = styled.aside`
     flex-shrink: 0; /* 창 크기가 줄어도 너비 유지 */
     position: relative; /* 내부 요소 포지셔닝 기준 */
 
-    /* ✅ 항상 320px의 너비를 차지하여, 패널이 닫혀도 메인 레이아웃이 밀리지 않도록 합니다. */
+    /* 패널 너비(230px)만큼 공간을 차지합니다. */
     width: 230px;
 `;
 

@@ -2,7 +2,7 @@ import React from "react";
 import MessageTab from "./right_side_bar/MessageTab.jsx";
 import ScheduleTab from "./right_side_bar/ScheduleTab.jsx";
 import QuickBar from "./right_side_bar/QuickBar.jsx";
-import { FaTimes } from "react-icons/fa";
+import { FaChevronRight } from "react-icons/fa";
 import {
     CloseButton,
     PanelBody,
@@ -16,9 +16,8 @@ import { useSchedule } from "../contexts/ScheduleContext.jsx";
 const SidebarPanel = ({ onClose }) => (
     <>
         <PanelHeader>
-            <span>사이드바</span>
-            <CloseButton onClick={onClose} title="닫기">
-                <FaTimes />
+            <CloseButton onClick={onClose} title="사이드바 접기">
+                <FaChevronRight />
             </CloseButton>
         </PanelHeader>
         <PanelBody>
@@ -35,7 +34,7 @@ const RightSideBar = () => {
         <RightSectionContainer $isPanelOpen={isSidebarOpen}>
             {/* 사이드바 패널은 상태에 따라 슬라이드 인/아웃 됩니다. */}
             <SidebarPanelWrapper $isPanelOpen={isSidebarOpen}>
-                <SidebarPanel onClose={closeSidebar} />
+                <SidebarPanel onClose={toggleSidebar} />
             </SidebarPanelWrapper>
 
             {/* QuickBar는 항상 렌더링되며, 스타일 컴포넌트 내부에서 위치가 동적으로 변경됩니다. */}

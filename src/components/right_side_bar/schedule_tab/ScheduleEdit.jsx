@@ -5,6 +5,7 @@ import {
     ActionButtons,
     Button,
     CheckboxWrapper,
+    CustomCheckbox,
     DateTimeRow,
     FieldSet,
     FormBody,
@@ -144,7 +145,7 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
                 </FieldSet>
 
                 <CheckboxWrapper>
-                    <input type="checkbox" id="all-day" checked={form.allDay} onChange={set("allDay")} />
+                    <CustomCheckbox id="all-day" checked={form.allDay} onChange={set("allDay")} />
                     <Label htmlFor="all-day" style={{fontWeight: 'normal', cursor: 'pointer'}}>하루 종일</Label>
                 </CheckboxWrapper>
 

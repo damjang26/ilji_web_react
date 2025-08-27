@@ -24,6 +24,9 @@ const QuickBar = ({ onToggle, $isPanelOpen }) => {
             <QuickBarButton title="친구 스토리 4" $active={activeButton === 4} onClick={() => setActiveButton(4)}>
                 <FaPlus />
             </QuickBarButton>
+            <QuickBarButton title="친구 스토리 5" $active={activeButton === 5} onClick={() => setActiveButton(5)}>
+                <FaPlus />
+            </QuickBarButton>
         </QuickBarContainer>
     );
 }

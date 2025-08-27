@@ -50,41 +50,44 @@ export const CheckboxWrapper = styled.label`
     gap: 8px;
     cursor: pointer;
     font-size: 14px;
+    user-select: none; /* 클릭 시 텍스트가 선택되는 것을 방지 */
+`;
+
+/** '하루 종일'에 사용될 커스텀 체크박스 input */
+export const CustomCheckbox = styled.input.attrs({ type: 'checkbox' })`
+    appearance: none; /* 브라우저 기본 스타일 제거 */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+
+    width: 18px;
+    height: 18px;
+    border: 2px solid #adb5bd;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+    position: relative; /* 체크 표시를 위한 기준점 */
+
+    &:checked {
+        border-color: transparent;
+        background-color: #7b5fff; /* ✅ 그라데이션에서 보라색 단색으로 변경 */
+    }
+
+    /* 체크 표시 (V) 아이콘 */
+    &:checked::after {
+        content: '✔';
+        font-size: 14px;
+        font-weight: bold;
+        color: white;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
 `;
 
 /** 날짜와 시간 입력 필드를 한 줄에 배치하기 위한 컨테이너 */
 export const DateTimeRow = styled.div`
     display: grid; /* flex에서 grid로 변경하여 자식 요소들을 세로로 쌓습니다. */
     gap: 8px;
-`;
-
-export const ActionButtons = styled.div`
-    padding-top: 16px;
-    display: flex;
-    gap: 8px;
-`;
-
-/** 버튼의 공통 스타일 */
-export const Button = styled.button`
-    flex-grow: 1;
-    padding: 10px;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-
-    &.primary {
-        background-color: #3498db;
-        color: white;
-        &:hover { background-color: #2980b9; }
-    }
-
-    &.secondary {
-        background-color: #f1f3f5;
-        color: #495057;
-        border-color: #dee2e6;
-        &:hover { background-color: #e9ecef; }
-    }
 `;

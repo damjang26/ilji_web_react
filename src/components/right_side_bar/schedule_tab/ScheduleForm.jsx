@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { useTags } from "../../../contexts/TagContext.jsx"; // useTags 훅 import
 import { Select } from "antd"; // AntD Select import
 import {
-    ActionButtons,
-    Button,
     CheckboxWrapper,
+    CustomCheckbox,
     DateTimeRow,
     FieldSet,
     FormBody,
@@ -12,6 +11,7 @@ import {
     Input,
     Label
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleFormStyled.jsx";
+import { ActionButtons, Button } from "../../../styled_components/common/FormElementsStyled.jsx";
 
 const ScheduleForm = ({onSave, onCancel, initialData}) => {
     const { tags } = useTags(); // TagContext에서 태그 목록 가져오기
@@ -106,7 +106,7 @@ const ScheduleForm = ({onSave, onCancel, initialData}) => {
                 </FieldSet>
 
                 <CheckboxWrapper>
-                    <input type="checkbox" id="all-day" checked={form.allDay} onChange={set("allDay")} />
+                    <CustomCheckbox id="all-day" checked={form.allDay} onChange={set("allDay")} />
                     <Label htmlFor="all-day" style={{fontWeight: 'normal', cursor: 'pointer'}}>하루 종일</Label>
                 </CheckboxWrapper>
 

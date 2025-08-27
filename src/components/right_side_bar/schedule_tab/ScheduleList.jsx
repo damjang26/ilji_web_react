@@ -1,5 +1,4 @@
 import {
-    AddButton,
     DateTitle,
     EventItem,
     EventList,
@@ -7,6 +6,7 @@ import {
     ListWrapper,
     NoEventsMessage
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleListStyled.jsx";
+import { ActionButtons, Button } from "../../../styled_components/common/FormElementsStyled.jsx";
 
 const ScheduleList = ({schedules, onAdd, onDetail, selectedDate}) => {
     const formatDate = (dateString) => {
@@ -47,7 +47,9 @@ const ScheduleList = ({schedules, onAdd, onDetail, selectedDate}) => {
                 <NoEventsMessage>등록된 일정이 없습니다.</NoEventsMessage>
             )}
 
-            <AddButton onClick={onAdd}>일정 추가</AddButton>
+            <ActionButtons>
+                <Button className="primary" onClick={onAdd}>일정 추가</Button>
+            </ActionButtons>
         </ListWrapper>
     )
 }

@@ -9,7 +9,7 @@ import {
     InfoValue,
     Title
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleDetailStyled.jsx";
-import { Button, ActionButtons } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleFormStyled.jsx";
+import { Button, ActionButtons } from "../../../styled_components/common/FormElementsStyled.jsx";
 
 const ScheduleDetail = ({item, onEdit, onCancel, onDelete}) => {
     const { tags } = useTags(); // TagContext에서 전체 태그 목록 가져오기

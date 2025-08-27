@@ -54,7 +54,7 @@ const ScheduleTab = () => {
                 setFilteredDate(null); // 날짜 필터링은 해제
             }
         } else {
-            // 사이드바가 닫히면 목록으로 돌아갑니다.
+            // 가 닫히면 목록으로 돌아갑니다.
             console.log('[ScheduleTab] Sidebar closed, resetting mode.');
             setMode("list");
             setSelectedId(null);
