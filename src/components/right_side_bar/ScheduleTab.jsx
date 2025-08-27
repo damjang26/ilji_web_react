@@ -73,6 +73,19 @@ const ScheduleTab = () => {
         [events, selectedId]
     );
     
+    // ✅ [수정] "뒤로가기/취소"를 위한 핸들러 함수들
+    // 1. 목록 보기로 돌아가는 함수
+    const handleReturnToList = () => {
+        setMode("list");
+        setSelectedId(null); // 목록으로 돌아갈 때는 선택된 ID를 초기화합니다.
+    };
+
+    // 2. 상세 보기로 돌아가는 함수 (수정 취소 시)
+    const handleReturnToDetail = () => {
+        setMode("detail");
+        // selectedId는 이미 올바르게 설정되어 있으므로 변경하지 않습니다.
+    };
+
     return (
         <TabWrapper>
             {mode === "list" && (
@@ -95,7 +108,7 @@ const ScheduleTab = () => {
                     // [수정] Context의 selectedInfo.data를 initialData로 전달합니다.
                     // 이렇게 하면 캘린더에서 드래그하여 생성할 때 날짜 범위가 자동으로 채워집니다.
                     initialData={selectedInfo?.data}
-                    onCancel={closeSidebar} // 생성 취소 시 사이드바를 닫습니다.
+                    onCancel={handleReturnToList} // ✅ [수정] 생성 취소 시 목록으로 돌아갑니다.
                     onSave={(newData) => {
                         addEvent(newData); // ✅ Context의 함수 호출
                         // 저장 후 사이드바를 닫습니다.
@@ -107,7 +120,7 @@ const ScheduleTab = () => {
             {mode === "edit" && (
                 <ScheduleEdit
                     item={selectedItem}
-                    onCancel={closeSidebar} // 수정 취소 시 사이드바를 닫습니다.
+                    onCancel={handleReturnToDetail} // ✅ [수정] 수정 취소 시 상세 보기로 돌아갑니다.
                     onSave={(updated) => {
                         updateEvent(updated); // ✅ Context의 함수 호출
                         // 수정 후 사이드바를 닫습니다.
@@ -119,7 +132,7 @@ const ScheduleTab = () => {
             {mode === "detail" && (
                 <ScheduleDetail
                     item={selectedItem}
-                    onCancel={closeSidebar} // 상세 보기에서 "뒤로"는 사이드바를 닫습니다.
+                    onCancel={handleReturnToList} // ✅ [수정] 상세 보기에서 "뒤로" 시 목록으로 돌아갑니다.
                     onEdit={(id) => {
                         setSelectedId(id);
                         setMode("edit");

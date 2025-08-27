@@ -2,22 +2,14 @@ import styled from "styled-components";
 
 /** ScheduleForm.jsx & ScheduleEdit.jsx의 스타일을 정의합니다. (일정 추가/수정 폼) */
 
-/** 폼 전체를 감싸는, 세로 정렬을 위한 flex 컨테이너 */
 export const FormWrapper = styled.div`
-    display: flex;
-    flex-direction: column;
-    height: 100%;
     padding: 8px;
     box-sizing: border-box;
 `;
 
-/** 폼의 입력 필드들이 위치하는 스크롤 가능한 영역 */
 export const FormBody = styled.div`
     display: grid;
     gap: 16px;
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 8px 2px;
 `;
 
 /** 라벨과 입력 필드를 묶는 컨테이너 */
@@ -62,14 +54,11 @@ export const CheckboxWrapper = styled.label`
 
 /** 날짜와 시간 입력 필드를 한 줄에 배치하기 위한 컨테이너 */
 export const DateTimeRow = styled.div`
-    display: flex;
+    display: grid; /* flex에서 grid로 변경하여 자식 요소들을 세로로 쌓습니다. */
     gap: 8px;
-    align-items: center;
 `;
 
-/** '저장', '취소' 버튼을 그룹화하여 하단에 고정하는 컨테이너 */
 export const ActionButtons = styled.div`
-    margin-top: auto;
     padding-top: 16px;
     display: flex;
     gap: 8px;

@@ -1,5 +1,4 @@
 import {
-    ActionButtons,
     BackButton,
     DetailHeader,
     DetailWrapper,
@@ -8,7 +7,7 @@ import {
     InfoValue,
     Title
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleDetailStyled.jsx";
-import { Button } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleFormStyled.jsx";
+import { Button, ActionButtons } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleFormStyled.jsx";
 
 const ScheduleDetail = ({item, onEdit, onCancel, onDelete}) => {
     // item이 로드되기 전에 렌더링되는 것을 방지 (오류의 근본 원인)
