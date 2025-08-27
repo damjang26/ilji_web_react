@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { BrowserRouter, useLocation, Routes, Route } from "react-router-dom";
+import React, {useState} from "react";
+import {BrowserRouter, useLocation, Routes, Route} from "react-router-dom";
 
 import LeftSideBar from "./components/LeftSideBar.jsx";
 import RightSideBar from "./components/RightSideBar.jsx";
@@ -56,7 +56,7 @@ const AppContent = () => {
                     </Routes>
                 )}
             </ContentWrapper>
-            <RightSideBar />
+            <RightSideBar/>
         </AppWrapper>
     ) : (
         <LoginPage/>

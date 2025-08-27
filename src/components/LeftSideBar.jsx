@@ -11,6 +11,7 @@ import {
     Overlay,
 } from "../styled_components/LeftSideBarStyled.jsx";
 
+
 const LeftSideBar = () => {
     const [isNotiOpen, setNotiOpen] = useState(false);
     const notiSidebarRef = useRef(null);
@@ -40,7 +41,9 @@ const LeftSideBar = () => {
                     <MenuItemWrapper>
                         <TabMenu toggleButtonRef={toggleButtonRef} onToggle={() => setNotiOpen(!isNotiOpen)}/>
                     </MenuItemWrapper>
+                    {/*<ConfigProvider theme={{hashed: false}}> /!** ConfigProvider 추가 **!/*/}
                     <MenuItemWrapper><CalendarMenu/></MenuItemWrapper>
+                    {/*</ConfigProvider>*/}
                 </MenuItemsContainer>
             </SidebarContainer>
 
