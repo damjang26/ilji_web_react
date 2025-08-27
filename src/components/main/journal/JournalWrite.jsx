@@ -1,7 +1,7 @@
 import React, {useState, useRef, useMemo} from 'react';
 import {useAuth} from '../../../AuthContext';
 import {useJournal} from '../../../contexts/JournalContext.jsx';
-import {FaImage, FaSmile, FaUserTag} from 'react-icons/fa';
+import {FaArrowLeft, FaImage, FaSmile, FaUserTag} from 'react-icons/fa';
 import {
     FormContainer,
     ProfilePicture,
@@ -15,6 +15,7 @@ import {
     IconButton,
     CharCounter,
     PostButton,
+    ImageEditorContainer,
 } from '../../../styled_components/main/journal/JournalWriteStyled';
 import {ModalHeader} from '../../../styled_components/main/journal/ModalStyled';
 
@@ -25,6 +26,8 @@ const JournalWrite = ({onClose, selectedDate}) => {
     const {user} = useAuth(); // 현재 로그인한 유저 정보
     const {addJournal} = useJournal(); // ✅ JournalContext에서 저장 함수 가져오기
     const [isSubmitting, setIsSubmitting] = useState(false); // ✅ 제출 중 상태 추가
+    const [editingImageInfo, setEditingImageInfo] = useState(null); // ✅ 이미지 편집 상태 관리
+    const [isDragging, setIsDragging] = useState(false); // ✅ 드래그 상태를 관리할 state 추가
     const [content, setContent] = useState('');
     const [images, setImages] = useState([]);
     const fileInputRef = useRef(null);
@@ -44,8 +47,8 @@ const JournalWrite = ({onClose, selectedDate}) => {
         }
     };
 
-    const handleImageUpload = (e) => {
-        const files = Array.from(e.target.files);
+    // ✅ 파일 처리 로직을 공통 함수로 분리하여 재사용성을 높입니다.
+    const processFiles = (files) => {
         if (images.length + files.length > MAX_IMAGE_LIMIT) {
             alert(`사진은 최대 ${MAX_IMAGE_LIMIT}개까지 추가할 수 있습니다.`);
             return;
@@ -59,8 +62,18 @@ const JournalWrite = ({onClose, selectedDate}) => {
         setImages(prevImages => [...prevImages, ...newImages]);
     };
 
-    const handleRemoveImage = (indexToRemove) => {
+    const handleImageUpload = (e) => {
+        processFiles(Array.from(e.target.files));
+    };
+
+    const handleRemoveImage = (e, indexToRemove) => {
+        e.stopPropagation(); // ❗ 중요: 부모(ImagePreviewWrapper)의 클릭 이벤트가 실행되는 것을 막습니다.
         setImages(prevImages => prevImages.filter((_, index) => index !== indexToRemove));
+    };
+
+    // ✅ 이미지 미리보기를 클릭하면 편집 모드로 전환하는 핸들러
+    const handleImagePreviewClick = (image, index) => {
+        setEditingImageInfo({image, index});
     };
 
     const handleImageButtonClick = () => {
@@ -70,6 +83,52 @@ const JournalWrite = ({onClose, selectedDate}) => {
     // TODO: 이모티콘, 친구 태그 기능 구현
     const handleEmojiClick = () => alert('이모티콘 기능 구현 예정');
     const handleTagClick = () => alert('친구 태그 기능 구현 예정');
+
+    // --- Drag & Drop 핸들러 추가 ---
+    const handleDragEnter = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // 드래그하는 대상이 파일일 때만 상태 변경
+        if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+            setIsDragging(true);
+        }
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault(); // 이 부분이 없으면 onDrop 이벤트가 발생하지 않습니다.
+        e.stopPropagation();
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        processFiles(Array.from(e.dataTransfer.files));
+    };
+
+    // --- 이미지 편집 모드 핸들러 ---
+    const handleCancelEdit = () => {
+        if (window.confirm('편집을 취소하시겠습니까? 변경사항이 저장되지 않습니다.')) {
+            setEditingImageInfo(null); // 편집 모드 종료
+        }
+    };
+
+    const handleSaveEdit = () => {
+        // TODO: Cropper.js/Fabric.js 로직이 적용된 후,
+        // 수정된 이미지 데이터를 images 배열에 업데이트해야 합니다.
+        // 예: const newImages = [...images];
+        //     newImages[editingImageInfo.index] = editedImageObject;
+        //     setImages(newImages);
+
+        alert('이미지 편집 내용이 저장되었습니다. (현재는 시뮬레이션)');
+        setEditingImageInfo(null); // 편집 모드 종료
+    };
 
     // 일기 저장
     const onSubmit = async () => {
@@ -97,6 +156,27 @@ const JournalWrite = ({onClose, selectedDate}) => {
         }
     };
 
+    // --- 렌더링 분기: 편집 모드일 경우 편집기 UI를 보여줍니다. ---
+    if (editingImageInfo) {
+        return (
+            <>
+                <ModalHeader>
+                    {/* IconButton을 재사용하여 뒤로가기 버튼 생성 */}
+                    <IconButton onClick={handleCancelEdit} style={{color: '#555'}}><FaArrowLeft/></IconButton>
+                    <h2>이미지 편집</h2>
+                    <PostButton onClick={handleSaveEdit}>저장</PostButton>
+                </ModalHeader>
+                <ImageEditorContainer>
+                    <img
+                        src={editingImageInfo.image.preview}
+                        alt={`편집 중인 이미지 ${editingImageInfo.index + 1}`}
+                    />
+                    <p>여기에 Cropper.js 또는 Fabric.js 편집 도구가 표시됩니다.</p>
+                </ImageEditorContainer>
+            </>
+        );
+    }
+
     return (
         <>
             <ModalHeader>
@@ -112,15 +192,22 @@ const JournalWrite = ({onClose, selectedDate}) => {
                     <StyledTextarea
                         value={content}
                         onChange={handleContentChange}
+                        onDragEnter={handleDragEnter}
+                        onDragLeave={handleDragLeave}
+                        onDragOver={handleDragOver}
+                        onDrop={handleDrop}
+                        isDragging={isDragging} // ✅ 스타일링을 위해 isDragging 상태 전달
                         placeholder="오늘은 무슨 일이 있었나요?"
                     />
 
                     {images.length > 0 && (
                         <ImagePreviewContainer>
                             {images.map((image, index) => (
-                                <ImagePreviewWrapper key={index}>
+                                <ImagePreviewWrapper key={index} onClick={() => handleImagePreviewClick(image, index)}>
                                     <img src={image.preview} alt={`preview ${index}`}/>
-                                    <RemoveImageButton onClick={() => handleRemoveImage(index)}>×</RemoveImageButton>
+                                    <RemoveImageButton onClick={(e) => handleRemoveImage(e, index)}>
+                                        ×
+                                    </RemoveImageButton>
                                 </ImagePreviewWrapper>
                             ))}
                         </ImagePreviewContainer>

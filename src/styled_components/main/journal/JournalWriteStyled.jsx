@@ -29,6 +29,11 @@ export const StyledTextarea = styled.textarea`
     font-family: inherit;
     padding: 0;
     margin-bottom: 16px;
+    border-radius: 5px;
+
+    transition: border-color 0.2s, background-color 0.2s;
+    background-color: ${props => props.isDragging ? "#ede9ff" : "#fff"};
+    color: ${props => props.isDragging ? "#fff" : "#000"};
 
     &:focus {
         outline: none;
@@ -49,6 +54,7 @@ export const ImagePreviewWrapper = styled.div`
     position: relative;
     width: 100px;
     height: 100px;
+    cursor: pointer;
 
     img {
         width: 100%;
@@ -75,6 +81,28 @@ export const RemoveImageButton = styled.button`
     display: flex;
     align-items: center;
     justify-content: center;
+`;
+
+export const ImageEditorContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 400px;
+    padding: 20px;
+    background-color: #f7f7f7;
+    border-radius: 8px;
+    box-sizing: border-box;
+
+    img {
+        max-width: 100%;
+        max-height: 300px;
+        object-fit: contain;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
 `;
 
 export const ActionBar = styled.div`
