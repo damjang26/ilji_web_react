@@ -197,16 +197,16 @@ export const CalendarWrapper = styled.div`
     // 일정 컨테이너 디자인 나중에 일정 카테고리 생기면 그거별로 나눠야 함
 
     .fc-event {
-        border: none !important; /* 기본 파란 테두리 제거 */
-        background: transparent !important; /* 필요 없으면 배경도 투명 */
-        box-shadow: none !important; /* 혹시 그림자 있으면 제거 */
+        border: none; /* 기본 파란 테두리 제거 */
+        background: transparent; /* 필요 없으면 배경도 투명 */
+        box-shadow: none; /* 혹시 그림자 있으면 제거 */
     }
 
     .fc-event .fc-event-main {
-        background: rgba(255, 247, 251, 0.79);
-        border: 1.5px solid #ff7eb9;
+        /* background: rgba(255, 247, 251, 0.79); */ /* 동적 색상 적용을 위해 제거 */
+        /* border: 1.5px solid #ff7eb9; */ /* 동적 색상 적용을 위해 제거 */
         border-radius: 3px;
-        color: #ff7eb9;
+        /* color: #ff7eb9; */ /* 동적 색상 적용을 위해 제거 */
     }
 
     .fc-event-time {

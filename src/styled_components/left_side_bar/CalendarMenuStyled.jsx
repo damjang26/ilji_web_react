@@ -12,17 +12,22 @@ export const TagListContainer = styled.div`
   overflow-y: auto;
 `;
 
-// 개별 태그 아이템 (색상 + 라벨)
 export const TagItem = styled.div`
   display: flex;
   align-items: center;
   margin-bottom: 8px;
   cursor: pointer;
-  padding: 4px;
+  padding: 4px 8px; // 패딩 조정
   border-radius: 4px;
+  border: 1px solid transparent; // 기본 테두리
+  transition: background-color 0.2s, border-color 0.2s; // 부드러운 전환 효과
+
+  /* $isSelected prop에 따라 스타일 변경 */
+  background-color: ${props => props.$isSelected ? '#e6f4ff' : 'transparent'};
+  border-color: ${props => props.$isSelected ? '#91caff' : 'transparent'};
 
   &:hover {
-    background-color: #f0f0f0; // 마우스를 올렸을 때 배경색 변경
+    background-color: ${props => props.$isSelected ? '#d9efff' : '#f0f0f0'}; // 호버 시 배경색 변경
   }
 `;
 
@@ -33,11 +38,16 @@ export const ColorSquare = styled.div`
   border-radius: 4px;
   background-color: ${props => props.color || '#ccc'}; // props로 전달된 색상 적용
   margin-right: 10px;
+  flex-shrink: 0; /* 공간이 부족해도 줄어들지 않도록 설정 */
 `;
 
 // 태그 이름(라벨)
 export const TagLabel = styled.span`
   font-size: 14px;
+  flex-grow: 1; /* 남는 공간을 모두 차지하도록 설정 */
+  white-space: nowrap; /* 텍스트가 길어져도 줄바꿈 방지 */
+  overflow: hidden; /* 넘치는 텍스트 숨기기 */
+  text-overflow: ellipsis; /* 넘치는 텍스트를 ...으로 표시 */
 `;
 
 

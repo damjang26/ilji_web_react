@@ -32,7 +32,6 @@ export const MenuItemsContainer = styled.div`
 export const MenuItemWrapper = styled.div`
   display: flex;
   width: 100%;
-  flex: 1; /* 자식 요소들이 남은 공간을 동일한 1:1:1 비율로 나누어 가짐 */
   align-items: flex-start; /* 컨텐츠를 할당된 공간의 상단 정렬 */
   justify-content: center; /* 컨텐츠를 수평 중앙에 정렬 */
 
