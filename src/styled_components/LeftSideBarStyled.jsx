@@ -5,7 +5,7 @@ export const SidebarContainer = styled.aside`
   //z-index: 1000;
   width: 230px; /* 사이드바 너비 지정 */
   flex-shrink: 0; /* 창 크기가 줄어도 사이드바 너비는 유지 */
-  height: 100%; /* 화면 전체 높이를 차지하도록 설정 */
+  height: 100vh; /* 화면 전체 높이를 차지하도록 설정 */
   background-color: #f8f9fa; /* 배경색 */
   padding: 20px; /* 내부 여백 */
   border-right: 1px solid #e9ecef; /* 오른쪽에 구분선 추가 */
@@ -17,7 +17,7 @@ export const SidebarContainer = styled.aside`
   //position: fixed; //maind을 중앙 정렬 방해 요소 : 나중에 확인용으로 일단 주석처리함
   //top: 0;
   //left: 0;
-  //z-index: 10;
+  z-index: 10;
 `;
 
 // Profile, TabMenu, CalendarMenu 감싸는 컨테이너

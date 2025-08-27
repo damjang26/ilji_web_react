@@ -24,7 +24,6 @@ const Main = () => {
                 <Route path="/mypage" element={<MyPage/>}/>
                 <Route path="/mypageset" element={<MyPageSet/>}/>
                 <Route path="/post/*" element={<Post/>}/>
-                <Route path="/journal/*" element={<Journal/>}/>
             </Routes>
         </MainContent>
     );

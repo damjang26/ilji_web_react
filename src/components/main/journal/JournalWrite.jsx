@@ -1,5 +1,6 @@
 import React, {useState, useRef, useMemo} from 'react';
 import {useAuth} from '../../../AuthContext';
+import {useJournal} from '../../../contexts/JournalContext.jsx';
 import {FaImage, FaSmile, FaUserTag} from 'react-icons/fa';
 import {
     FormContainer,
@@ -22,6 +23,8 @@ const MAX_IMAGE_LIMIT = 3;
 
 const JournalWrite = ({onClose, selectedDate}) => {
     const {user} = useAuth(); // 현재 로그인한 유저 정보
+    const {addJournal} = useJournal(); // ✅ JournalContext에서 저장 함수 가져오기
+    const [isSubmitting, setIsSubmitting] = useState(false); // ✅ 제출 중 상태 추가
     const [content, setContent] = useState('');
     const [images, setImages] = useState([]);
     const fileInputRef = useRef(null);
@@ -67,6 +70,32 @@ const JournalWrite = ({onClose, selectedDate}) => {
     // TODO: 이모티콘, 친구 태그 기능 구현
     const handleEmojiClick = () => alert('이모티콘 기능 구현 예정');
     const handleTagClick = () => alert('친구 태그 기능 구현 예정');
+
+    // 일기 저장
+    const onSubmit = async () => {
+        if (isSubmitting) return; // 중복 제출 방지
+        setIsSubmitting(true);
+
+        // TODO: 이미지 업로드 로직 (e.g., Firebase Storage에 업로드 후 URL 받아오기)
+        // 지금은 시뮬레이션을 위해 파일 이름만 저장합니다.
+        const imageUrls = images.map(image => image.file.name);
+
+        const journalData = {
+            content: content,
+            images: imageUrls,
+            authorId: user.uid, // 작성자 ID
+        };
+
+        try {
+            await addJournal(selectedDate, journalData);
+            onClose(); // 저장 후 모달 닫기
+        } catch (error) {
+            console.error("일기 저장 실패:", error);
+            alert('일기 저장에 실패했습니다.');
+        } finally {
+            setIsSubmitting(false); // 제출 상태 해제
+        }
+    };
 
     return (
         <>
@@ -120,8 +149,9 @@ const JournalWrite = ({onClose, selectedDate}) => {
                         <CharCounter error={content.length === MAX_CHAR_LIMIT}>
                             {content.length} / {MAX_CHAR_LIMIT}
                         </CharCounter>
-                        <PostButton disabled={!content.trim() && images.length === 0}>
-                            게시하기
+                        <PostButton onClick={onSubmit}
+                                    disabled={(!content.trim() && images.length === 0) || isSubmitting}>
+                            {isSubmitting ? '저장 중...' : '게시하기'}
                         </PostButton>
                     </ActionBar>
                 </FormContent>
