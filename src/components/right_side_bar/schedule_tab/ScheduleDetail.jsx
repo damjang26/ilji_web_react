@@ -1,3 +1,5 @@
+import { useMemo } from "react";
+import { useTags } from "../../../contexts/TagContext.jsx";
 import {
     BackButton,
     DetailHeader,
@@ -10,10 +12,19 @@ import {
 import { Button, ActionButtons } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleFormStyled.jsx";
 
 const ScheduleDetail = ({item, onEdit, onCancel, onDelete}) => {
+    const { tags } = useTags(); // TagContext에서 전체 태그 목록 가져오기
+
     // item이 로드되기 전에 렌더링되는 것을 방지 (오류의 근본 원인)
     if (!item) {
         return <div>일정을 선택해주세요.</div>;
     }
+
+    // 현재 일정의 tagId에 해당하는 태그 객체를 찾습니다.
+    const currentTag = useMemo(() => {
+        const tagId = item.extendedProps?.tagId;
+        if (!tagId) return null;
+        return tags.find(t => t.id === tagId);
+    }, [item, tags]);
 
     // 날짜와 시간을 상황에 맞게 표시하는 함수
     const formatDateRange = () => {
@@ -72,9 +83,9 @@ const ScheduleDetail = ({item, onEdit, onCancel, onDelete}) => {
                     <InfoLabel>장소</InfoLabel>
                     <InfoValue>{item.extendedProps.location}</InfoValue>
                 </div>}
-                {item.extendedProps?.tags && <div>
+                {currentTag && <div>
                     <InfoLabel>태그</InfoLabel>
-                    <InfoValue>{item.extendedProps.tags}</InfoValue>
+                    <InfoValue>{currentTag.label}</InfoValue>
                 </div>}
                 {item.extendedProps?.description && <div>
                     <InfoLabel>설명</InfoLabel>

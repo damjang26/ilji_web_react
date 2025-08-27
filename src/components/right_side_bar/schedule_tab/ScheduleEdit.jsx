@@ -1,4 +1,6 @@
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
+import { useTags } from "../../../contexts/TagContext.jsx";
+import { Select } from "antd";
 import {
     ActionButtons,
     Button,
@@ -42,7 +44,7 @@ const transformEventToFormState = (event) => {
         id: event.id,
         title: event.title,
         location: event.extendedProps?.location || "",
-        tags: event.extendedProps?.tags || "",
+        tagId: event.extendedProps?.tagId || null, // 'tags'를 'tagId'로 변경
         description: event.extendedProps?.description || "",
         allDay: event.allDay,
         startDate: toYYYYMMDD(start),
@@ -54,12 +56,13 @@ const transformEventToFormState = (event) => {
 };
 
 const ScheduleEdit = ({item, onSave, onCancel}) => {
+    const { tags } = useTags(); // TagContext에서 태그 목록 가져오기
     // 백엔드 데이터 구조에 맞게 폼 상태를 상세하게 변경
     const [form, setForm] = useState({
         id: null,
         title: "",
         location: "",
-        tags: "",
+        tagId: null, // 'tags'를 'tagId'로 변경
         description: "",
         allDay: true,
         startDate: "",
@@ -77,6 +80,11 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
     }, [item]);
 
     const set = (k) => (e) => {
+        // AntD Select는 event 객체가 아닌 value를 직접 전달하므로, e가 바로 value가 됩니다.
+        if (k === 'tagId') {
+            setForm((prev) => ({ ...prev, [k]: e }));
+            return;
+        }
         const v = e?.target?.type === "checkbox" ? e.target.checked : e.target.value;
         setForm((prev) => ({ ...prev, [k]: v }));
     };
@@ -95,7 +103,7 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
     }, [form.startDate, form.startTime, form.endDate, form.endTime]);
 
     const handleSave = () => {
-        const { id, title, description, allDay, startDate, startTime, endDate, endTime, location, tags, calendarId } = form;
+        const { id, title, description, allDay, startDate, startTime, endDate, endTime, location, tagId, calendarId } = form;
 
         // 제목이 비어있으면 "새 일정"으로 기본값을 설정합니다.
         const finalTitle = title.trim() ? title : "새 일정";
@@ -114,13 +122,19 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
             extendedProps: {
                 description,
                 location,
-                tags,
+                tagId, // tags 대신 tagId 전송
                 calendarId,
             }
         };
         onSave(updatedEvent);
     };
-
+ 
+    // 태그 선택 옵션을 생성
+    const tagOptions = tags.map(tag => ({
+        value: tag.id,
+        label: tag.label
+    }));
+ 
     return (
         <FormWrapper>
             <FormBody>
@@ -155,9 +169,18 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
                     <Input id="location" placeholder="장소" value={form.location} onChange={set("location")} />
                 </FieldSet>
 
+                {/* 태그 입력을 Select로 변경 */}
                 <FieldSet>
                     <Label htmlFor="tags">태그</Label>
-                    <Input id="tags" placeholder="태그 (쉼표로 구분)" value={form.tags} onChange={set("tags")} />
+                    <Select
+                        id="tags"
+                        placeholder="태그 선택"
+                        value={form.tagId}
+                        onChange={set("tagId")}
+                        options={tagOptions}
+                        style={{ width: '100%' }}
+                        allowClear
+                    />
                 </FieldSet>
 
                 <FieldSet>
