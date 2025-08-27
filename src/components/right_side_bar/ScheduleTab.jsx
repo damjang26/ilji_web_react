@@ -111,8 +111,8 @@ const ScheduleTab = () => {
                     onCancel={handleReturnToList} // ✅ [수정] 생성 취소 시 목록으로 돌아갑니다.
                     onSave={(newData) => {
                         addEvent(newData); // ✅ Context의 함수 호출
-                        // 저장 후 사이드바를 닫습니다.
-                        closeSidebar();
+                        // ✅ [수정] 저장 후 목록 화면으로 돌아갑니다.
+                        handleReturnToList();
                     }}
                 />
             )}
@@ -123,8 +123,8 @@ const ScheduleTab = () => {
                     onCancel={handleReturnToDetail} // ✅ [수정] 수정 취소 시 상세 보기로 돌아갑니다.
                     onSave={(updated) => {
                         updateEvent(updated); // ✅ Context의 함수 호출
-                        // 수정 후 사이드바를 닫습니다.
-                        closeSidebar();
+                        // ✅ [수정] 수정 후 목록 화면으로 돌아갑니다.
+                        handleReturnToList();
                     }}
                 />
             )}
@@ -138,10 +138,13 @@ const ScheduleTab = () => {
                         setMode("edit");
                     }}
                     onDelete={(id) => {
-                        // id를 기준으로 이벤트를 삭제하도록 수정합니다.
-                        deleteEvent(id); // ✅ Context의 함수 호출
-                        // 삭제 후 사이드바를 닫습니다.
-                        closeSidebar();
+                        // ✅ [개선] 삭제 전에 사용자에게 확인을 받습니다.
+                        if (window.confirm("정말로 이 일정을 삭제하시겠습니까?")) {
+                            // id를 기준으로 이벤트를 삭제하도록 수정합니다.
+                            deleteEvent(id); // ✅ Context의 함수 호출
+                            // 삭제 후 목록 화면으로 돌아갑니다.
+                            handleReturnToList();
+                        }
                     }}
                 />
             )}

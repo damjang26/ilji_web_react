@@ -11,6 +11,48 @@ import {
     Label
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleEditStyled.jsx";
 
+/**
+ * FullCalendar 이벤트 객체를 폼 상태 객체로 변환하는 헬퍼 함수입니다.
+ * @param {object} event - FullCalendar 이벤트 객체
+ * @returns {object|null} - 폼에서 사용할 수 있는 상태 객체
+ */
+const transformEventToFormState = (event) => {
+    if (!event) return null;
+
+    const start = new Date(event.start);
+
+    // "하루 종일" 일정의 경우, FullCalendar의 end는 exclusive(포함 안됨)이므로
+    // 폼에 표시하기 위해 inclusive(포함됨) 날짜로 다시 변환해야 합니다. (하루 빼기)
+    let inclusiveEnd;
+    if (event.allDay && event.end) {
+        inclusiveEnd = new Date(event.end);
+        inclusiveEnd.setDate(inclusiveEnd.getDate() - 1);
+    } else {
+        inclusiveEnd = event.end ? new Date(event.end) : new Date(start);
+    }
+
+    // 시간대 오류를 피하기 위해 toISOString() 대신 get...() 메서드를 사용합니다.
+    const toYYYYMMDD = (d) => {
+        const pad = (num) => String(num).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    };
+    const toHHMM = (d) => d.toTimeString().substring(0, 5);
+
+    return {
+        id: event.id,
+        title: event.title,
+        location: event.extendedProps?.location || "",
+        tags: event.extendedProps?.tags || "",
+        description: event.extendedProps?.description || "",
+        allDay: event.allDay,
+        startDate: toYYYYMMDD(start),
+        startTime: event.allDay ? '09:00' : toHHMM(start),
+        endDate: toYYYYMMDD(inclusiveEnd),
+        endTime: event.allDay ? '10:00' : toHHMM(inclusiveEnd),
+        calendarId: event.extendedProps?.calendarId || 1,
+    };
+};
+
 const ScheduleEdit = ({item, onSave, onCancel}) => {
     // 백엔드 데이터 구조에 맞게 폼 상태를 상세하게 변경
     const [form, setForm] = useState({
@@ -28,40 +70,9 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
     });
 
     useEffect(() => {
-        if (item) {
-            // 백엔드에서 온 start, end (ISO 문자열)를 날짜와 시간으로 분리합니다.
-            const start = new Date(item.start);
-
-            // "하루 종일" 일정의 경우, FullCalendar의 end는 exclusive(포함 안됨)이므로
-            // 폼에 표시하기 위해 inclusive(포함됨) 날짜로 다시 변환해야 합니다. (하루 빼기)
-            let inclusiveEnd;
-            if (item.allDay && item.end) {
-                inclusiveEnd = new Date(item.end);
-                inclusiveEnd.setDate(inclusiveEnd.getDate() - 1);
-            } else {
-                inclusiveEnd = item.end ? new Date(item.end) : new Date(start);
-            }
-
-            // 시간대 오류를 피하기 위해 toISOString() 대신 get...() 메서드를 사용합니다.
-            const toYYYYMMDD = (d) => {
-                const pad = (num) => String(num).padStart(2, '0');
-                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-            };
-            const toHHMM = (d) => d.toTimeString().substring(0, 5);
-
-            setForm({
-                id: item.id,
-                title: item.title,
-                location: item.extendedProps?.location || "",
-                tags: item.extendedProps?.tags || "",
-                description: item.extendedProps?.description || "",
-                allDay: item.allDay,
-                startDate: toYYYYMMDD(start),
-                startTime: item.allDay ? '09:00' : toHHMM(start),
-                endDate: toYYYYMMDD(inclusiveEnd),
-                endTime: item.allDay ? '10:00' : toHHMM(inclusiveEnd),
-                calendarId: item.extendedProps?.calendarId || 1,
-            });
+        const initialState = transformEventToFormState(item);
+        if (initialState) {
+            setForm(initialState);
         }
     }, [item]);
 

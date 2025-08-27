@@ -238,6 +238,10 @@ export function ScheduleProvider({ children }) {
         []
     );
 
+    const toggleSidebar = useCallback(() => {
+        setIsSidebarOpen(prev => !prev);
+    }, []);
+
     const value = useMemo(() => ({
         isSidebarOpen,
         loading,
@@ -247,13 +251,14 @@ export function ScheduleProvider({ children }) {
         openSidebarForNew,
         openSidebarForDetail,
         closeSidebar,
+        toggleSidebar,
         // ✅ 데이터와 함수를 외부로 노출
         events,
         addEvent,
         updateEvent,
         deleteEvent,
     // ✅ events가 변경될 때마다 value를 새로 만들도록 의존성 배열에 추가합니다.
-    }), [isSidebarOpen, loading, error, selectedInfo, events, addEvent, updateEvent, deleteEvent, openSidebarForDate, openSidebarForNew, openSidebarForDetail, closeSidebar]);
+    }), [isSidebarOpen, loading, error, selectedInfo, events, addEvent, updateEvent, deleteEvent, openSidebarForDate, openSidebarForNew, openSidebarForDetail, closeSidebar, toggleSidebar]);
 
     return (
         <ScheduleContext.Provider value={value}>

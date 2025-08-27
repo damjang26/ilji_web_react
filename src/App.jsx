@@ -10,6 +10,7 @@ import Main from "./components/Main.jsx";
 import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
 import {JournalProvider} from "./contexts/JournalContext.jsx";
 import JournalViewModal from "./components/main/journal/JournalViewModal.jsx";
+import { ScheduleProvider } from "./contexts/ScheduleContext.jsx";
 
 const AppWrapper = styled.div`
     display: flex;
@@ -66,7 +67,9 @@ export default function App() {
     return (
         <BrowserRouter>
             <JournalProvider>
-                <AppContent/>
+                <ScheduleProvider>
+                    <AppContent/>
+                </ScheduleProvider>
             </JournalProvider>
         </BrowserRouter>
     );
