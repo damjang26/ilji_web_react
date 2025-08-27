@@ -17,7 +17,7 @@ export const SidebarContainer = styled.aside`
     //position: fixed; //maind을 중앙 정렬 방해 요소 : 나중에 확인용으로 일단 주석처리함
     //top: 0;
     //left: 0;
-    //z-index: 10;
+    z-index: 10;
 `;
 
 // Profile, TabMenu, CalendarMenu 감싸는 컨테이너
@@ -32,10 +32,10 @@ export const MenuItemsContainer = styled.div`
 export const MenuItemWrapper = styled.div`
     display: flex;
     width: 100%;
-    flex: 1;/* 자식 요소들이 남은 공간을 동일한 1:1:1 비율로 나누어 가짐 */
+    flex: 1; /* 자식 요소들이 남은 공간을 동일한 1:1:1 비율로 나누어 가짐 */
     align-items: flex-start; /* 컨텐츠를 할당된 공간의 상단 정렬 */
     justify-content: center; /* 컨텐츠를 수평 중앙에 정렬 */
-    
+
     &:not(:last-child) {
         border-bottom: 1px solid #e0e0e0; /* 마지막 아이템을 제외, 각 아이템의 공간 하단에 구분선 추가  */
     }
@@ -45,7 +45,7 @@ export const MenuItemWrapper = styled.div`
 export const NotiSidebarWrapper = styled.div`
     position: fixed;
     top: 0;
-    left: 230px;/* LeftSideBar(230px) 바로 옆에 위치하도록 설정 */
+    left: 230px; /* LeftSideBar(230px) 바로 옆에 위치하도록 설정 */
     height: 100%;
     width: 300px;
     background-color: #fff;
@@ -67,10 +67,10 @@ export const Overlay = styled.div`
     visibility: ${({open}) => (open ? "visible" : "hidden")}; /* open prop에 따라 요소의 렌더링 여부를 결정 (보이거나, 공간은 차지하지 않고 숨김) */
     opacity: ${({open}) => (open ? "1" : "0")}; /* open prop에 따라 투명도를 조절하여 나타나고 사라지는 효과 */
     position: fixed; /* 뷰포트(화면)를 기준으로 위치를 고정 */
-    top: 0; 
+    top: 0;
     left: 0;
-    width: 100%; 
-    height: 100%; 
-    z-index: 0; 
+    width: 100%;
+    height: 100%;
+    z-index: 0;
     transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out; /* opacity와 visibility 속성 변경 시 0.3초 동안 전환 효과 적용 */
 `;
