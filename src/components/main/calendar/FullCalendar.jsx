@@ -10,6 +10,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import {useSchedule} from "../../../contexts/ScheduleContext.jsx";
+import {useJournal} from "../../../contexts/JournalContext.jsx";
 import {
     FaPencilAlt,
     FaBookOpen,
@@ -27,13 +28,8 @@ export default function FullCalendarExample() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // 일기 데이터 예시 (나중에는 API로 가져와야 합니다)
-    // 날짜 문자열(YYYY-MM-DD)을 키로 사용하는 Set을 사용합니다.
-    const [journal, setJournal] = useState(
-        new Set(["2025-08-15", "2025-08-22"])
-    );
-
     // 일기 팝오버 상태 관리
+    const {hasJournal} = useJournal();
     const [diaryPopover, setDiaryPopover] = useState({
         visible: false,
         date: null,
@@ -81,7 +77,7 @@ export default function FullCalendarExample() {
 
     // Handle event drop (drag and drop)
     const handleEventDrop = (dropInfo) => {
-        const { event, oldEvent } = dropInfo;
+        const {event, oldEvent} = dropInfo;
 
         // '하루 종일'이 아닌 시간 지정 일정의 경우, 월(Month) 뷰에서 드래그 시 시간이 초기화되는 것을 방지합니다.
         if (!event.allDay) {
@@ -108,10 +104,10 @@ export default function FullCalendarExample() {
             }
 
             // 보정된 시간으로 업데이트를 요청합니다.
-            updateEvent({ ...event.toPlainObject(), start: newStart, end: newEnd });
+            updateEvent({...event.toPlainObject(), start: newStart, end: newEnd});
         } else {
             // '하루 종일' 일정은 기본 동작을 그대로 사용합니다.
-            updateEvent({ ...event.toPlainObject(), start: event.start, end: event.end });
+            updateEvent({...event.toPlainObject(), start: event.start, end: event.end});
         }
     };
 
@@ -182,9 +178,15 @@ export default function FullCalendarExample() {
                     onMouseEnter={clearHideTimer} // 팝오버 위에 마우스가 올라가면 숨기기 취소
                     onMouseLeave={startHideTimer} // 팝오버에서 마우스가 떠나면 숨기기 시작
                 >
-                    {journal.has(diaryPopover.date) ? (
+                    {hasJournal(diaryPopover.date) ? (
                         <>
-                            <DiaryPopoverButton>
+                            <DiaryPopoverButton onClick={() => {
+                                navigate(`/journal/view/${diaryPopover.date}`, {
+                                    state: {
+                                        backgroundLocation: location,
+                                    }
+                                })
+                            }}>
                                 <FaBookOpen/> 일기 보기
                             </DiaryPopoverButton>
                             <DiaryPopoverButton>
