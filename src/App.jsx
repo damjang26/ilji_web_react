@@ -65,12 +65,15 @@ const AppContent = () => {
 
 export default function App() {
     return (
-        <BrowserRouter>
-            <JournalProvider>
-                <ScheduleProvider>
-                    <AppContent/>
-                </ScheduleProvider>
-            </JournalProvider>
-        </BrowserRouter>
+        <>
+            <BrowserRouter>
+                <JournalProvider>
+                    <ScheduleProvider>
+                        <AppContent/>
+                    </ScheduleProvider>
+                </JournalProvider>
+            </BrowserRouter>
+            <div id="modal-root"></div>
+        </>
     );
 }

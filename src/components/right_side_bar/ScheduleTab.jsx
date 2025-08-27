@@ -5,6 +5,7 @@ import ScheduleForm from "./schedule_tab/ScheduleForm.jsx";
 import ScheduleEdit from "./schedule_tab/ScheduleEdit.jsx";
 import ScheduleDetail from "./schedule_tab/ScheduleDetail.jsx";
 import { useSchedule } from "../../contexts/ScheduleContext.jsx";
+import ConfirmModal from "../common/ConfirmModal.jsx";
 import { TabWrapper } from "../../styled_components/right_side_bar/ScheduleTabStyled.jsx";
 // components
 
@@ -12,6 +13,9 @@ const ScheduleTab = () => {
     const [mode, setMode] = useState("list"); // "list" | "create" | "edit"
     const [selectedId, setSelectedId] = useState(null);
     const [filteredDate, setFilteredDate] = useState(null); // ✅ 클릭된 날짜를 저장할 상태
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
+
     // ✅ Context에서 데이터와 모든 함수를 가져옴
     const {
         events,
@@ -86,6 +90,27 @@ const ScheduleTab = () => {
         // selectedId는 이미 올바르게 설정되어 있으므로 변경하지 않습니다.
     };
 
+    // --- 삭제 모달 관련 핸들러 ---
+    // 1. 삭제 요청을 받아 모달을 여는 함수
+    const handleDeleteRequest = (id) => {
+        setItemToDelete(id);
+        setIsDeleteModalOpen(true);
+    };
+
+    // 2. 모달에서 '삭제'를 확정했을 때 실행되는 함수
+    const handleConfirmDelete = () => {
+        if (itemToDelete) {
+            deleteEvent(itemToDelete); // Context의 삭제 함수 호출
+            handleReturnToList();      // 목록으로 돌아가기
+        }
+        // 모달을 닫고 상태를 초기화합니다.
+        setIsDeleteModalOpen(false);
+        setItemToDelete(null);
+    };
+
+    // 3. 모달을 그냥 닫는 함수
+    const handleCloseModal = () => setIsDeleteModalOpen(false);
+
     return (
         <TabWrapper>
             {mode === "list" && (
@@ -137,18 +162,19 @@ const ScheduleTab = () => {
                         setSelectedId(id);
                         setMode("edit");
                     }}
-                    onDelete={(id) => {
-                        // ✅ [개선] 삭제 전에 사용자에게 확인을 받습니다.
-                        if (window.confirm("정말로 이 일정을 삭제하시겠습니까?")) {
-                            // id를 기준으로 이벤트를 삭제하도록 수정합니다.
-                            deleteEvent(id); // ✅ Context의 함수 호출
-                            // 삭제 후 목록 화면으로 돌아갑니다.
-                            handleReturnToList();
-                        }
-                    }}
+                    onDelete={handleDeleteRequest} // ✅ 삭제 요청 핸들러 연결
                 />
             )}
 
+
+            <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                onClose={handleCloseModal}
+                onConfirm={handleConfirmDelete}
+                title="일정 삭제"
+            >
+                정말로 이 일정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+            </ConfirmModal>
 
         </TabWrapper>
     );
