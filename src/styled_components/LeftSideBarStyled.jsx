@@ -4,7 +4,7 @@ export const SidebarContainer = styled.aside`
     //z-index: 1000;
     width: 230px; /* 사이드바 너비 지정 */
     flex-shrink: 0; /* 창 크기가 줄어도 사이드바 너비는 유지 */
-    height: 100vh; /* 화면 전체 높이를 차지하도록 설정 */
+    height: 100%; /* 화면 전체 높이를 차지하도록 설정 */
     background-color: #f8f9fa; /* 배경색 */
     padding: 20px; /* 내부 여백 */
     border-right: 1px solid #e9ecef; /* 오른쪽에 구분선 추가 */
@@ -29,14 +29,20 @@ export const MenuItemsContainer = styled.div`
 
 // 각 메뉴 아이템을 감싸서 동일한 공간을 차지, 내부 정렬을 제어
 export const MenuItemWrapper = styled.div`
-    flex: 1; /* 세 아이템이 남은 공간을 1:1:1 비율로  나누기 */
+    //flex: 1; /* 세 아이템이 남은 공간을 1:1:1 비율로  나누기 */
     display: flex;
     align-items: flex-start; /* 컨텐츠를 할당된 공간의 상단 정렬 */
     justify-content: center; /* 컨텐츠를 수평 중앙에 정렬 */
     width: 100%;
+    /* padding-bottom: 20px; */ /* 모든 아이템에 적용되던 패딩은 제거 */
 
     &:not(:last-child) {
         border-bottom: 1px solid #e0e0e0; /* 마지막 아이템을 제외, 각 아이템의 공간 하단에 구분선 추가  */
+    }
+
+    /* 2번째 자식 요소에만 padding-bottom을 적용합니다. */
+    &:nth-child(2) {
+        padding-bottom: 30px;
     }
 `;
 
