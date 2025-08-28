@@ -1,53 +1,130 @@
+import React, { useState, useMemo } from 'react';
+import { FaCalendarDay, FaCalendarWeek, FaInfinity } from 'react-icons/fa';
+import { Tooltip } from 'antd';
 import {
-    AddButton,
     DateTitle,
     EventItem,
     EventList,
+    FilterButton,
+    FilterButtons,
     ListHeader,
     ListWrapper,
     NoEventsMessage
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleListStyled.jsx";
+import { ActionButtons, Button } from "../../../styled_components/common/FormElementsStyled.jsx";
 
-const ScheduleList = ({schedules, onAdd, onDetail, selectedDate}) => {
-    const formatDate = (dateString) => {
-        if (!dateString) {
-            return "전체 일정"; // 선택된 날짜가 없으면 기본 텍스트를 표시합니다.
+const FILTERS = {
+    all: { icon: FaInfinity, label: "전체 일정" },
+    month: { icon: FaCalendarWeek, label: "이번 달 일정" },
+    today: { icon: FaCalendarDay, label: "오늘 일정" },
+};
+
+const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelectedDate }) => {
+    // ✅ [수정] '오늘', '이번 달', '전체'를 전환하는 필터 상태. 기본값은 'today'.
+    const [filterMode, setFilterMode] = useState('today');
+
+    // ✅ [수정] props와 내부 필터 상태에 따라 보여줄 이벤트를 계산합니다.
+    const filteredEvents = useMemo(() => {
+        // 1. 캘린더에서 특정 날짜가 선택된 경우, 해당 날짜의 일정만 보여줍니다.
+        if (selectedDate) {
+            return allEvents.filter(e => e.start?.startsWith(selectedDate));
         }
 
-        // 'T00:00:00Z'를 추가하여 시간대(Timezone) 문제 없이 UTC로 날짜를 파싱합니다.
-        const date = new Date(dateString + 'T00:00:00Z');
-
-        // 유효하지 않은 날짜에 대한 예외 처리
-        if (isNaN(date.getTime())) {
-            return "날짜 정보";
+        // 2. 특정 날짜가 선택되지 않은 경우, '오늘' 또는 '이번 달' 필터를 적용합니다.
+        const now = new Date();
+        switch (filterMode) {
+            case 'today':
+                const todayStr = now.toISOString().split('T')[0];
+                return allEvents.filter(e => e.start?.startsWith(todayStr));
+            case 'month':
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const monthPrefix = `${year}-${month}`;
+                return allEvents.filter(e => e.start?.startsWith(monthPrefix));
+            case 'all':
+                return allEvents;
+            default:
+                return [];
         }
+    }, [allEvents, selectedDate, filterMode]);
 
-        const month = date.getUTCMonth() + 1;
-        const day = date.getUTCDate();
-        const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][date.getUTCDay()];
+    // ✅ [수정] 상황에 맞는 제목을 동적으로 생성합니다.
+    const title = useMemo(() => {
+        // 1. 특정 날짜가 선택된 경우
+        if (selectedDate) {
+            const date = new Date(selectedDate + 'T00:00:00Z');
+            if (isNaN(date.getTime())) return "날짜 정보";
 
-        return `${month} / ${day} ${dayOfWeek}요일`;
+            const month = date.getUTCMonth() + 1;
+            const day = date.getUTCDate();
+            const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][date.getUTCDay()];
+            return `${month} / ${day} ${dayOfWeek}요일`;
+        }
+        // 2. 필터 모드에 따른 제목
+        return FILTERS[filterMode]?.label || "일정";
+    }, [selectedDate, filterMode]);
+
+    const handleFilterClick = (mode) => {
+        if (selectedDate) {
+            onClearSelectedDate();
+        }
+        setFilterMode(mode);
+    };
+
+    // 표시할 필터 버튼들을 결정합니다.
+    const renderFilterButtons = () => {
+        // ✅ [수정] 특정 날짜가 선택된 경우에도 '이번 달'과 '오늘' 일정으로 바로 갈 수 있는 버튼을 표시합니다.
+        if (selectedDate) {
+            return ['month', 'today'].map(key => {
+                const FilterIcon = FILTERS[key].icon;
+                return (
+                    <Tooltip key={key} title={FILTERS[key].label} placement="bottom">
+                        <FilterButton onClick={() => handleFilterClick(key)}>
+                            <FilterIcon />
+                        </FilterButton>
+                    </Tooltip>
+                );
+            });
+        }
+        // 기본 목록 뷰에서는 현재 활성화된 필터를 제외한 나머지 버튼들을 표시합니다.
+        return Object.keys(FILTERS)
+            .filter(key => key !== filterMode)
+            .map(key => {
+                const FilterIcon = FILTERS[key].icon;
+                return (
+                    <Tooltip key={key} title={FILTERS[key].label} placement="bottom">
+                        <FilterButton onClick={() => handleFilterClick(key)}>
+                            <FilterIcon />
+                        </FilterButton>
+                    </Tooltip>
+                );
+            });
     };
 
     return (
         <ListWrapper>
             <ListHeader>
-                <DateTitle>{formatDate(selectedDate)}</DateTitle>
+                <DateTitle>{title}</DateTitle>
+                <FilterButtons>{renderFilterButtons()}</FilterButtons>
             </ListHeader>
 
-            {schedules.length > 0 ? (
+            {filteredEvents.length > 0 ? (
                 <EventList>
-                    {schedules.map((s) => (
-                        <EventItem key={s.id} onClick={() => onDetail(s.id)} title="클릭하면 상세 보기">
-                            {s.title}
-                        </EventItem>
+                    {filteredEvents.map((s) => (
+                        <Tooltip key={s.id} title="클릭하면 상세 보기" placement="left">
+                            <EventItem onClick={() => onDetail(s)}>
+                                {s.title}
+                            </EventItem>
+                        </Tooltip>
                     ))}
                 </EventList>
             ) : (
                 <NoEventsMessage>등록된 일정이 없습니다.</NoEventsMessage>
             )}
 
-            <AddButton onClick={onAdd}>일정 추가</AddButton>
+            <ActionButtons>
+                <Button className="primary" onClick={onAdd}>일정 추가</Button>
+            </ActionButtons>
         </ListWrapper>
     )
 }

@@ -2,11 +2,7 @@ import styled from "styled-components";
 
 /** ScheduleDetail.jsx의 스타일을 정의합니다. (일정 상세 보기) */
 
-/** 상세 보기 뷰 전체를 감싸는 컨테이너 */
 export const DetailWrapper = styled.div`
-    display: flex;
-    flex-direction: column;
-    height: 100%;
     padding: 8px;
     box-sizing: border-box;
 `;
@@ -51,7 +47,7 @@ export const InfoSection = styled.div`
     display: grid;
     gap: 16px;
     font-size: 14px;
-    flex-grow: 1;
+    padding: 8px 2px; /* 스크롤바와 내용 사이에 약간의 여백을 줍니다. */
 `;
 
 /** 정보 항목의 라벨 (예: '날짜') */
@@ -68,12 +64,4 @@ export const InfoValue = styled.p`
     color: #343a40;
     word-break: break-all;
     line-height: 1.5;
-`;
-
-/** '수정', '삭제' 버튼을 그룹화하는 컨테이너 */
-export const ActionButtons = styled.div`
-    margin-top: auto;
-    padding-top: 16px;
-    display: flex;
-    gap: 8px;
 `;

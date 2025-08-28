@@ -1,5 +1,7 @@
+import { useMemo } from "react";
+import { useSchedule } from "../../../contexts/ScheduleContext.jsx";
+import { useTags } from "../../../contexts/TagContext.jsx";
 import {
-    ActionButtons,
     BackButton,
     DetailHeader,
     DetailWrapper,
@@ -8,13 +10,32 @@ import {
     InfoValue,
     Title
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleDetailStyled.jsx";
-import { Button } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleFormStyled.jsx";
+import { Button, ActionButtons } from "../../../styled_components/common/FormElementsStyled.jsx";
 
-const ScheduleDetail = ({item, onEdit, onCancel, onDelete}) => {
+const ScheduleDetail = ({item}) => {
+    const { tags } = useTags();
+    // ✅ [수정] Context에서 직접 UI 제어 함수들을 가져옵니다. (onEdit, onCancel, onDelete 프롭 제거)
+    const { goBackInSidebar, openSidebarForEdit, deleteEvent } = useSchedule();
+
     // item이 로드되기 전에 렌더링되는 것을 방지 (오류의 근본 원인)
     if (!item) {
         return <div>일정을 선택해주세요.</div>;
     }
+
+    // 현재 일정의 tagId에 해당하는 태그 객체를 찾습니다.
+    const currentTag = useMemo(() => {
+        const tagId = item.extendedProps?.tagId;
+        if (!tagId) return null;
+        return tags.find(t => t.id === tagId);
+    }, [item, tags]);
+
+    // ✅ [추가] 삭제 로직을 컴포넌트 내부에서 처리합니다.
+    const handleDelete = () => {
+        if (window.confirm(`'${item.title}' 일정을 삭제하시겠습니까?`)) {
+            deleteEvent(item.id);
+            goBackInSidebar(); // 삭제 후 목록으로 돌아갑니다.
+        }
+    };
 
     // 날짜와 시간을 상황에 맞게 표시하는 함수
     const formatDateRange = () => {
@@ -59,7 +80,8 @@ const ScheduleDetail = ({item, onEdit, onCancel, onDelete}) => {
     return (
         <DetailWrapper>
             <DetailHeader>
-                <BackButton onClick={onCancel}>← 목록으로</BackButton>
+                {/* ✅ [수정] '목록으로' 버튼이 Context의 goBackInSidebar 함수를 호출하도록 변경합니다. */}
+                <BackButton onClick={goBackInSidebar}>← 목록으로</BackButton>
             </DetailHeader>
 
             <Title>{item.title}</Title>
@@ -73,9 +95,9 @@ const ScheduleDetail = ({item, onEdit, onCancel, onDelete}) => {
                     <InfoLabel>장소</InfoLabel>
                     <InfoValue>{item.extendedProps.location}</InfoValue>
                 </div>}
-                {item.extendedProps?.tags && <div>
+                {currentTag && <div>
                     <InfoLabel>태그</InfoLabel>
-                    <InfoValue>{item.extendedProps.tags}</InfoValue>
+                    <InfoValue>{currentTag.label}</InfoValue>
                 </div>}
                 {item.extendedProps?.description && <div>
                     <InfoLabel>설명</InfoLabel>
@@ -84,8 +106,9 @@ const ScheduleDetail = ({item, onEdit, onCancel, onDelete}) => {
             </InfoSection>
 
             <ActionButtons>
-                <Button className="secondary" onClick={() => onDelete(item.id)}>삭제</Button>
-                <Button className="primary" onClick={() => onEdit(item.id)}>수정</Button>
+                {/* ✅ [수정] 버튼들이 Context의 함수를 직접 사용하도록 변경합니다. */}
+                <Button className="secondary" onClick={handleDelete}>삭제</Button>
+                <Button className="primary" onClick={() => openSidebarForEdit(item)}>수정</Button>
             </ActionButtons>
         </DetailWrapper>
     )

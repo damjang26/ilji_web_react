@@ -10,6 +10,8 @@ import Main from "./components/Main.jsx";
 import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
 import {JournalProvider} from "./contexts/JournalContext.jsx";
 import JournalViewModal from "./components/main/journal/JournalViewModal.jsx";
+import { ScheduleProvider } from "./contexts/ScheduleContext.jsx";
+import { TagProvider } from "./contexts/TagContext.jsx";
 
 const AppWrapper = styled.div`
     display: flex;
@@ -64,10 +66,17 @@ const AppContent = () => {
 
 export default function App() {
     return (
-        <BrowserRouter>
-            <JournalProvider>
-                <AppContent/>
-            </JournalProvider>
-        </BrowserRouter>
+        <>
+            <BrowserRouter>
+                <JournalProvider>
+                    <ScheduleProvider>
+                        <TagProvider>
+                            <AppContent/>
+                        </TagProvider>
+                    </ScheduleProvider>
+                </JournalProvider>
+            </BrowserRouter>
+            <div id="modal-root"></div>
+        </>
     );
 }
