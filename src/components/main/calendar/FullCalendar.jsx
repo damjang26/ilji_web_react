@@ -1,9 +1,9 @@
 import React, { useState, useRef, useMemo } from "react";
 import ReactDOM from "react-dom";
 import {
-  CalendarWrapper,
-  DiaryPopoverContainer,
-  DiaryPopoverButton,
+    CalendarWrapper,
+    DiaryPopoverContainer,
+    DiaryPopoverButton,
 } from "../../../styled_components/main/calendar/CalendarWrapper.jsx";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -29,8 +29,8 @@ export default function FullCalendarExample() {
   } = useSchedule();
   const { tags } = useTags();
 
-  const navigate = useNavigate();
-  const location = useLocation();
+    const navigate = useNavigate();
+    const location = useLocation();
 
   // 일기 팝오버 상태 관리
   const { hasJournal } = useJournal();
@@ -52,7 +52,7 @@ export default function FullCalendarExample() {
       const color = tagColorMap.get(tagId) || "#cccccc";
       return { ...event, backgroundColor: color, borderColor: color };
     });
-  }, [events, tags]);
+    const popoverHideTimer = useRef(null);
 
   /**
    * ✅ 날짜 칸을 클릭/선택했을 때의 동작을 정의합니다.
@@ -183,12 +183,7 @@ export default function FullCalendarExample() {
           top: rect.bottom + 5,
           left: rect.left + rect.width / 2,
         });
-      });
-      dayNumberEl.addEventListener("mouseleave", () => {
-        startHideTimer();
-      });
-    }
-  };
+    }, [events, tags]);
 
   return (
       <CalendarWrapper>

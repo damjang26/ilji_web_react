@@ -33,7 +33,6 @@ export const StyledTextarea = styled.textarea`
 
     transition: border-color 0.2s, background-color 0.2s;
     background-color: ${props => props.isDragging ? "#ede9ff" : "#fff"};
-    color: ${props => props.isDragging ? "#fff" : "#000"};
 
     &:focus {
         outline: none;
@@ -85,14 +84,12 @@ export const RemoveImageButton = styled.button`
 
 export const ImageEditorContainer = styled.div`
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     width: 100%;
     min-height: 400px;
-    padding: 20px;
-    background-color: #f7f7f7;
-    border-radius: 8px;
+    background-color: #f6f3ff;
     box-sizing: border-box;
 
     img {
@@ -102,6 +99,19 @@ export const ImageEditorContainer = styled.div`
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         border-radius: 4px;
         margin-bottom: 20px;
+    }
+`;
+
+export const CropArea = styled.div`
+    width: 100%;
+    height: 450px; /* 자르기 UI의 높이를 고정합니다. */
+    background-color: #2c2c2c; /* 어두운 배경색으로 이미지를 돋보이게 합니다. */
+
+    /* react-cropper가 생성하는 컨테이너가 부모 영역을 꽉 채우도록 합니다. */
+
+    .cropper-container {
+        height: 100%;
+        width: 100%;
     }
 `;
 
@@ -158,4 +168,21 @@ export const PostButton = styled.button`
         background-color: #c3b3ff;
         cursor: not-allowed;
     }
+`;
+
+export const CanvasContainer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 400px;
+`;
+
+export const EditContainer = styled.div`
+    display: flex;
+    width: 40%;
+    height: 100%;
+    min-height: 400px;
+    background-color: #ffffff;
+    border: 1px solid black;
 `;

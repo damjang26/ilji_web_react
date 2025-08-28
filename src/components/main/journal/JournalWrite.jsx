@@ -1,7 +1,7 @@
 import React, {useState, useRef, useMemo} from 'react';
 import {useAuth} from '../../../AuthContext';
 import {useJournal} from '../../../contexts/JournalContext.jsx';
-import {FaArrowLeft, FaImage, FaSmile, FaUserTag} from 'react-icons/fa';
+import {FaImage, FaSmile, FaUserTag} from 'react-icons/fa';
 import {
     FormContainer,
     ProfilePicture,
@@ -15,9 +15,9 @@ import {
     IconButton,
     CharCounter,
     PostButton,
-    ImageEditorContainer,
 } from '../../../styled_components/main/journal/JournalWriteStyled';
-import {ModalHeader} from '../../../styled_components/main/journal/ModalStyled';
+import {CloseButton, ModalHeader} from '../../../styled_components/main/journal/ModalStyled';
+import ImageEditor from './image_edit/ImageEditor.jsx';
 
 const MAX_CHAR_LIMIT = 3000;
 const MAX_IMAGE_LIMIT = 3;
@@ -47,20 +47,42 @@ const JournalWrite = ({onClose, selectedDate}) => {
         }
     };
 
-    // ✅ 파일 처리 로직을 공통 함수로 분리하여 재사용성을 높입니다.
+    // ✅ File을 base64(dataURL)로 변환해서 preview에 저장
     const processFiles = (files) => {
         if (images.length + files.length > MAX_IMAGE_LIMIT) {
             alert(`사진은 최대 ${MAX_IMAGE_LIMIT}개까지 추가할 수 있습니다.`);
             return;
         }
 
-        const newImages = files.map(file => ({
-            file: file,
-            preview: URL.createObjectURL(file),
-        }));
+        // Array.from(files).forEach((file) => {
+        //     const reader = new FileReader();
+        //     reader.onloadend = () => {
+        //         const base64Data = reader.result; // ✅ dataURL (base64)
+        //         setImages((prevImages) => [
+        //             ...prevImages,
+        //             {
+        //                 file,                // 원본 File도 저장 (필요하면 서버 업로드용)
+        //                 preview: base64Data, // ✅ 이제 blobURL 대신 base64 저장
+        //             },
+        //         ]);
+        //     };
+        //     reader.readAsDataURL(file);
+        // });
 
-        setImages(prevImages => [...prevImages, ...newImages]);
+        Array.from(files).forEach((file) => {
+            // ✅ base64 대신 blob URL 사용
+            const blobUrl = URL.createObjectURL(file);
+
+            setImages((prevImages) => [
+                ...prevImages,
+                {
+                    file,         // 원본 File (서버 업로드용)
+                    preview: blobUrl, // 브라우저에서 바로 보여줄 임시 URL
+                },
+            ]);
+        });
     };
+
 
     const handleImageUpload = (e) => {
         processFiles(Array.from(e.target.files));
@@ -114,23 +136,28 @@ const JournalWrite = ({onClose, selectedDate}) => {
 
     // --- 이미지 편집 모드 핸들러 ---
     const handleCancelEdit = () => {
-        if (window.confirm('편집을 취소하시겠습니까? 변경사항이 저장되지 않습니다.')) {
-            setEditingImageInfo(null); // 편집 모드 종료
-        }
-    };
-
-    const handleSaveEdit = () => {
-        // TODO: Cropper.js/Fabric.js 로직이 적용된 후,
-        // 수정된 이미지 데이터를 images 배열에 업데이트해야 합니다.
-        // 예: const newImages = [...images];
-        //     newImages[editingImageInfo.index] = editedImageObject;
-        //     setImages(newImages);
-
-        alert('이미지 편집 내용이 저장되었습니다. (현재는 시뮬레이션)');
         setEditingImageInfo(null); // 편집 모드 종료
     };
 
-    // 일기 저장
+    // ✅ ImageEditor로부터 최종 편집된 이미지 데이터를 받아 처리하는 함수
+    const handleSaveEdit = (editedImageDataUrl) => {
+        const newImages = [...images];
+
+        // preview를 편집된 이미지의 데이터 URL(base64)로 교체합니다.
+        newImages[editingImageInfo.index] = {
+            ...newImages[editingImageInfo.index],
+            preview: editedImageDataUrl,
+            // 원본 파일 정보는 더 이상 유효하지 않으므로,
+            // 필요하다면 나중에 base64를 File 객체로 변환하여 업로드해야 합니다.
+            file: null,
+        };
+
+        setImages(newImages);
+        setEditingImageInfo(null); // 모든 편집 모드 종료
+        alert('이미지가 성공적으로 편집되었습니다.');
+    };
+
+    // 일기 저장processFiles
     const onSubmit = async () => {
         if (isSubmitting) return; // 중복 제출 방지
         setIsSubmitting(true);
@@ -159,21 +186,11 @@ const JournalWrite = ({onClose, selectedDate}) => {
     // --- 렌더링 분기: 편집 모드일 경우 편집기 UI를 보여줍니다. ---
     if (editingImageInfo) {
         return (
-            <>
-                <ModalHeader>
-                    {/* IconButton을 재사용하여 뒤로가기 버튼 생성 */}
-                    <IconButton onClick={handleCancelEdit} style={{color: '#555'}}><FaArrowLeft/></IconButton>
-                    <h2>이미지 편집</h2>
-                    <PostButton onClick={handleSaveEdit}>저장</PostButton>
-                </ModalHeader>
-                <ImageEditorContainer>
-                    <img
-                        src={editingImageInfo.image.preview}
-                        alt={`편집 중인 이미지 ${editingImageInfo.index + 1}`}
-                    />
-                    <p>여기에 Cropper.js 또는 Fabric.js 편집 도구가 표시됩니다.</p>
-                </ImageEditorContainer>
-            </>
+            <ImageEditor
+                imageInfo={editingImageInfo}
+                onSave={handleSaveEdit}
+                onCancel={handleCancelEdit}
+            />
         );
     }
 
@@ -181,7 +198,7 @@ const JournalWrite = ({onClose, selectedDate}) => {
         <>
             <ModalHeader>
                 <h2>{formattedDate}</h2> {/* 제목은 비워두거나 다른 용도로 사용 */}
-                <button onClick={onClose}>×</button>
+                <CloseButton onClick={onClose}>×</CloseButton>
             </ModalHeader>
             <FormContainer>
                 <ProfilePicture
@@ -201,7 +218,12 @@ const JournalWrite = ({onClose, selectedDate}) => {
                     />
 
                     {images.length > 0 && (
-                        <ImagePreviewContainer>
+                        <ImagePreviewContainer
+                            onDragEnter={handleDragEnter}
+                            onDragLeave={handleDragLeave}
+                            onDragOver={handleDragOver}
+                            onDrop={handleDrop}
+                            isDragging={isDragging}>
                             {images.map((image, index) => (
                                 <ImagePreviewWrapper key={index} onClick={() => handleImagePreviewClick(image, index)}>
                                     <img src={image.preview} alt={`preview ${index}`}/>
@@ -248,3 +270,4 @@ const JournalWrite = ({onClose, selectedDate}) => {
 };
 
 export default JournalWrite;
+JournalWrite;
