@@ -21,6 +21,8 @@ export const TagProvider = ({ children }) => {
     }
   };
 
+
+
   const addTag = async (newTagPayload) => {
     try {
       console.log('Sending to backend:', newTagPayload); // 데이터 확인용 로그

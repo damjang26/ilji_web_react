@@ -94,19 +94,19 @@ export function ScheduleProvider({ children }) {
             setLoading(false);
             return;
         }
-
         setLoading(true);
         try {
             let url = '/api/schedules';
             // tagIds 배열이 비어있지 않으면 쿼리 파라미터를 추가합니다.
             if (tagIds && tagIds.length > 0) {
                 const params = new URLSearchParams();
-                params.append('tag_ids', tagIds.join(','));
+                params.append('tagIds', tagIds.join(',')); // tagIds : 4,7
                 url += `?${params.toString()}`;
             }
-            
+            console.log(tagIds)
             const response = await api.get(url);
             const formattedEvents = response.data.map(formatEventForCalendar);
+            console.log(formattedEvents)
             setEvents(formattedEvents);
             setError(null);
         } catch (err) {

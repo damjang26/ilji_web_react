@@ -1,7 +1,6 @@
 import {StrictMode} from 'react'
 import {createRoot} from 'react-dom/client'
 import 'antd/dist/reset.css';
-import { ConfigProvider } from 'antd'; // ConfigProvider import
 import App from './App.jsx'
 import {GoogleOAuthProvider} from '@react-oauth/google';
 import AuthProvider from './AuthContext.jsx';
@@ -17,9 +16,7 @@ createRoot(document.getElementById('root')).render(
             <AuthProvider>
                 <ScheduleProvider>
                     <TagProvider>
-                        <ConfigProvider theme={{ hashed: false }}> {/** ConfigProvider 추가 **/} 
                             <App/>
-                        </ConfigProvider>
                     </TagProvider>
                 </ScheduleProvider>
             </AuthProvider>

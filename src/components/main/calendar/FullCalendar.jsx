@@ -18,6 +18,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 export default function FullCalendarExample() {
   const {
     events,
+    loading, // 로딩 상태 추가
     openSidebarForDate,
     openSidebarForNew,
     openSidebarForDetail,
@@ -157,6 +158,10 @@ export default function FullCalendarExample() {
       });
     }
   };
+
+  if (loading) {
+    return <div>일정을 불러오는 중입니다...</div>;
+  }
 
   return (
     <CalendarWrapper>

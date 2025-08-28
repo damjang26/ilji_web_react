@@ -47,6 +47,8 @@ const CalendarMenu = () => {
         ? prevIds.filter(id => id !== tagId) // 있으면 제거 (선택 해제)
         : [...prevIds, tagId] // 없으면 추가 (선택)
     );
+      fetchSchedulesByTags(selectedTagIds);
+
   };
 
   // --- 그룹 변경 핸들러 ---
@@ -113,7 +115,7 @@ const CalendarMenu = () => {
         <S.TagListContainer>
           {tags.map(tag => (
             <Dropdown 
-              key={tag.id} 
+              key={tag.id}
               menu={{ 
                 items: menuItems, 
                 onClick: ({ key }) => {
@@ -153,6 +155,7 @@ const CalendarMenu = () => {
 
   return (
     <>
+      {/*  아코디언(콜랩스) 어떤거 열지 // 디폴트가 '1'= 태그별 보기  */}
       <S.MenuContainer>
         <Collapse items={items} defaultActiveKey={['1']} ghost />
       </S.MenuContainer>
