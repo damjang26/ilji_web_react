@@ -146,6 +146,8 @@ export const CalendarWrapper = styled.div`
 
     .fc-daygrid-day {
         border: 1px solid #e4eaf1; /* 버튼 테두리와 동일한 색상으로 통일감 */
+        position: relative; /* highlight 요소의 기준점 */
+        min-height: 90px; /* 셀 자체에 최소 높이를 지정 */
     }
 
 
@@ -173,25 +175,25 @@ export const CalendarWrapper = styled.div`
     }
 
     .fc .fc-daygrid-day-frame {
-        min-height: 90px;
+        /* min-height: 90px; */ /* 부모인 fc-daygrid-day로 이동 */
     }
 
     // 오늘 날짜 배경 색상 변경!
 
     .fc .fc-daygrid-day.fc-day-today {
-        background: #fff7e7;
+        background: #eaf6ff; /* 연한 파란색 */
     }
 
     /* Week / Day view - today 컬럼 전체 */
 
     .fc-timegrid-col.fc-day-today {
-        background-color: #fff7e7;
+        background-color: #eaf6ff; /* 연한 파란색 */
     }
 
     /* Week / Day view - all-day 영역 */
 
     .fc-timegrid-all-day.fc-day-today {
-        background-color: #fff7e7;
+        background-color: #eaf6ff; /* 연한 파란색 */
     }
 
     // 일정 컨테이너 디자인 나중에 일정 카테고리 생기면 그거별로 나눠야 함
@@ -211,6 +213,16 @@ export const CalendarWrapper = styled.div`
 
     .fc-event-time {
         text-transform: uppercase;
+    }
+
+    /* 날짜 선택 시 배경이 셀을 꽉 채우도록 수정 */
+    .fc .fc-highlight {
+        background: rgba(255, 126, 185, 0.1); /* 더 연한 분홍색 */
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
     }
 
 `;

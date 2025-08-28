@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { useTags } from "../../../contexts/TagContext.jsx"; // useTags 훅 import
+import { useEffect, useRef } from "react"; // useState 제거
+import { useTags } from "../../../contexts/TagContext.jsx";
+import { useSchedule } from "../../../contexts/ScheduleContext.jsx"; // ✅ useSchedule 훅 import
 import { Select } from "antd"; // AntD Select import
 import {
     CheckboxWrapper,
@@ -13,48 +14,21 @@ import {
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleFormStyled.jsx";
 import { ActionButtons, Button } from "../../../styled_components/common/FormElementsStyled.jsx";
 
-const ScheduleForm = ({onSave, onCancel, initialData}) => {
-    const { tags } = useTags(); // TagContext에서 태그 목록 가져오기
+const ScheduleForm = ({onSave, initialData, tags: tagsFromProp}) => {
+    const formRef = useRef(null);
+    // ✅ 1. Context에서 공유 폼 데이터와 태그 데이터를 가져옵니다.
+    const { formData: form, setFormData: setForm, goBackInSidebar } = useSchedule();
+    const { tags: tagsFromContext } = useTags();
+    const tags = tagsFromProp || tagsFromContext; // prop으로 받은 tags가 있으면 사용, 없으면 context의 것 사용
 
-    const [form, setForm] = useState({
-        title: "",
-        location: "",
-        tagId: null, // 'tags'를 'tagId'로 변경하고 초기값을 null로 설정
-        description: "",
-        allDay: true,
-        startDate: "",
-        startTime: "09:00",
-        endDate: "",
-        endTime: "10:00",
-        calendarId: 1,
-    });
-
-    useEffect(() => {
-        if (initialData) {
-            const startDateStr = (initialData.startStr || new Date().toISOString()).split("T")[0];
-            let endDateStr = startDateStr;
-
-            if (initialData.endStr) {
-                const inclusiveEndDate = new Date(initialData.endStr);
-                if (!isNaN(inclusiveEndDate.getTime())) {
-                    inclusiveEndDate.setDate(inclusiveEndDate.getDate() - 1);
-                    endDateStr = inclusiveEndDate.toISOString().split('T')[0];
-                }
-            }
-
-            setForm(prev => ({
-                ...prev,
-                startDate: startDateStr,
-                endDate: endDateStr,
-            }));
-        }
-    }, [initialData]);
+    // ✅ 2. 내부 상태(useState)와 초기화 로직(useEffect)을 제거합니다.
+    //    이제 모든 상태는 ScheduleContext에서 관리합니다.
 
     // set 함수를 tagId 변경에도 대응하도록 수정
     const set = (k) => (v) => {
         // AntD Select는 event 객체가 아닌 value를 직접 전달
         if (k === 'tagId') {
-            setForm((prev) => ({ ...prev, [k]: v }));
+            setForm((prev) => ({ ...prev, [k]: v })); // ✅ Context의 setFormData를 호출
             return;
         }
         const value = v?.target?.type === "checkbox" ? v.target.checked : v.target.value;
@@ -62,13 +36,13 @@ const ScheduleForm = ({onSave, onCancel, initialData}) => {
     };
 
     useEffect(() => {
-        if (form.startDate > form.endDate) {
+        if (form && form.startDate > form.endDate) { // ✅ form이 null이 아닌지 확인
             setForm(prev => ({ ...prev, endDate: prev.startDate }));
         }
-        if (form.startDate === form.endDate && form.startTime > form.endTime) {
+        if (form && form.startDate === form.endDate && form.startTime > form.endTime) { // ✅ form null 체크 추가
             setForm(prev => ({ ...prev, endTime: prev.startTime }));
         }
-    }, [form.startDate, form.startTime, form.endDate, form.endTime]);
+    }, [form?.startDate, form?.startTime, form?.endDate, form?.endTime, setForm]); // ✅ 의존성 배열을 안전하게 변경
 
     const handleSave = () => {
         const { title, description, allDay, startDate, startTime, endDate, endTime, location, tagId, calendarId } = form;
@@ -96,8 +70,11 @@ const ScheduleForm = ({onSave, onCancel, initialData}) => {
         label: tag.label
     }));
 
+    // ✅ 3. Context의 formData가 아직 준비되지 않았다면 아무것도 렌더링하지 않습니다.
+    if (!form) return null;
+
     return (
-        <FormWrapper>
+        <FormWrapper ref={formRef}>
             <FormBody>
                 {/* ... 다른 FieldSet들 ... */}
                 <FieldSet>
@@ -142,6 +119,7 @@ const ScheduleForm = ({onSave, onCancel, initialData}) => {
                         options={tagOptions}
                         style={{ width: '100%' }}
                         allowClear // 선택을 취소할 수 있는 x 버튼 추가
+                        getPopupContainer={() => formRef.current} // 드롭다운을 form 내부에 렌더링
                     />
                 </FieldSet>
 
@@ -152,7 +130,7 @@ const ScheduleForm = ({onSave, onCancel, initialData}) => {
             </FormBody>
 
             <ActionButtons>
-                <Button className="secondary" onClick={onCancel}>취소</Button>
+                <Button className="secondary" onClick={goBackInSidebar}>취소</Button>
                 <Button className="primary" onClick={handleSave}>저장</Button>
             </ActionButtons>
         </FormWrapper>

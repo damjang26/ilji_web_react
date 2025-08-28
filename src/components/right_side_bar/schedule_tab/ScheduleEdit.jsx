@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useTags } from "../../../contexts/TagContext.jsx";
+import { useSchedule } from "../../../contexts/ScheduleContext.jsx";
 import { Select } from "antd";
 import {
     ActionButtons,
@@ -14,71 +15,11 @@ import {
     Label
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleEditStyled.jsx";
 
-/**
- * FullCalendar 이벤트 객체를 폼 상태 객체로 변환하는 헬퍼 함수입니다.
- * @param {object} event - FullCalendar 이벤트 객체
- * @returns {object|null} - 폼에서 사용할 수 있는 상태 객체
- */
-const transformEventToFormState = (event) => {
-    if (!event) return null;
-
-    const start = new Date(event.start);
-
-    // "하루 종일" 일정의 경우, FullCalendar의 end는 exclusive(포함 안됨)이므로
-    // 폼에 표시하기 위해 inclusive(포함됨) 날짜로 다시 변환해야 합니다. (하루 빼기)
-    let inclusiveEnd;
-    if (event.allDay && event.end) {
-        inclusiveEnd = new Date(event.end);
-        inclusiveEnd.setDate(inclusiveEnd.getDate() - 1);
-    } else {
-        inclusiveEnd = event.end ? new Date(event.end) : new Date(start);
-    }
-
-    // 시간대 오류를 피하기 위해 toISOString() 대신 get...() 메서드를 사용합니다.
-    const toYYYYMMDD = (d) => {
-        const pad = (num) => String(num).padStart(2, '0');
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    };
-    const toHHMM = (d) => d.toTimeString().substring(0, 5);
-
-    return {
-        id: event.id,
-        title: event.title,
-        location: event.extendedProps?.location || "",
-        tagId: event.extendedProps?.tagId || null, // 'tags'를 'tagId'로 변경
-        description: event.extendedProps?.description || "",
-        allDay: event.allDay,
-        startDate: toYYYYMMDD(start),
-        startTime: event.allDay ? '09:00' : toHHMM(start),
-        endDate: toYYYYMMDD(inclusiveEnd),
-        endTime: event.allDay ? '10:00' : toHHMM(inclusiveEnd),
-        calendarId: event.extendedProps?.calendarId || 1,
-    };
-};
-
-const ScheduleEdit = ({item, onSave, onCancel}) => {
-    const { tags } = useTags(); // TagContext에서 태그 목록 가져오기
-    // 백엔드 데이터 구조에 맞게 폼 상태를 상세하게 변경
-    const [form, setForm] = useState({
-        id: null,
-        title: "",
-        location: "",
-        tagId: null, // 'tags'를 'tagId'로 변경
-        description: "",
-        allDay: true,
-        startDate: "",
-        startTime: "09:00",
-        endDate: "",
-        endTime: "10:00",
-        calendarId: 1,
-    });
-
-    useEffect(() => {
-        const initialState = transformEventToFormState(item);
-        if (initialState) {
-            setForm(initialState);
-        }
-    }, [item]);
+const ScheduleEdit = ({item, onSave, tags: tagsFromProp}) => {
+    const formRef = useRef(null); // ref 생성
+    const { tags: tagsFromContext } = useTags(); // TagContext에서 태그 목록 가져오기
+    const { formData: form, setFormData: setForm, goBackInSidebar } = useSchedule(); // ✅ Context에서 상태 가져오기
+    const tags = tagsFromProp || tagsFromContext; // prop으로 받은 tags가 있으면 사용, 없으면 context의 것 사용
 
     const set = (k) => (e) => {
         // AntD Select는 event 객체가 아닌 value를 직접 전달하므로, e가 바로 value가 됩니다.
@@ -92,6 +33,8 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
 
     // 시작 날짜/시간이 변경될 때 종료 날짜/시간을 자동으로 조정합니다.
     useEffect(() => {
+        if (!form) return; // ✅ form이 null일 때를 대비한 가드
+
         // 시작일이 종료일보다 늦어지면, 종료일을 시작일과 같게 설정
         if (form.startDate > form.endDate) {
             setForm(prev => ({ ...prev, endDate: prev.startDate }));
@@ -101,7 +44,7 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
         if (form.startDate === form.endDate && form.startTime > form.endTime) {
             setForm(prev => ({ ...prev, endTime: prev.startTime }));
         }
-    }, [form.startDate, form.startTime, form.endDate, form.endTime]);
+    }, [form?.startDate, form?.startTime, form?.endDate, form?.endTime, setForm]);
 
     const handleSave = () => {
         const { id, title, description, allDay, startDate, startTime, endDate, endTime, location, tagId, calendarId } = form;
@@ -135,9 +78,12 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
         value: tag.id,
         label: tag.label
     }));
- 
+
+    // ✅ Context의 formData가 아직 준비되지 않았다면 아무것도 렌더링하지 않습니다.
+    if (!form) return null;
+
     return (
-        <FormWrapper>
+        <FormWrapper ref={formRef}>
             <FormBody>
                 <FieldSet>
                     <Label htmlFor="title">제목</Label>
@@ -181,6 +127,7 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
                         options={tagOptions}
                         style={{ width: '100%' }}
                         allowClear
+                        getPopupContainer={() => formRef.current} // 드롭다운을 form 내부에 렌더링
                     />
                 </FieldSet>
 
@@ -191,7 +138,7 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
             </FormBody>
 
             <ActionButtons>
-                <Button className="secondary" onClick={onCancel}>취소</Button>
+                <Button className="secondary" onClick={goBackInSidebar}>취소</Button>
                 <Button className="primary" onClick={handleSave}>저장</Button>
             </ActionButtons>
         </FormWrapper>

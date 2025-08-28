@@ -13,6 +13,10 @@ export const ListWrapper = styled.div`
 
 /** 날짜 제목을 포함하는 헤더 영역 */
 export const ListHeader = styled.header`
+    /* ✅ [수정] 제목과 버튼을 나란히 정렬하기 위해 flex 속성을 추가합니다. */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding-bottom: 12px;
     border-bottom: 1px solid #e9ecef;
 `;
@@ -23,6 +27,27 @@ export const DateTitle = styled.h2`
     font-weight: 600;
     color: #343a40;
     margin: 0;
+`;
+
+/* ✅ [신규] 필터 아이콘 버튼들을 감싸는 컨테이너입니다. */
+export const FilterButtons = styled.div`
+    display: flex;
+    gap: 8px;
+`;
+
+/* ✅ [신규] 개별 필터 아이콘 버튼의 스타일입니다. */
+export const FilterButton = styled.button`
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    color: ${({ $active }) => ($active ? '#7b5fff' : '#aaa')};
+    transition: color 0.2s;
+
+    &:hover {
+        color: ${({ $active }) => ($active ? '#7b5fff' : '#555')};
+    }
 `;
 
 /** 일정 목록을 감싸는 ul 태그, 스크롤 가능 */
@@ -63,23 +88,4 @@ export const NoEventsMessage = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-`;
-
-/** '일정 추가' 버튼 */
-export const AddButton = styled.button`
-    width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 6px;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    background-color: #3498db;
-    color: white;
-    margin-top: auto;
-    
-    &:hover {
-        background-color: #2980b9;
-    }
 `;
