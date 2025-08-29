@@ -312,17 +312,22 @@ const SchedulePopUp = () => {
         }
     };
 
-    const handleSave = (data) => {
-        if (currentItem?.id) {
-            updateEvent({ ...data, id: currentItem.id });
-        } else {
-            addEvent(data);
+    const handleSave = async (data) => {
+        try {
+            if (currentItem?.id) {
+                await updateEvent({ ...data, id: currentItem.id });
+            } else {
+                await addEvent(data);
+            }
+            handleBackToList();
+        } catch (error) {
+            console.error("Failed to save event:", error);
+            // 사용자에게 에러 알림을 표시하는 로직을 추가할 수 있습니다.
         }
-        handleBackToList();
     };
 
-    const handleDelete = (id) => {
-        deleteEvent(id);
+    const handleDelete = async (id) => {
+        await deleteEvent(id);
         // 삭제 후에는 항상 목록 보기로 돌아갑니다.
         handleBackToList();
     };
@@ -331,13 +336,16 @@ const SchedulePopUp = () => {
         switch (viewMode) {
             case 'form':
                 const FormComponent = currentItem?.id ? ScheduleEdit : ScheduleForm;
+                // '새 일정' 모드일 때, 캘린더에서 전달받은 다중 날짜 정보(selectInfo)가 있으면 사용하고,
+                // 없으면 팝업의 단일 날짜(date)를 사용합니다.
+                const initialDataForNew = popupData?.selectInfo || { startStr: date, endStr: date, allDay: true };
                 const formProps = {
                     tags: tags,
                     onCancel: handleBackToList,
                     onSave: handleSave,
                     ...(currentItem?.id
                         ? { item: currentItem }
-                        : { initialData: { start: date, end: date, allDay: true } })
+                        : { initialData: initialDataForNew })
                 };
                 return <FormComponent {...formProps} />;
             case 'detail':

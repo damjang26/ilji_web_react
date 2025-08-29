@@ -67,26 +67,29 @@ export default function FullCalendarExample() {
         const diffInMs = end.getTime() - start.getTime();
         const diffInDays = diffInMs / (1000 * 3600 * 24);
 
-        if (diffInDays > 1) {
-            // 여러 날을 선택한 경우: 사이드바에서 새 일정 생성
-            openSidebarForNew(selectInfo);
-        } else {
-            // 하루만 선택(클릭)한 경우: 팝업 열기.
-            // ✅ [수정] 기준점을 '날짜 셀'이 아닌 '마우스 클릭 좌표'로 변경합니다.
-            const rect = {
-                top: jsEvent.clientY,
-                bottom: jsEvent.clientY,
-                left: jsEvent.clientX,
-                right: jsEvent.clientX,
-            };
+        // ✅ 팝업 위치 계산을 위해 마우스 클릭/드래그 시작 좌표를 사용합니다.
+        const rect = {
+            top: jsEvent.clientY,
+            bottom: jsEvent.clientY,
+            left: jsEvent.clientX,
+            right: jsEvent.clientX,
+        };
 
+        if (diffInDays > 1) {
+            // 여러 날을 선택한 경우: 사이드바와 팝업 모두 '새 일정' 모드로 엽니다.
+            openSidebarForNew(selectInfo);
             openPopup({
                 date: startStr,
-                // 팝업이 위치를 계산할 수 있도록 마우스 클릭 좌표를 전달합니다.
+                targetRect: rect,
+                selectInfo: selectInfo, // ✅ 팝업 폼에 정확한 날짜 범위를 전달하기 위해 추가
+            });
+        } else {
+            // 하루만 선택(클릭)한 경우: 팝업과 사이드바를 '목록' 모드로 엽니다.
+            openPopup({
+                date: startStr,
                 targetRect: rect,
             });
 
-            // ✅ 동시에, 사이드바를 열고 해당 날짜의 일정 목록을 보여줍니다.
             openSidebarForDate({ startStr });
         }
 
