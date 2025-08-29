@@ -34,6 +34,16 @@ export default function AuthProvider({ children }) {
             localStorage.setItem("token", appToken);
             setToken(appToken);
 
+            // --- 여기에서 토큰 payload를 확인합니다 ---
+            console.log("서버로부터 받은 JWT:", appToken);
+            try {
+                const payload = JSON.parse(atob(appToken.split('.')[1]));
+                console.log("JWT Payload (사용자 정보):", payload);
+            } catch (e) {
+                console.error("JWT 디코딩 실패:", e);
+            }
+            // -----------------------------------------
+
             // 2. 방금 받은 appToken을 사용하여, 서버에서 완전한 사용자 정보를 다시 조회합니다.
             const meResponse = await api.get("/api/auth/me");
             const user = meResponse.data.user;
