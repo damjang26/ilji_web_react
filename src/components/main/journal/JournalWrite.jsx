@@ -22,7 +22,7 @@ import ImageEditor from './image_edit/ImageEditor.jsx';
 const MAX_CHAR_LIMIT = 3000;
 const MAX_IMAGE_LIMIT = 3;
 
-const JournalWrite = ({onClose, selectedDate}) => {
+const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
     const {user} = useAuth(); // 현재 로그인한 유저 정보
     const {addJournal} = useJournal(); // ✅ JournalContext에서 저장 함수 가져오기
     const [isSubmitting, setIsSubmitting] = useState(false); // ✅ 제출 중 상태 추가
@@ -136,6 +136,7 @@ const JournalWrite = ({onClose, selectedDate}) => {
 
     // --- 이미지 편집 모드 핸들러 ---
     const handleCancelEdit = () => {
+        if (onFabricModeChange) onFabricModeChange(false); // 편집 모드 종료 시 모달 크기 복원
         setEditingImageInfo(null); // 편집 모드 종료
     };
 
@@ -153,6 +154,7 @@ const JournalWrite = ({onClose, selectedDate}) => {
         };
 
         setImages(newImages);
+        if (onFabricModeChange) onFabricModeChange(false); // 편집 저장 시 모달 크기 복원
         setEditingImageInfo(null); // 모든 편집 모드 종료
         alert('이미지가 성공적으로 편집되었습니다.');
     };
@@ -190,6 +192,7 @@ const JournalWrite = ({onClose, selectedDate}) => {
                 imageInfo={editingImageInfo}
                 onSave={handleSaveEdit}
                 onCancel={handleCancelEdit}
+                onFabricModeChange={onFabricModeChange} // ImageEditor로 심부름꾼 함수 전달
             />
         );
     }

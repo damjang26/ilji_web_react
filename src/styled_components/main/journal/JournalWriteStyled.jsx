@@ -89,12 +89,12 @@ export const ImageEditorContainer = styled.div`
     justify-content: space-between;
     width: 100%;
     min-height: 400px;
+    max-height: 1000px;
     background-color: #f6f3ff;
     box-sizing: border-box;
 
     img {
         max-width: 100%;
-        max-height: 300px;
         object-fit: contain;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         border-radius: 4px;
@@ -180,9 +180,96 @@ export const CanvasContainer = styled.div`
 
 export const EditContainer = styled.div`
     display: flex;
+    flex-direction: column;
     width: 40%;
-    height: 100%;
+    height: ${(props) => props.canvasHeight}px;
     min-height: 400px;
     background-color: #ffffff;
     border: 1px solid black;
+`;
+
+export const EditTabMenuContainer = styled.div`
+    display: flex;
+    justify-content: center;
+    border-bottom: 1px solid #ebe9ef;
+    margin-top: 15px;
+`;
+
+export const EditTab = styled.div`
+    padding: 6px 19px;
+    color: ${props => (props.click ? '#7b5fff' : '#868e96')};
+    border-bottom: 3px solid ${props => (props.click ? '#7b5fff' : 'transparent')};
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    font-size: 20px;
+`;
+
+export const EditTabContent = styled.div`
+    padding: 10px;
+`;
+
+export const EditTabWrapper = styled.div`
+    width: 247px;
+`;
+
+export const EditDrawPenButton = styled.button`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    background-color: #ffffff;
+    border: 2px solid #7b5fff;
+    border-radius: 9999px;
+    color: #7b5fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    /* $active prop에 따라 스타일 변경 */
+    background-color: ${props => props.$active ? '#7b5fff' : '#ffffff'};
+    color: ${props => props.$active ? '#ffffff' : '#7b5fff'};
+
+    &:hover {
+        opacity: 0.8;
+    }
+`;
+
+export const EditDrawBrushWidthList = styled.div`
+    display: flex;
+    gap: 10px;
+    align-items: center;
+`;
+
+export const EditDrawBrushWidthBtn = styled.button`
+    padding: 6px 10px;
+    border-radius: 5px;
+    border: 1px solid ${props => props.$active ? '#7b5fff' : '#ccc'};
+    background-color: ${props => props.$active ? '#f0ebff' : 'white'};
+    color: ${props => props.$active ? '#7b5fff' : '#333'};
+    cursor: pointer;
+
+    &:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+`;
+
+export const EditDrawColorList = styled.div`
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+`;
+
+export const EditDrawColor = styled.div`
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: ${props => props.color};
+    cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+    opacity: ${props => props.disabled ? 0.5 : 1};
+    border: 3px solid ${props => props.$active ? '#7b5fff' : '#fff'};
+    box-shadow: 0 0 0 1px #ccc;
+    transition: all 0.2s ease;
 `;

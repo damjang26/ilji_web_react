@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.min.css';
 import {FaArrowLeft} from 'react-icons/fa';
@@ -11,26 +11,26 @@ import {
 } from '../../../../styled_components/main/journal/JournalWriteStyled';
 import FabricEditor from "./FabricEditor.jsx";
 
-const ImageEditor = ({imageInfo, onSave, onCancel}) => {
+const ImageEditor = ({imageInfo, onSave, onCancel, onFabricModeChange}) => {
     const [editingStep, setEditingStep] = useState('crop'); // 'crop' | 'fabric'
     const [croppedImage, setCroppedImage] = useState(null);
     const cropperRef = useRef(null);
 
+    useEffect(() => {
+        if (onFabricModeChange) {
+            onFabricModeChange(editingStep === 'fabric');
+        }
+    }, [editingStep, onFabricModeChange]);
+
     // --- Cropper.js 핸들러 ---
     const handleNextStep = () => {
         const cropper = cropperRef.current?.cropper;
-        console.log("✅ cropperRef:", cropperRef.current);
-        console.log("✅ cropper 인스턴스:", cropper);
         if (typeof cropper === 'undefined') return;
 
-
-        console.log("✅ cropData:", cropper.getData(true));
         const croppedCanvas = cropper.getCroppedCanvas({
             width: cropper.getData(true).width,
             height: cropper.getData(true).height,
         });
-        console.log("✅ croppedCanvas:", croppedCanvas);
-        console.log("✅ croppedCanvas 크기:", croppedCanvas?.width, croppedCanvas?.height);
 
         croppedCanvas.toBlob((blob) => {
             if (!blob) {
@@ -38,7 +38,6 @@ const ImageEditor = ({imageInfo, onSave, onCancel}) => {
                 return;
             }
             const blobUrl = URL.createObjectURL(blob);
-            console.log("✅ Blob URL:", blobUrl);
             setCroppedImage(blobUrl);
         }, 'image/png');
         setEditingStep('fabric');
@@ -102,8 +101,6 @@ const ImageEditor = ({imageInfo, onSave, onCancel}) => {
                     {croppedImage && (
                         <>
                             <FabricEditor croppedImage={croppedImage}/>
-                            {/* 바로 확인용 */}
-                            <img src={croppedImage} alt="테스트 이미지" style={{maxWidth: '300px'}}/>
                         </>
                     )}
                 </ImageEditorContainer>

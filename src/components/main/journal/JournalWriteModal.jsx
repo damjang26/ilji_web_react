@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {useNavigate, useLocation} from "react-router-dom";
 import JournalWrite from "./JournalWrite.jsx";
 import Modal from "./Modal.jsx";
@@ -6,6 +7,8 @@ const JournalWriteModal = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const selectedDate = location.state?.selectedDate;
+    // 이미지 편집기 단계에 따라 모달 크기를 조절하기 위한 상태
+    const [isFabricMode, setIsFabricMode] = useState(false);
 
     // "모달이 열릴 때, location.state에 날짜가 잘 도착했는가?"
     // console.log('JournalWriteModal이 받은 location state:', location.state);
@@ -16,8 +19,12 @@ const JournalWriteModal = () => {
     };
 
     return (
-        <Modal isOpen={true} onClose={handleClose}>
-            <JournalWrite onClose={handleClose} selectedDate={selectedDate}/>
+        <Modal isOpen={true} onClose={handleClose} isFabricStep={isFabricMode}>
+            <JournalWrite
+                onClose={handleClose}
+                selectedDate={selectedDate}
+                onFabricModeChange={setIsFabricMode} // 자식에게 상태 변경 함수(심부름꾼) 전달
+            />
         </Modal>
     );
 };

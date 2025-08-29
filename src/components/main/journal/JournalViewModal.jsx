@@ -1,6 +1,7 @@
 import {useNavigate} from "react-router-dom";
 import Modal from "./Modal.jsx";
 import JournalView from "./JournalView.jsx";
+import {useState} from "react";
 
 const JournalViewModal = () => {
     const navigate = useNavigate();
