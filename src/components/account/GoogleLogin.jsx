@@ -12,7 +12,7 @@ const SocialLogin = () => {
                     try {
                         await loginWithGoogle(res.credential);
                         console.log("로그인 성공!");
-                        console.log(res.credential)
+                        console.log("credential: " +  res.credential)
                     } catch (err) {
                         console.error("로그인 처리 중 에러 발생:", err);
                     }
