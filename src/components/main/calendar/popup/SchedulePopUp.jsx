@@ -125,7 +125,7 @@ const SchedulePopUp = () => {
         closePopup,
         addEvent,
         updateEvent,
-        deleteEvent,
+        requestDeleteConfirmation, // ✅ [수정] 중앙화된 삭제 요청 함수를 가져옵니다.
         openSidebarForNew,
         openSidebarForEdit,
         openSidebarForDetail,
@@ -141,7 +141,26 @@ const SchedulePopUp = () => {
     const popupRef = useRef(null);
 
     const { isOpen, data: popupData } = popupState;
-    const date = popupData?.date;
+
+    // ✅ [수정] 팝업 헤더에 표시될 날짜를 지능적으로 결정합니다.
+    // 사용자가 날짜를 클릭했는지, 이벤트를 직접 클릭했는지에 따라 popupData의 구조가 다릅니다.
+    // 이 코드는 두 경우 모두를 처리하여 항상 정확한 날짜를 표시합니다.
+    const date = useMemo(() => {
+        if (!popupData) return null;
+
+        // Case 1: 날짜를 클릭한 경우, popupData.date에 날짜 문자열이 직접 들어있습니다.
+        if (popupData.date) {
+            return popupData.date;
+        }
+
+        // Case 2: 이벤트를 직접 클릭한 경우, popupData.event에서 날짜를 추출해야 합니다.
+        if (popupData.event?.start) {
+            const d = new Date(popupData.event.start);
+            // toISOString()의 시간대 문제를 피하기 위해 로컬 날짜 구성요소를 사용합니다.
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+        return null;
+    }, [popupData]);
 
     // ✅ [수정] 팝업의 뷰(list, detail, form)를 결정하는 로직을 하나로 통합합니다.
     // 이 효과는 팝업이 열리거나 사이드바의 상태가 바뀔 때, 팝업의 뷰를 올바르게 설정하여
@@ -326,10 +345,9 @@ const SchedulePopUp = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        await deleteEvent(id);
-        // 삭제 후에는 항상 목록 보기로 돌아갑니다.
-        handleBackToList();
+    // ✅ [수정] 삭제 버튼 클릭 시, Context의 중앙화된 삭제 확인 함수를 호출합니다.
+    const handleDelete = (id) => {
+        requestDeleteConfirmation(id);
     };
 
     const renderContent = () => {

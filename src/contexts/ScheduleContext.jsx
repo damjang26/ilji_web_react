@@ -5,6 +5,7 @@
  */
 import { createContext, useContext, useState, useMemo, useCallback, useEffect } from "react";
 import { api } from "../api"; // axios 대신 우리가 만든 api 인스턴스를 가져옵니다.
+import ConfirmModal from "../components/common/ConfirmModal.jsx";
 import { useAuth } from "../AuthContext.jsx";
 
 const ScheduleContext = createContext(null);
@@ -97,12 +98,14 @@ export function ScheduleProvider({ children }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // ✅ [신규] 삭제 확인 모달 상태를 Context로 이동하여 전역으로 관리합니다.
+    const [deleteModalState, setDeleteModalState] = useState({ isOpen: false, eventId: null });
+
     // 백엔드 데이터를 FullCalendar 형식으로 변환하는 헬퍼 함수
     const formatEventForCalendar = (event) => {
         // ✅ [핵심 수정] 백엔드가 isAllDay 플래그를 false로 잘못 보내더라도,
-        // 시간 형식을 보고 '하루 종일' 여부를 다시 판단합니다.
-        const isAllDayEvent = event.isAllDay ||
-            (event.startTime?.endsWith('T00:00:00') && event.endTime?.endsWith('T23:59:59'));
+        // 시간 형식을 보고 '하루 종일' 여부를 다시 판단합니다. (이제 백엔드를 신뢰하므로 이 로직을 단순화할 수 있습니다.)
+        const isAllDayEvent = event.isAllDay;
 
         const commonProps = {
             id: event.id,
@@ -220,66 +223,7 @@ export function ScheduleProvider({ children }) {
         fetchSchedules();
     }, [user]); // user 객체가 변경될 때마다 이 useEffect 훅을 다시 실행합니다.
 
-
-    const addEvent = useCallback(async (eventData) => {
-        if (!user) return; // 사용자가 없으면 함수 실행 중단
-
-        // 프론트엔드 폼 데이터를 백엔드 DTO 형식으로 변환
-        const requestData = {
-            calendarId: eventData.extendedProps.calendarId || 1,
-            title: eventData.title,
-            location: eventData.extendedProps.location,
-            tagId: eventData.extendedProps.tagId, // tags -> tagId로 수정
-            description: eventData.extendedProps.description,
-            // ✅ 새로운 헬퍼 함수를 사용하여 시간을 안전하게 포맷합니다.
-            startTime: formatDateTimeForBackend(eventData.start, eventData.allDay, false),
-            endTime: formatDateTimeForBackend(eventData.end, eventData.allDay, true),
-            isAllDay: eventData.allDay,
-            rrule: eventData.extendedProps.rrule,
-        };
-        try {
-            const response = await api.post("/api/schedules", requestData);
-            const newEvent = formatEventForCalendar(response.data);
-            setEvents(prev => [...prev, newEvent]);
-        } catch (err) {
-            console.error("일정 생성 실패:", err);
-            // TODO: 사용자에게 에러 알림
-        }
-    }, [user]); // ✅ user를 의존성 배열에 추가
-
-    const updateEvent = useCallback(async (eventData) => {
-        const requestData = {
-            calendarId: eventData.extendedProps.calendarId,
-            title: eventData.title,
-            location: eventData.extendedProps.location,
-            tagId: eventData.extendedProps.tagId, // tags -> tagId로 수정
-            description: eventData.extendedProps.description,
-            // ✅ 새로운 헬퍼 함수를 사용하여 시간을 안전하게 포맷합니다.
-            startTime: formatDateTimeForBackend(eventData.start, eventData.allDay, false),
-            // 드래그앤드롭 시 end가 null일 수 있으므로 start로 대체합니다.
-            endTime: formatDateTimeForBackend(eventData.end || eventData.start, eventData.allDay, true),
-            isAllDay: eventData.allDay,
-            rrule: eventData.extendedProps.rrule,
-        };
-        try {
-            const response = await api.put(`/api/schedules/${eventData.id}`, requestData);
-            const updatedEvent = formatEventForCalendar(response.data);
-            setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
-        } catch (err) {
-            console.error("일정 업데이트 실패:", err);
-        }
-    }, []);
-
-    const deleteEvent = useCallback(async (eventId) => {
-        try {
-            await api.delete(`/api/schedules/${eventId}`);
-            setEvents(prev => prev.filter(e => e.id !== eventId));
-        } catch (err) {
-            console.error("일정 삭제 실패:", err);
-        }
-    }, []);
-
-    // --- UI 제어 함수 ---
+    // --- UI 제어 함수 (정의 순서가 중요합니다) ---
 
     // 사이드바 관련 함수들
     const openSidebarForDate = useCallback(
@@ -332,7 +276,6 @@ export function ScheduleProvider({ children }) {
         setIsSidebarOpen(prev => !prev);
     }, []);
 
-
     // 팝업 관련 함수들
     const openPopup = useCallback((data) => {
         setPopupState({ isOpen: true, data });
@@ -343,47 +286,40 @@ export function ScheduleProvider({ children }) {
     }, []);
 
     /**
-     * ✅ [신규] 이벤트 상세보기를 위한 통합 함수
-     * 사이드바와 팝업을 동시에 '상세보기' 모드로 엽니다.
-     * 컴포넌트가 UI 상태를 직접 제어하는 대신, 이 함수를 통해 추상화된 동작을 요청합니다.
-     */
-    const showEventDetails = useCallback((event, clickInfo) => {
-        // 1. 사이드바를 상세 보기 모드로 엽니다.
-        openSidebarForDetail(event);
-
-        // 2. 팝업을 열고, 위치 정보를 전달합니다.
-        const rect = clickInfo.el.getBoundingClientRect();
-        openPopup({
-            date: event.startStr.substring(0, 10),
-            targetRect: rect,
-        });
-    }, [openSidebarForDetail, openPopup]);
-
-    /**
      * ✅ [신규] 사이드바에서 '뒤로 가기' 동작을 처리하는 통합 함수
-     * 현재 사이드바의 상태(selectedInfo)에 따라 적절한 이전 화면으로 전환합니다.
-     * (예: 수정 폼 -> 상세 보기, 상세 보기 -> 목록 보기)
      */
     const goBackInSidebar = useCallback(() => {
         if (!selectedInfo) {
             closeSidebar();
             return;
         }
-
         const { type, data } = selectedInfo;
-
         switch (type) {
             case 'edit':
-                // 수정 폼에서는 해당 이벤트의 상세 보기 화면으로 돌아갑니다.
                 openSidebarForDetail(data);
                 break;
             case 'new':
-                // 새 일정 폼에서는 해당 날짜의 목록 보기 화면으로 돌아갑니다.
                 openSidebarForDate({ startStr: data.startStr });
                 break;
             case 'detail':
-                // 상세 보기에서는 해당 날짜의 목록 보기 화면으로 돌아갑니다.
-                const dateStr = data.startStr || (data.start && data.start.substring(0, 10));
+                let dateStr = null;
+                // ✅ [수정] '뒤로가기' 시 날짜를 안전하게 추출합니다.
+                // data.start는 캘린더에서 직접 클릭하면 Date 객체,
+                // 팝업이나 목록에서 클릭하면 문자열일 수 있으므로 두 경우 모두 처리합니다.
+                if (data && data.start) {
+                    if (data.start instanceof Date && !isNaN(data.start)) {
+                        // Case 1: Date 객체인 경우 - UTC 변환을 피하기 위해 로컬 날짜 구성요소를 사용합니다.
+                        const d = new Date(data.start);
+                        const year = d.getFullYear();
+                        const month = String(d.getMonth() + 1).padStart(2, '0');
+                        const day = String(d.getDate()).padStart(2, '0');
+                        dateStr = `${year}-${month}-${day}`;
+                    } else if (typeof data.start === 'string') {
+                        // Case 2: 문자열인 경우 (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss)
+                        dateStr = data.start.split('T')[0];
+                    }
+                }
+
                 if (dateStr) {
                     openSidebarForDate({ startStr: dateStr });
                 } else {
@@ -391,10 +327,105 @@ export function ScheduleProvider({ children }) {
                 }
                 break;
             default:
-                // 그 외의 경우(목록 보기 등)에는 사이드바를 닫습니다.
                 closeSidebar();
         }
     }, [selectedInfo, openSidebarForDetail, openSidebarForDate, closeSidebar]);
+
+    /**
+     * ✅ [신규] 이벤트 상세보기를 위한 통합 함수
+     */
+    const showEventDetails = useCallback((event, clickInfo) => {
+        openSidebarForDetail(event);
+        const rect = clickInfo.el.getBoundingClientRect();
+        openPopup({
+            event: event,
+            targetRect: rect,
+        });
+    }, [openSidebarForDetail, openPopup]);
+
+
+    const addEvent = useCallback(async (eventData) => {
+        if (!user) return; // 사용자가 없으면 함수 실행 중단
+
+        // 프론트엔드 폼 데이터를 백엔드 DTO 형식으로 변환
+        const requestData = {
+            calendarId: eventData.extendedProps.calendarId || 1,
+            title: eventData.title,
+            location: eventData.extendedProps.location,
+            tagId: eventData.extendedProps.tagId, // tags -> tagId로 수정
+            description: eventData.extendedProps.description,
+            // ✅ 새로운 헬퍼 함수를 사용하여 시간을 안전하게 포맷합니다.
+            startTime: formatDateTimeForBackend(eventData.start, eventData.allDay, false),
+            endTime: formatDateTimeForBackend(eventData.end, eventData.allDay, true),
+            // ✅ [최종 수정] 백엔드 DTO가 boolean 타입을 기대하므로, boolean 값을 그대로 전송합니다.
+            isAllDay: eventData.allDay,
+            rrule: eventData.extendedProps.rrule,
+        };
+
+        try {
+            const response = await api.post("/api/schedules", requestData);
+            const newEvent = formatEventForCalendar(response.data);
+            setEvents(prev => [...prev, newEvent]);
+        } catch (err) {
+            console.error("일정 생성 실패:", err);
+            // TODO: 사용자에게 에러 알림
+        }
+    }, [user]); // ✅ user를 의존성 배열에 추가
+
+    const updateEvent = useCallback(async (eventData) => {
+        const requestData = {
+            calendarId: eventData.extendedProps.calendarId,
+            title: eventData.title,
+            location: eventData.extendedProps.location,
+            tagId: eventData.extendedProps.tagId, // tags -> tagId로 수정
+            description: eventData.extendedProps.description,
+            // ✅ 새로운 헬퍼 함수를 사용하여 시간을 안전하게 포맷합니다.
+            startTime: formatDateTimeForBackend(eventData.start, eventData.allDay, false),
+            // 드래그앤드롭 시 end가 null일 수 있으므로 start로 대체합니다.
+            endTime: formatDateTimeForBackend(eventData.end || eventData.start, eventData.allDay, true),
+            // ✅ [최종 수정] 여기도 동일하게 boolean 값을 그대로 전송합니다.
+            isAllDay: eventData.allDay,
+            rrule: eventData.extendedProps.rrule,
+        };
+        try {
+            const response = await api.put(`/api/schedules/${eventData.id}`, requestData);
+            const updatedEvent = formatEventForCalendar(response.data);
+            setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
+        } catch (err) {
+            console.error("일정 업데이트 실패:", err);
+        }
+    }, []);
+
+    const deleteEvent = useCallback(async (eventId) => {
+        try {
+            await api.delete(`/api/schedules/${eventId}`);
+            setEvents(prev => prev.filter(e => e.id !== eventId));
+        } catch (err) {
+            console.error("일정 삭제 실패:", err);
+        }
+    }, []);
+
+    // --- 삭제 관련 함수 ---
+    const requestDeleteConfirmation = useCallback((eventId) => {
+        // closePopup(); // 팝업을 닫지 않고, 모달을 그 위에 띄웁니다.
+        setDeleteModalState({ isOpen: true, eventId }); // 2. 삭제 확인 모달을 엽니다.
+    }, []);
+
+    const cancelDeleteConfirmation = useCallback(() => {
+        setDeleteModalState({ isOpen: false, eventId: null });
+    }, []);
+
+    const confirmDelete = useCallback(async () => {
+        if (deleteModalState.eventId) {
+            await deleteEvent(deleteModalState.eventId);
+            // 삭제 후, 사이드바가 상세/수정 화면이었다면 목록으로 되돌립니다.
+            if (selectedInfo?.type === 'detail' || selectedInfo?.type === 'edit') {
+                goBackInSidebar();
+            }
+        }
+        // 모달을 닫고 상태를 초기화합니다.
+        setDeleteModalState({ isOpen: false, eventId: null });
+    }, [deleteModalState.eventId, deleteEvent, selectedInfo, goBackInSidebar]);
 
     const value = useMemo(() => ({
         // 데이터
@@ -418,22 +449,31 @@ export function ScheduleProvider({ children }) {
         closePopup,
         showEventDetails, // ✅ 추가
         goBackInSidebar, // ✅ 추가
-        // CRUD 함수
+        // CRUD 함수 (deleteEvent는 confirmDelete 내부에서 사용됩니다)
         addEvent,
         updateEvent,
-        deleteEvent,
+        requestDeleteConfirmation, // ✅ [수정] 외부에서는 이 함수를 통해 삭제를 요청합니다.
     }), [
         events, loading, error,
         formData, isSidebarOpen, selectedInfo,
         popupState,
-        addEvent, updateEvent, deleteEvent,
+        addEvent, updateEvent, requestDeleteConfirmation, // deleteEvent -> requestDeleteConfirmation
         openSidebarForDate, openSidebarForNew, openSidebarForDetail, openSidebarForEdit, closeSidebar, toggleSidebar,
-        openPopup, closePopup, showEventDetails, goBackInSidebar
+        openPopup, closePopup, showEventDetails, goBackInSidebar, confirmDelete, cancelDeleteConfirmation // 의존성 배열 추가
     ]);
 
     return (
         <ScheduleContext.Provider value={value}>
             {children}
+            {/* ✅ [신규] ConfirmModal을 전역 레벨에서 렌더링하여 중앙에서 제어합니다. */}
+            <ConfirmModal
+                isOpen={deleteModalState.isOpen}
+                onClose={cancelDeleteConfirmation}
+                onConfirm={confirmDelete}
+                title="일정 삭제"
+            >
+                정말로 이 일정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+            </ConfirmModal>
         </ScheduleContext.Provider>
     );
 }

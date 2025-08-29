@@ -17,7 +17,10 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, children }) => {
 
     return ReactDOM.createPortal(
         (
-            <ModalWrapper>
+            // ✅ [수정] mousedown 이벤트의 전파를 막습니다.
+            // 이렇게 하면 모달 내부를 클릭했을 때, 다른 컴포넌트(예: SchedulePopUp)의
+            // '외부 클릭 감지' 로직이 실행되어 팝업이 닫히는 현상을 방지할 수 있습니다.
+            <ModalWrapper onMouseDown={(e) => e.stopPropagation()}>
                 <ModalBackdrop onClick={onClose} />
                 <ModalContent>
                     <ModalHeader>
