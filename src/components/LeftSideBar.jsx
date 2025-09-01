@@ -11,6 +11,7 @@ import {
     Overlay,
 } from "../styled_components/LeftSideBarStyled.jsx";
 
+
 const LeftSideBar = () => {
     const [isNotiOpen, setNotiOpen] = useState(false);
     const notiSidebarRef = useRef(null);
@@ -28,13 +29,14 @@ const LeftSideBar = () => {
                 setNotiOpen(false);
             }
         };
-        document.addEventListener("click", handleClickOutside);
-        return () => document.removeEventListener("click", handleClickOutside);
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [isNotiOpen]);
 
     return (
         <>
-            <SidebarContainer>
+            {/* ✅ [수정] mousedown 이벤트의 전파를 막아, 다른 팝업(일정 팝업 등)이 닫히는 현상을 방지합니다. */}
+            <SidebarContainer onMouseDown={(e) => e.stopPropagation()}>
                 <MenuItemsContainer>
                     <MenuItemWrapper><Profile/></MenuItemWrapper>
                     <MenuItemWrapper>
@@ -47,7 +49,7 @@ const LeftSideBar = () => {
             {ReactDOM.createPortal(
                 <>
                     <Overlay open={isNotiOpen} onClick={() => setNotiOpen(false)}/>
-                    <NotiSidebarWrapper ref={notiSidebarRef} open={isNotiOpen} onClick={(e) => e.stopPropagation()}>
+                    <NotiSidebarWrapper ref={notiSidebarRef} open={isNotiOpen} onMouseDown={(e) => e.stopPropagation()}>
                         <h2>Notifications</h2>
                         <p>여기에 내용 넣기</p>
                     </NotiSidebarWrapper>

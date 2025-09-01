@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { message } from 'antd'; // message 컴포넌트 import
 import { api } from '../api';
+import { useAuth } from '../AuthContext';
 
 const TagContext = createContext();
 
@@ -9,19 +10,32 @@ export const useTags = () => {
 };
 
 export const TagProvider = ({ children }) => {
+  const { user } = useAuth();
   const [tags, setTags] = useState([]);
+  const [loading, setLoading] = useState(false); // 초기 로딩 상태를 false로 변경
 
   const fetchTags = async () => {
+    if (!user) return; // 사용자가 없으면 요청하지 않음
+    setLoading(true);
     try {
       const response = await api.get('/api/tags');
       setTags(response.data);
     } catch (error) {
       console.error("Failed to fetch tags:", error);
       message.error('태그 목록을 불러오는데 실패했습니다.');
+    } finally {
+      setLoading(false);
     }
   };
 
-
+  useEffect(() => {
+    if (user) {
+      fetchTags();
+    } else {
+      // 로그아웃 시 태그 목록 초기화
+      setTags([]);
+    }
+  }, [user]);
 
   const addTag = async (newTagPayload) => {
     try {
@@ -49,12 +63,9 @@ export const TagProvider = ({ children }) => {
     }
   };
 
-  useEffect(() => {
-    fetchTags();
-  }, []);
-
   const value = {
     tags,
+    loading,
     fetchTags,
     addTag,
     deleteTag,

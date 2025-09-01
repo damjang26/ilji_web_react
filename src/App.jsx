@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { BrowserRouter, useLocation, Routes, Route } from "react-router-dom";
+import React, {useState} from "react";
+import {BrowserRouter, useLocation, Routes, Route} from "react-router-dom";
+import { Spin } from 'antd';
 
 import LeftSideBar from "./components/LeftSideBar.jsx";
 import RightSideBar from "./components/RightSideBar.jsx";
@@ -10,12 +11,22 @@ import Main from "./components/Main.jsx";
 import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
 import {JournalProvider} from "./contexts/JournalContext.jsx";
 import JournalViewModal from "./components/main/journal/JournalViewModal.jsx";
+import { ScheduleProvider } from "./contexts/ScheduleContext.jsx";
+import { TagProvider } from "./contexts/TagContext.jsx";
 
 const AppWrapper = styled.div`
     display: flex;
     width: 100%;
     height: 100vh;
     overflow: hidden; /* 전체 페이지의 스크롤바를 방지 */
+`;
+
+const FullPageSpinner = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
 `;
 
 const ContentWrapper = styled.div`
@@ -35,7 +46,11 @@ const AppContent = () => {
     const background = location.state && location.state.backgroundLocation;
 
     if (loading) {
-        return <div>Loading...</div>;
+        return (
+            <FullPageSpinner>
+                <Spin size="large" />
+            </FullPageSpinner>
+        );
     }
 
     return user ? (
@@ -55,7 +70,7 @@ const AppContent = () => {
                     </Routes>
                 )}
             </ContentWrapper>
-            <RightSideBar />
+            <RightSideBar/>
         </AppWrapper>
     ) : (
         <LoginPage/>
@@ -64,10 +79,17 @@ const AppContent = () => {
 
 export default function App() {
     return (
-        <BrowserRouter>
-            <JournalProvider>
-                <AppContent/>
-            </JournalProvider>
-        </BrowserRouter>
+        <>
+            <BrowserRouter>
+                <JournalProvider>
+                    <ScheduleProvider>
+                        <TagProvider>
+                            <AppContent/>
+                        </TagProvider>
+                    </ScheduleProvider>
+                </JournalProvider>
+            </BrowserRouter>
+            <div id="modal-root"></div>
+        </>
     );
 }

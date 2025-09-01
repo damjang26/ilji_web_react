@@ -1,8 +1,12 @@
-import {useEffect, useState} from "react";
+import { useEffect, useRef } from "react";
+import { useTags } from "../../../contexts/TagContext.jsx";
+import { useSchedule } from "../../../contexts/ScheduleContext.jsx";
+import { Select } from "antd";
 import {
     ActionButtons,
     Button,
     CheckboxWrapper,
+    CustomCheckbox,
     DateTimeRow,
     FieldSet,
     FormBody,
@@ -11,67 +15,26 @@ import {
     Label
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleEditStyled.jsx";
 
-const ScheduleEdit = ({item, onSave, onCancel}) => {
-    // 백엔드 데이터 구조에 맞게 폼 상태를 상세하게 변경
-    const [form, setForm] = useState({
-        id: null,
-        title: "",
-        location: "",
-        tags: "",
-        description: "",
-        allDay: true,
-        startDate: "",
-        startTime: "09:00",
-        endDate: "",
-        endTime: "10:00",
-        calendarId: 1,
-    });
-
-    useEffect(() => {
-        if (item) {
-            // 백엔드에서 온 start, end (ISO 문자열)를 날짜와 시간으로 분리합니다.
-            const start = new Date(item.start);
-
-            // "하루 종일" 일정의 경우, FullCalendar의 end는 exclusive(포함 안됨)이므로
-            // 폼에 표시하기 위해 inclusive(포함됨) 날짜로 다시 변환해야 합니다. (하루 빼기)
-            let inclusiveEnd;
-            if (item.allDay && item.end) {
-                inclusiveEnd = new Date(item.end);
-                inclusiveEnd.setDate(inclusiveEnd.getDate() - 1);
-            } else {
-                inclusiveEnd = item.end ? new Date(item.end) : new Date(start);
-            }
-
-            // 시간대 오류를 피하기 위해 toISOString() 대신 get...() 메서드를 사용합니다.
-            const toYYYYMMDD = (d) => {
-                const pad = (num) => String(num).padStart(2, '0');
-                return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-            };
-            const toHHMM = (d) => d.toTimeString().substring(0, 5);
-
-            setForm({
-                id: item.id,
-                title: item.title,
-                location: item.extendedProps?.location || "",
-                tags: item.extendedProps?.tags || "",
-                description: item.extendedProps?.description || "",
-                allDay: item.allDay,
-                startDate: toYYYYMMDD(start),
-                startTime: item.allDay ? '09:00' : toHHMM(start),
-                endDate: toYYYYMMDD(inclusiveEnd),
-                endTime: item.allDay ? '10:00' : toHHMM(inclusiveEnd),
-                calendarId: item.extendedProps?.calendarId || 1,
-            });
-        }
-    }, [item]);
+const ScheduleEdit = ({item, onSave, tags: tagsFromProp}) => {
+    const formRef = useRef(null); // ref 생성
+    const { tags: tagsFromContext } = useTags(); // TagContext에서 태그 목록 가져오기
+    const { formData: form, setFormData: setForm, goBackInSidebar } = useSchedule(); // ✅ Context에서 상태 가져오기
+    const tags = tagsFromProp || tagsFromContext; // prop으로 받은 tags가 있으면 사용, 없으면 context의 것 사용
 
     const set = (k) => (e) => {
+        // AntD Select는 event 객체가 아닌 value를 직접 전달하므로, e가 바로 value가 됩니다.
+        if (k === 'tagId') {
+            setForm((prev) => ({ ...prev, [k]: e }));
+            return;
+        }
         const v = e?.target?.type === "checkbox" ? e.target.checked : e.target.value;
         setForm((prev) => ({ ...prev, [k]: v }));
     };
 
     // 시작 날짜/시간이 변경될 때 종료 날짜/시간을 자동으로 조정합니다.
     useEffect(() => {
+        if (!form) return; // ✅ form이 null일 때를 대비한 가드
+
         // 시작일이 종료일보다 늦어지면, 종료일을 시작일과 같게 설정
         if (form.startDate > form.endDate) {
             setForm(prev => ({ ...prev, endDate: prev.startDate }));
@@ -81,10 +44,10 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
         if (form.startDate === form.endDate && form.startTime > form.endTime) {
             setForm(prev => ({ ...prev, endTime: prev.startTime }));
         }
-    }, [form.startDate, form.startTime, form.endDate, form.endTime]);
+    }, [form?.startDate, form?.startTime, form?.endDate, form?.endTime, setForm]);
 
     const handleSave = () => {
-        const { id, title, description, allDay, startDate, startTime, endDate, endTime, location, tags, calendarId } = form;
+        const { id, title, description, allDay, startDate, startTime, endDate, endTime, location, tagId, calendarId } = form;
 
         // 제목이 비어있으면 "새 일정"으로 기본값을 설정합니다.
         const finalTitle = title.trim() ? title : "새 일정";
@@ -103,15 +66,24 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
             extendedProps: {
                 description,
                 location,
-                tags,
+                tagId, // tags 대신 tagId 전송
                 calendarId,
             }
         };
         onSave(updatedEvent);
     };
+ 
+    // 태그 선택 옵션을 생성
+    const tagOptions = tags.map(tag => ({
+        value: tag.id,
+        label: tag.label
+    }));
+
+    // ✅ Context의 formData가 아직 준비되지 않았다면 아무것도 렌더링하지 않습니다.
+    if (!form) return null;
 
     return (
-        <FormWrapper>
+        <FormWrapper ref={formRef}>
             <FormBody>
                 <FieldSet>
                     <Label htmlFor="title">제목</Label>
@@ -119,7 +91,7 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
                 </FieldSet>
 
                 <CheckboxWrapper>
-                    <input type="checkbox" id="all-day" checked={form.allDay} onChange={set("allDay")} />
+                    <CustomCheckbox id="all-day" checked={form.allDay} onChange={set("allDay")} />
                     <Label htmlFor="all-day" style={{fontWeight: 'normal', cursor: 'pointer'}}>하루 종일</Label>
                 </CheckboxWrapper>
 
@@ -144,9 +116,19 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
                     <Input id="location" placeholder="장소" value={form.location} onChange={set("location")} />
                 </FieldSet>
 
+                {/* 태그 입력을 Select로 변경 */}
                 <FieldSet>
                     <Label htmlFor="tags">태그</Label>
-                    <Input id="tags" placeholder="태그 (쉼표로 구분)" value={form.tags} onChange={set("tags")} />
+                    <Select
+                        id="tags"
+                        placeholder="태그 선택"
+                        value={form.tagId}
+                        onChange={set("tagId")}
+                        options={tagOptions}
+                        style={{ width: '100%' }}
+                        allowClear
+                        getPopupContainer={() => formRef.current} // 드롭다운을 form 내부에 렌더링
+                    />
                 </FieldSet>
 
                 <FieldSet>
@@ -156,7 +138,7 @@ const ScheduleEdit = ({item, onSave, onCancel}) => {
             </FormBody>
 
             <ActionButtons>
-                <Button className="secondary" onClick={onCancel}>취소</Button>
+                <Button className="secondary" onClick={goBackInSidebar}>취소</Button>
                 <Button className="primary" onClick={handleSave}>저장</Button>
             </ActionButtons>
         </FormWrapper>

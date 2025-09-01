@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 
 export const CalendarWrapper = styled.div`
 
@@ -6,7 +6,7 @@ export const CalendarWrapper = styled.div`
     display: flex;
     flex-direction: column;
     color: #8394a6;
-
+    
     /* week/day view 스크롤 숨김 */
 
     .fc-timegrid-scroller,
@@ -146,6 +146,8 @@ export const CalendarWrapper = styled.div`
 
     .fc-daygrid-day {
         border: 1px solid #e4eaf1; /* 버튼 테두리와 동일한 색상으로 통일감 */
+        position: relative; /* highlight 요소의 기준점 */
+        min-height: 90px; /* 셀 자체에 최소 높이를 지정 */
     }
 
 
@@ -173,25 +175,25 @@ export const CalendarWrapper = styled.div`
     }
 
     .fc .fc-daygrid-day-frame {
-        min-height: 90px;
+        /* min-height: 90px; */ /* 부모인 fc-daygrid-day로 이동 */
     }
 
     // 오늘 날짜 배경 색상 변경!
 
     .fc .fc-daygrid-day.fc-day-today {
-        background: #fff7e7;
+        background: #eaf6ff; /* 연한 파란색 */
     }
 
     /* Week / Day view - today 컬럼 전체 */
 
     .fc-timegrid-col.fc-day-today {
-        background-color: #fff7e7;
+        background-color: #eaf6ff; /* 연한 파란색 */
     }
 
     /* Week / Day view - all-day 영역 */
 
     .fc-timegrid-all-day.fc-day-today {
-        background-color: #fff7e7;
+        background-color: #eaf6ff; /* 연한 파란색 */
     }
 
     // 일정 컨테이너 디자인 나중에 일정 카테고리 생기면 그거별로 나눠야 함
@@ -213,6 +215,16 @@ export const CalendarWrapper = styled.div`
         text-transform: uppercase;
     }
 
+    /* 날짜 선택 시 배경이 셀을 꽉 채우도록 수정 */
+    .fc .fc-highlight {
+        background: rgba(255, 126, 185, 0.1); /* 더 연한 분홍색 */
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
 `;
 
 // 날짜에 호버했을 때 나타나는 일기 메뉴(모달) 스타일
@@ -229,8 +241,8 @@ export const DiaryPopoverContainer = styled.div`
     /* 마우스가 팝오버 위로 이동할 수 있도록 설정 */
     pointer-events: auto;
     transition: opacity 0.15s ease-in-out;
-    opacity: ${({ $visible }) => ($visible ? 1 : 0)};
-    visibility: ${({ $visible }) => ($visible ? 'visible' : 'hidden')};
+    opacity: ${({$visible}) => ($visible ? 1 : 0)};
+    visibility: ${({$visible}) => ($visible ? 'visible' : 'hidden')};
 `;
 
 // 팝오버 안의 개별 버튼 스타일
@@ -251,4 +263,41 @@ export const DiaryPopoverButton = styled.button`
     &:hover {
         background-color: #f0f2f5;
     }
+`;
+
+// --- 로딩 스피너 관련 스타일 ---
+
+// 스피너 회전 애니메이션
+const spin = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+// 스피너를 캘린더 중앙에 위치시키기 위한 래퍼
+export const SpinnerWrapper = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7); // 반투명 배경
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; // 캘린더 위에 표시
+  border-radius: 8px; // 부모 컨테이너와 맞춤
+`;
+
+// 스피너 자체의 스타일
+export const Spinner = styled.div`
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #9781ff; // 스피너 색상 (테마 색상과 유사하게)
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: ${spin} 1s linear infinite;
 `;
