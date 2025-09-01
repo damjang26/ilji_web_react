@@ -1,78 +1,123 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
-// 전체 마이페이지 감싸는 컨테이너
-export const MyPageSetContainer = styled.div`
-  display: flex;
-  flex-direction: column; /* 헤더, 메인을 수직으로 쌓기 */
-  width: 100%;
-  height: 100%;
-`;
-
-// 마이페이지 상단 배경 이미지를 위한 컨테이너
-export const MypageImg = styled.div`
-  height: 250px; /* 헤더,메인 박스가 겹칠 수 있도록 높이를 확보 */
-  margin: -40px 0 0; /* 부모의 여백을 무시, 좌우를 채우기 */
-  width: 100%; 
-  background-color: #e9ecef; /* 이미지가 없을 때 보일 임시 배경색 */
-  flex-shrink: 0; /* 컨테이너 크기 줄어들기 방지 */
-  z-index: 0; /* 배경 역할 가장 낮은 레이어에 위치 */
-
-  /* 나중에 실제 이미지를 넣을 때  */
-  /* background-image: url(여기에 이미지 주소); */
-  /* background-size: cover; */
-  /* background-position: center; */
-`;
-
-// 헤더와 메인을 감싸서 이미지 위에 띄울 박스 컨테이너
-export const ContentBox = styled.div`
-  position: relative;
-  z-index: 1; /* MypageImg(z-index: 0) 위 설정 */
-  margin-top: -110px; /* 이미지와 겹치는 정도를 변경 */
-  margin-left: 30px;  /* 박스 모양과 위치 */
-  margin-right: 30px;
-  background-color: #fafafa;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);/* 내부 컨텐츠(이미지, 정보, 버튼)를 배치 */
+// 프로필 수정 폼 전체를 감싸는 메인 컨테이너
+export const SettingsForm = styled.form`
   display: flex;
   flex-direction: column;
-  align-items: center; /* 내부 요소 중앙 정렬 */
-  padding: 30px; /* 박스 안쪽에 여유 공간 */
+  width: 100%;
+  max-width: 600px; /* 폼의 최대 너비를 제한하여 가독성 향상 */
+  padding: 20px;
+  gap: 24px; /* 각 입력 필드 그룹 사이의 간격 */
 `;
 
-// 페이지 상단에 위치할 헤더
-export const UserInfo = styled.header`
+// 라벨과 입력 필드를 하나의 단위로 묶는 그룹
+export const FormGroup = styled.div`
   display: flex;
-  flex-direction: column; /* 정보들을 세로로 나열 */
-  align-items: flex-start; /* 왼쪽 정렬 */
-  padding: 20px 40px;
-  gap: 15px; /* 각 정보 항목 사이의 간격 */
-  width: 100%; /* 부모 컨테이너의 너비를 채우기 */
+  flex-direction: column;
+  gap: 8px; /* 라벨과 입력 필드 사이의 간격 */
 `;
 
-// 프로필 이미지를 감싸는 컨테이너
-export const ImgWrapper = styled.div`
-    margin-left: -800px; /*이미지와 왼쪽 끝의 간격 */
+// 각 입력 필드의 제목 역할을 하는 라벨
+export const FormLabel = styled.label`
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #495057;
+`;
 
-  & > img {/* <img> 태그에 직접 스타일을 적용합니다. */
-    width: 120px; /* 이미지 크기를 변경. */
-    height: 120px;
-    border-radius: 50%; /* 이미지를 원형으로 만듭니다. */
-    object-fit: cover; /* 이미지 비율을 유지하면서 원을 채웁니다. */
-    flex-shrink: 0; /* 컨테이너가 줄어도 이미지 크기 유지 */
+// 모든 input, textarea, select에 적용될 공통 스타일 (재사용을 위해 분리)
+const inputBaseStyles = css`
+  padding: 10px 12px;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background-color: #fff;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+  &:focus {
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+
+  &:disabled {
+    background-color: #e9ecef;
+    opacity: 1;
   }
 `;
 
-// 수정, 취소 버튼을 감싸는 컨테이너
-export const Check = styled.div`
-  display: flex;
-  gap: 20px; /* 버튼 사이의 간격 */
-  margin-top: 20px;
+// 일반적인 텍스트, 날짜, 숫자 등을 입력하는 <input> 필드
+export const FormInput = styled.input`
+  ${inputBaseStyles};
 `;
 
-// 선을 만들기 위한 간단한 컴포넌트
-export const Divider = styled.div`
-  width: 100%; /*  선의 길이를 변경 */
-  height: 1px;
-  background-color: #e0e0e0;
-  margin: 10px 0 20px 0; /* 위, 아래 여백 */
+// 자기소개 등 여러 줄의 텍스트를 입력하는 <textarea>
+export const FormTextarea = styled.textarea`
+  ${inputBaseStyles};
+  resize: vertical; /* 사용자가 세로 크기만 조절할 수 있도록 설정 */
+  min-height: 100px;
 `;
+
+// 성별, 지역 등 정해진 옵션 중 하나를 선택하는 <select> 드롭다운
+export const FormSelect = styled.select`
+  ${inputBaseStyles};
+`;
+
+// '계정 비공개'와 같은 체크박스와 라벨을 가로로 정렬하기 위한 그룹
+export const CheckboxGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  /* 라벨이 input 뒤에 오도록 순서 변경 */
+  & > label {
+    order: 2;
+    cursor: pointer;
+    font-weight: 500; /* 일반 라벨보다 얇게 */
+  }
+  & > input {
+    order: 1;
+  }
+`;
+
+// 체크박스(<input type="checkbox">) 자체의 스타일
+export const FormCheckbox = styled.input`
+  width: 1.15em;
+  height: 1.15em;
+  cursor: pointer;
+`;
+
+// '저장', '취소' 등 여러 버튼을 묶어서 정렬하는 컨테이너
+export const ButtonGroup = styled.div`
+   display: flex;
+   justify-content: flex-end; /* 버튼들을 오른쪽으로 정렬 */
+   gap: 12px; /* 버튼 사이의 간격 */
+   margin-top: 24px; /* 폼의 마지막 요소와 간격 확보 */
+   width: 100%;
+ `;
+
+// 폼 제출을 위한 '저장' 버튼
+export const SubmitButton = styled.button`
+  padding: 12px 24px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fff;
+  background-color: #0d6efd;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  /* margin-top: 16px; */ /* 다른 필드와 간격을 둠 - 현재는 ButtonGroup에서 관리 */
+  transition: background-color 0.2s ease-in-out;
+
+  &:hover {
+    background-color: #0b5ed7;
+  }
+`;
+
+// 작업을 취소하고 이전 페이지로 돌아가는 '취소' 버튼
+export const CancelButton = styled(SubmitButton)`
+   background-color: #6c757d; /* 눈에 덜 띄는 회색 계열 색상 */
+ 
+   &:hover {
+     background-color: #5c636a;
+   }
+ `;
