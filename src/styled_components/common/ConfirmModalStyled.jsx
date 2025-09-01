@@ -9,7 +9,8 @@ export const ModalWrapper = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000; // 다른 요소들 위에 오도록 z-index 설정
+    /* ✅ 팝업(z-index: 1100)보다 위에 오도록 z-index를 높게 설정합니다. */
+    z-index: 1200;
 `;
 
 export const ModalBackdrop = styled.div`
