@@ -1,4 +1,4 @@
-import React, {useRef, useEffect, useState} from "react";
+import React, {useRef, useEffect, useState, forwardRef, useImperativeHandle} from "react";
 import * as fabric from 'fabric';
 import {
     CanvasContainer,
@@ -9,16 +9,48 @@ import {HiOutlineFaceSmile} from "react-icons/hi2";
 import {MdPhotoFilter} from "react-icons/md";
 import {CgFormatText} from "react-icons/cg";
 import {LuPencilLine} from "react-icons/lu";
-import Emoji from "./editcontent/Emoji.jsx";
 import Filter from "./editcontent/Filter.jsx";
 import Draw from "./editcontent/Draw.jsx";
 import Text from "./editcontent/Text.jsx";
+import Sticker from "./editcontent/Sticker.jsx";
 
-const FabricEditor = ({croppedImage}) => {
+const FabricEditor = forwardRef(({croppedImage}, ref) => {
     const canvasRef = useRef(null);
     const fabricRef = useRef(null);
     const [canvasHeight, setCanvasHeight] = useState(400);
-    const [editTab, seteditTab] = useState('emoji');
+    const [editTab, seteditTab] = useState('sticker');
+
+    // 부모 컴포넌트(ImageEditor)가 ref를 통해 이 컴포넌트의 함수를 호출할 수 있도록 설정합니다.
+    useImperativeHandle(ref, () => ({
+        /**
+         * 현재 캔버스의 상태를 base64 데이터 URL로 변환하여 반환합니다.
+         * @returns {string|null} 이미지 데이터 URL 또는 canvas가 없을 경우 null
+         */
+        exportCanvas: () => {
+            const canvas = fabricRef.current;
+            if (!canvas) return null;
+
+            // 1. 캔버스에 저장해 둔 원본 이미지의 크기를 가져옵니다.
+            // const originalSize = canvas._originalSize;
+            // if (!originalSize || !originalSize.width) {
+            //     console.warn("원본 이미지 크기를 찾을 수 없어 현재 크기로 내보냅니다.");
+            //     return canvas.toDataURL({
+            //         format: 'png',
+            //         quality: 0.9,
+            //     });
+            // }
+
+            // 2. 현재 캔버스 크기 대비 원본 크기의 비율(multiplier)을 계산합니다.
+            // const multiplier = originalSize.width / canvas.getWidth();
+
+            // 3. toDataURL에 multiplier 옵션을 주어 원본 해상도로 이미지를 추출합니다.
+            return canvas.toDataURL({
+                format: 'png',
+                quality: 1,
+                // multiplier: multiplier,
+            });
+        }
+    }));
 
     useEffect(() => {
         if (!croppedImage || !canvasRef.current) {
@@ -62,10 +94,14 @@ const FabricEditor = ({croppedImage}) => {
 
                     canvas.setDimensions({width: displayWidth, height: displayHeight});
 
-                    img.scaleToWidth(displayWidth);
-                    img.scaleToHeight(displayHeight);
-
-                    img.set({left: 0, top: 0, selectable: false, evented: false});
+                    img.set({
+                        scaleX: scale,
+                        scaleY: scale,
+                        left: 0,
+                        top: 0,
+                        selectable: false,
+                        evented: false,
+                    });
                     canvas.add(img);
                     canvas.sendToBack(img);
 
@@ -98,8 +134,8 @@ const FabricEditor = ({croppedImage}) => {
             </CanvasContainer>
             <EditContainer canvasHeight={canvasHeight}>
                 <EditTabMenuContainer>
-                    <EditTab click={editTab === 'emoji'}
-                             onClick={() => seteditTab('emoji')}><HiOutlineFaceSmile/></EditTab>
+                    <EditTab click={editTab === 'sticker'}
+                             onClick={() => seteditTab('sticker')}><HiOutlineFaceSmile/></EditTab>
                     <EditTab click={editTab === 'filter'}
                              onClick={() => seteditTab('filter')}><MdPhotoFilter/></EditTab>
                     <EditTab click={editTab === 'draw'} onClick={() => seteditTab('draw')}><LuPencilLine/></EditTab>
@@ -107,7 +143,7 @@ const FabricEditor = ({croppedImage}) => {
                 </EditTabMenuContainer>
                 <EditTabContent>
                     <EditTabWrapper>
-                        {editTab === 'emoji' && <Emoji canvas={fabricRef.current}/>}
+                        {editTab === 'sticker' && <Sticker canvas={fabricRef.current}/>}
                         {editTab === 'filter' && <Filter canvas={fabricRef.current}/>}
                         {editTab === 'draw' && <Draw canvas={fabricRef.current}/>}
                         {editTab === 'text' && <Text canvas={fabricRef.current}/>}
@@ -115,6 +151,6 @@ const FabricEditor = ({croppedImage}) => {
                 </EditTabContent>
             </EditContainer>
         </>);
-};
+});
 
 export default FabricEditor;

@@ -155,6 +155,55 @@ export const CharCounter = styled.div`
     color: ${({error}) => (error ? '#d93025' : '#888')};
 `;
 
+export const CheckboxLabel = styled.label`
+    display: flex;
+    align-items: center;
+    margin: 0 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: ${props => props.theme.textSecondary || '#555'};
+    user-select: none; /* 사용자가 라벨 텍스트를 드래그하는 것을 방지합니다. */
+
+    &:hover {
+        color: ${props => props.theme.text || '#000'};
+    }
+`;
+
+export const CheckboxInput = styled.input.attrs({type: 'checkbox'})`
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #7b5fff;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    margin-right: 6px;
+    outline: none;
+    transition: all 0.2s ease;
+
+    &:checked {
+        background-color: #7b5fff;
+        border-color: #7b5fff;
+    }
+
+    &:checked::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 4px;
+        height: 8px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: translate(-50%, -50%) rotate(45deg); /* 가운데 정렬 */
+    }
+
+    &:hover {
+        box-shadow: 0 0 0 2px rgba(123, 95, 255, 0.2);
+    }
+`;
+
 export const PostButton = styled.button`
     background-color: #7b5fff;
     color: white;
@@ -185,7 +234,7 @@ export const EditContainer = styled.div`
     height: ${(props) => props.canvasHeight}px;
     min-height: 400px;
     background-color: #ffffff;
-    border: 1px solid black;
+    border: 1px solid #d9d1e8;
 `;
 
 export const EditTabMenuContainer = styled.div`
@@ -272,4 +321,144 @@ export const EditDrawColor = styled.div`
     border: 3px solid ${props => props.$active ? '#7b5fff' : '#fff'};
     box-shadow: 0 0 0 1px #ccc;
     transition: all 0.2s ease;
+`;
+
+export const ColorPickerLabel = styled.label`
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    /* 선택된 색상이 커스텀 색상일 경우 해당 색을, 아닐 경우 무지개 그래디언트를 배경으로 사용합니다. */
+    background: ${props => props.customColor || 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)'};
+    border: 3px solid ${props => props.$active ? '#7b5fff' : '#fff'};
+    box-shadow: 0 0 0 1px #ccc;
+    transition: all 0.2s ease;
+`;
+
+export const ColorPickerInput = styled.input.attrs({type: 'color'})`
+    /* 실제 input은 시각적으로 숨기고, label을 통해 상호작용합니다. */
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+`;
+
+export const FilterContainer = styled.div`
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: sans-serif;
+`;
+
+export const FilterLabel = styled.p`
+    margin: 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: #555;
+`;
+
+export const FilterPresetList = styled.div`
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+`;
+
+export const FilterPresetButton = styled.button`
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1px solid ${props => props.$active ? '#7b5fff' : '#ccc'};
+    background-color: ${props => props.$active ? '#f0ebff' : 'white'};
+    color: ${props => props.$active ? '#7b5fff' : '#333'};
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+
+    &:hover {
+        border-color: #7b5fff;
+    }
+`;
+
+export const FilterSliderContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    span {
+        font-size: 13px;
+        color: #666;
+    }
+`;
+
+export const FilterSlider = styled.input.attrs({type: 'range'})`
+    width: 100%;
+    cursor: pointer;
+`;
+
+export const ResetButton = styled.button`
+    padding: 10px;
+    border: 1px solid #ddd;
+    background-color: #f8f9fa;
+    color: #333;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+
+    &:hover {
+        background-color: #e9ecef;
+    }
+`;
+
+
+export const EditStickerBtn = styled.button`
+    width: 70px;
+    height: 70px;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: none;
+
+    &:hover {
+        background: #f5f0ff;
+    }
+
+    img {
+        width: 100%;
+        height: 100%;
+        box-shadow: none;
+    }
+`;
+
+export const TextContainer = styled.div`
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    font-family: sans-serif;
+`;
+
+export const AddButton = styled.button`
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background-color: #7b5fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+        background-color: #6a4fe6;
+    }
+`;
+
+export const Description = styled.p`
+    font-size: 14px;
+    color: #666;
+    text-align: center;
+    margin: 0;
 `;

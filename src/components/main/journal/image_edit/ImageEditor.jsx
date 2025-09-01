@@ -14,6 +14,7 @@ import FabricEditor from "./FabricEditor.jsx";
 const ImageEditor = ({imageInfo, onSave, onCancel, onFabricModeChange}) => {
     const [editingStep, setEditingStep] = useState('crop'); // 'crop' | 'fabric'
     const [croppedImage, setCroppedImage] = useState(null);
+    const fabricEditorRef = useRef(null); // ✅ FabricEditor를 참조하기 위한 ref
     const cropperRef = useRef(null);
 
     useEffect(() => {
@@ -22,15 +23,23 @@ const ImageEditor = ({imageInfo, onSave, onCancel, onFabricModeChange}) => {
         }
     }, [editingStep, onFabricModeChange]);
 
+    useEffect(() => {
+        // 컴포넌트가 언마운트되거나 croppedImage가 변경될 때
+        // 이전에 생성된 Blob URL을 해제하여 메모리 누수를 방지합니다.
+        return () => {
+            if (croppedImage) {
+                URL.revokeObjectURL(croppedImage);
+            }
+        };
+    }, [croppedImage]);
+
     // --- Cropper.js 핸들러 ---
     const handleNextStep = () => {
         const cropper = cropperRef.current?.cropper;
         if (typeof cropper === 'undefined') return;
 
-        const croppedCanvas = cropper.getCroppedCanvas({
-            width: cropper.getData(true).width,
-            height: cropper.getData(true).height,
-        });
+        // ❗ 중요: 옵션 없이 getCroppedCanvas()를 호출해야 원본 해상도의 잘린 이미지를 얻을 수 있습니다.
+        const croppedCanvas = cropper.getCroppedCanvas();
 
         croppedCanvas.toBlob((blob) => {
             if (!blob) {
@@ -43,9 +52,14 @@ const ImageEditor = ({imageInfo, onSave, onCancel, onFabricModeChange}) => {
         setEditingStep('fabric');
     };
 
+    // FabricEditor로부터 최종 편집된 이미지를 받아 부모에게 전달하는 함수
     const handleSaveEdit = () => {
-        if (!croppedImage) return;
-        onSave(croppedImage); // 부모 컴포넌트로 최종 이미지 데이터 전달
+        // ✅ fabricEditorRef를 통해 FabricEditor의 exportCanvas 함수를 호출
+        if (fabricEditorRef.current) {
+            const editedImageDataUrl = fabricEditorRef.current.exportCanvas();
+            // 부모 컴포넌트(JournalWrite)의 onSave 함수를 호출하여 데이터 전달
+            onSave(editedImageDataUrl);
+        }
     };
 
     const handleCancelEdit = () => {
@@ -98,11 +112,7 @@ const ImageEditor = ({imageInfo, onSave, onCancel, onFabricModeChange}) => {
                 </ModalHeader>
                 <ImageEditorContainer>
                     {/*{croppedImage && <FabricEditor croppedImage={croppedImage}/>}*/}
-                    {croppedImage && (
-                        <>
-                            <FabricEditor croppedImage={croppedImage}/>
-                        </>
-                    )}
+                    {croppedImage && <FabricEditor ref={fabricEditorRef} croppedImage={croppedImage}/>}
                 </ImageEditorContainer>
             </div>
         </>
