@@ -4,9 +4,19 @@
  *       일정 CRUD 함수들과 UI 컴포넌트를 제어하는 함수들을 제공합니다.
  */
 import { createContext, useContext, useState, useMemo, useCallback, useEffect } from "react";
+import styled from "styled-components";
 import { api } from "../api"; // axios 대신 우리가 만든 api 인스턴스를 가져옵니다.
 import ConfirmModal from "../components/common/ConfirmModal.jsx";
 import { useAuth } from "../AuthContext.jsx";
+
+const ModalWrapper = styled.div`
+  /*
+    z-index를 명시적으로 관리하여 모달이 다른 UI 요소(팝업 등) 위에
+    안정적으로 표시되도록 합니다.
+  */
+  position: relative;
+  z-index: 1200; /* 팝업(1100) 및 다른 antd 컴포넌트(기본 1000)보다 높게 설정 */
+`;
 
 const ScheduleContext = createContext(null);
 
@@ -103,9 +113,10 @@ export function ScheduleProvider({ children }) {
 
     // 백엔드 데이터를 FullCalendar 형식으로 변환하는 헬퍼 함수
     const formatEventForCalendar = (event) => {
-        // ✅ [핵심 수정] 백엔드가 isAllDay 플래그를 false로 잘못 보내더라도,
-        // 시간 형식을 보고 '하루 종일' 여부를 다시 판단합니다. (이제 백엔드를 신뢰하므로 이 로직을 단순화할 수 있습니다.)
-        const isAllDayEvent = event.isAllDay;
+        // ✅ [수정] 백엔드에서 isAllDay 플래그가 false로 오는 경우에 대비하여,
+        // 시간 형식을 보고 '하루 종일' 여부를 다시 판단하는 방어 로직을 복원합니다.
+        const isAllDayEvent = event.isAllDay ||
+            (event.startTime?.endsWith('00:00:00') && event.endTime?.endsWith('23:59:59'));
 
         const commonProps = {
             id: event.id,
@@ -465,15 +476,17 @@ export function ScheduleProvider({ children }) {
     return (
         <ScheduleContext.Provider value={value}>
             {children}
-            {/* ✅ [신규] ConfirmModal을 전역 레벨에서 렌더링하여 중앙에서 제어합니다. */}
-            <ConfirmModal
-                isOpen={deleteModalState.isOpen}
-                onClose={cancelDeleteConfirmation}
-                onConfirm={confirmDelete}
-                title="일정 삭제"
-            >
-                정말로 이 일정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
-            </ConfirmModal>
+            {/* ✅ [수정] ConfirmModal을 z-index를 관리하는 Wrapper로 감싸 안정성을 높입니다. */}
+            <ModalWrapper>
+                <ConfirmModal
+                    isOpen={deleteModalState.isOpen}
+                    onClose={cancelDeleteConfirmation}
+                    onConfirm={confirmDelete}
+                    title="일정 삭제"
+                >
+                    정말로 이 일정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                </ConfirmModal>
+            </ModalWrapper>
         </ScheduleContext.Provider>
     );
 }

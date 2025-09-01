@@ -14,7 +14,10 @@ const PopupWrapper = styled.div`
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    z-index: 1100;
+    /* ✅ [수정] z-index를 antd 모달의 기본값(1000)보다 낮게 설정하여
+       태그 추가 모달 등이 팝업 위에 표시되도록 합니다.
+    */
+    z-index: 999;
     width: 340px;
     padding: 12px;
     transition: opacity 0.15s ease-in-out, visibility 0.15s ease-in-out;
@@ -76,9 +79,33 @@ const AddButton = styled.button`
 const NoEventsMessage = styled.p` text-align: center; color: #888; font-size: 14px; padding: 20px 0; `;
 
 const DetailContent = styled.div`
-    padding: 10px;
+    padding: 10px 4px; /* 좌우 패딩 조정 */
     font-size: 14px;
     line-height: 1.6;
+`;
+
+// ✅ [추가] 상세 정보 표시를 위한 스타일
+const DetailInfoSection = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 16px 0;
+`;
+
+const DetailInfoItem = styled.div``;
+
+const DetailInfoLabel = styled.span`
+    display: block;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 4px;
+`;
+
+const DetailInfoValue = styled.span`
+    font-size: 14px;
+    color: #333;
+    white-space: pre-wrap; /* 설명 줄바꿈을 위해 추가 */
+    word-break: break-word; /* 긴 단어 줄바꿈 */
 `;
 
 // --- Sub-components for different modes ---
@@ -107,13 +134,83 @@ const EventListView = ({ events, onAdd, onDetail, onDelete }) => (
     </>
 );
 
-const DetailView = ({ event, onEdit }) => (
-    <DetailContent>
-        <h4>{event.title}</h4>
-        <p>{event.extendedProps?.description || '설명 없음'}</p>
-        <AddButton onClick={() => onEdit(event)}>수정</AddButton>
-    </DetailContent>
-);
+// ✅ [수정] 사이드바처럼 상세 정보를 표시하도록 DetailView를 확장합니다.
+const DetailView = ({ event, onEdit, tags }) => {
+    // 현재 일정의 tagId에 해당하는 태그 객체를 찾습니다.
+    const currentTag = useMemo(() => {
+        const tagId = event.extendedProps?.tagId;
+        if (!tagId || !tags) return null;
+        return tags.find(t => t.id === tagId);
+    }, [event, tags]);
+
+    // 날짜와 시간을 상황에 맞게 표시하는 함수
+    const formatDateRange = (item) => {
+        if (!item.start) return "날짜 정보 없음";
+
+        const start = new Date(item.start);
+        const end = item.end ? new Date(item.end) : start;
+
+        // Case 1: '하루 종일' 일정
+        if (item.allDay) {
+            const inclusiveEnd = new Date(end.getTime());
+            inclusiveEnd.setDate(inclusiveEnd.getDate() - 1);
+
+            const startDateStr = start.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+            const inclusiveEndDateStr = inclusiveEnd.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            if (startDateStr === inclusiveEndDateStr) {
+                return startDateStr;
+            }
+            return `${startDateStr} ~ ${inclusiveEndDateStr}`;
+        }
+
+        // Case 2: 시간 지정 일정
+        const startDateStr = start.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+        const startTimeStr = start.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+        const endDateStr = end.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+        const endTimeStr = end.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+        if (startDateStr === endDateStr) {
+            return `${startDateStr} ${startTimeStr} - ${endTimeStr}`;
+        }
+        return `${startDateStr} ${startTimeStr} - ${endDateStr} ${endTimeStr}`;
+    };
+
+    return (
+        <DetailContent>
+            <h4>{event.title}</h4>
+            <DetailInfoSection>
+                <DetailInfoItem>
+                    <DetailInfoLabel>날짜</DetailInfoLabel>
+                    <DetailInfoValue>{formatDateRange(event)}</DetailInfoValue>
+                </DetailInfoItem>
+
+                {event.extendedProps?.location && (
+                    <DetailInfoItem>
+                        <DetailInfoLabel>장소</DetailInfoLabel>
+                        <DetailInfoValue>{event.extendedProps.location}</DetailInfoValue>
+                    </DetailInfoItem>
+                )}
+
+                {currentTag && (
+                    <DetailInfoItem>
+                        <DetailInfoLabel>태그</DetailInfoLabel>
+                        <DetailInfoValue>{currentTag.label}</DetailInfoValue>
+                    </DetailInfoItem>
+                )}
+
+                {event.extendedProps?.description && (
+                    <DetailInfoItem>
+                        <DetailInfoLabel>설명</DetailInfoLabel>
+                        <DetailInfoValue>{event.extendedProps.description}</DetailInfoValue>
+                    </DetailInfoItem>
+                )}
+            </DetailInfoSection>
+            <AddButton onClick={() => onEdit(event)}>수정</AddButton>
+        </DetailContent>
+    );
+};
 
 
 // --- Main Popup Component ---
@@ -367,7 +464,7 @@ const SchedulePopUp = () => {
                 };
                 return <FormComponent {...formProps} />;
             case 'detail':
-                return <DetailView event={currentItem} onEdit={() => handleShowForm(currentItem)} />;
+                return <DetailView event={currentItem} onEdit={() => handleShowForm(currentItem)} tags={tags} />;
             case 'list':
             default:
                 return <EventListView
