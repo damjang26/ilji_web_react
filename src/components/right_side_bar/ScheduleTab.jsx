@@ -1,27 +1,21 @@
 import { useEffect, useMemo, useState } from "react";
 import ScheduleList from "./schedule_tab/ScheduleList.jsx";
 import ScheduleForm from "./schedule_tab/ScheduleForm.jsx";
-import ScheduleEdit from "./schedule_tab/ScheduleEdit.jsx";
 import ScheduleDetail from "./schedule_tab/ScheduleDetail.jsx";
 import { useSchedule } from "../../contexts/ScheduleContext.jsx";
-import ConfirmModal from "../common/ConfirmModal.jsx";
 import { TabWrapper } from "../../styled_components/right_side_bar/ScheduleTabStyled.jsx";
 
 const ScheduleTab = () => {
     const [filteredDate, setFilteredDate] = useState(null);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [itemToDelete, setItemToDelete] = useState(null);
 
     const {
         events,
-        addEvent,
-        updateEvent,
-        deleteEvent,
+        requestDeleteConfirmation, // ✅ [수정] 중앙화된 삭제 요청 함수를 가져옵니다.
         selectedInfo,
         openSidebarForNew,
         openSidebarForDetail,
         openSidebarForEdit,
-        closeSidebar,
+        goBackInSidebar, // ✅ [수정] '뒤로가기' 로직을 처리하는 함수를 가져옵니다.
     } = useSchedule();
 
     const mode = selectedInfo?.type || 'list';
@@ -32,40 +26,41 @@ const ScheduleTab = () => {
         return null;
     }, [mode, selectedInfo]);
 
+    // ✅ 렌더링 시점에 displayDate를 직접 계산하여 상태 업데이트 지연 문제를 원천적으로 방지합니다.
+    const displayDate = useMemo(() => {
+        if (selectedInfo?.type === 'list_for_date') {
+            return selectedInfo.data.startStr;
+        }
+
+        if (selectedInfo?.type === 'detail' || selectedInfo?.type === 'edit') {
+            const event = selectedInfo.data;
+            if (event?.start) {
+                // ✅ [수정] toISOString()은 UTC 기준으로 변환하므로, 로컬 시간대 기준으로 날짜를 포맷합니다.
+                if (event.start instanceof Date) {
+                    const d = new Date(event.start);
+                    const year = d.getFullYear();
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                }
+                return String(event.start).split('T')[0]; // 문자열인 경우 그대로 사용
+            }
+        }
+
+        return null;
+    }, [selectedInfo]);
+
     useEffect(() => {
+        // 이 useEffect는 이제 '날짜별 목록' 모드에서 사용되는 filteredDate 상태만 관리합니다.
         if (selectedInfo?.type === 'list_for_date') {
             setFilteredDate(selectedInfo.data.startStr);
-        } else {
+        } else if (selectedInfo?.type === 'list' || !selectedInfo) {
             setFilteredDate(null);
         }
     }, [selectedInfo]);
 
     const handleClearSelectedDate = () => {
         setFilteredDate(null);
-    };
-
-    const handleReturnToList = () => {
-        closeSidebar();
-    };
-
-    const handleReturnToDetail = () => {
-        if (selectedItem) {
-            openSidebarForDetail(selectedItem);
-        }
-    };
-
-    const handleDeleteRequest = (id) => {
-        setItemToDelete(id);
-        setIsDeleteModalOpen(true);
-    };
-
-    const handleConfirmDelete = () => {
-        if (itemToDelete) {
-            deleteEvent(itemToDelete);
-            handleReturnToList();
-        }
-        setIsDeleteModalOpen(false);
-        setItemToDelete(null);
     };
 
     const handleAdd = () => {
@@ -76,29 +71,16 @@ const ScheduleTab = () => {
     const renderContent = () => {
         switch (mode) {
             case 'new':
-                return <ScheduleForm
-                    initialData={selectedInfo?.data}
-                    onCancel={handleReturnToList}
-                    onSave={(newData) => {
-                        addEvent(newData);
-                        handleReturnToList();
-                    }}
-                />;
             case 'edit':
-                return <ScheduleEdit
-                    item={selectedItem}
-                    onCancel={handleReturnToDetail}
-                    onSave={(updated) => {
-                        updateEvent(updated);
-                        handleReturnToList();
-                    }}
-                />;
+                // ✅ 'new'와 'edit' 모드 모두 props 없이 ScheduleForm을 렌더링합니다.
+                return <ScheduleForm />;
             case 'detail':
                 return <ScheduleDetail
                     item={selectedItem}
-                    onCancel={handleReturnToList}
-                    onEdit={openSidebarForEdit} // 이제 event 객체를 직접 넘깁니다.
-                    onDelete={handleDeleteRequest}
+                    displayDate={displayDate}
+                    onCancel={goBackInSidebar} // ✅ [수정] '뒤로가기' 버튼에 올바른 함수를 연결합니다.
+                    onEdit={openSidebarForEdit}
+                    onDelete={requestDeleteConfirmation} // ✅ [수정] Context의 함수를 직접 전달합니다.
                 />;
             case 'list_for_date':
             case 'list':
@@ -116,14 +98,6 @@ const ScheduleTab = () => {
     return (
         <TabWrapper>
             {renderContent()}
-            <ConfirmModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
-                onConfirm={handleConfirmDelete}
-                title="일정 삭제"
-            >
-                정말로 이 일정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
-            </ConfirmModal>
         </TabWrapper>
     );
 };

@@ -10,7 +10,11 @@ export const DetailWrapper = styled.div`
 /** '뒤로가기' 버튼을 포함하는 헤더 */
 export const DetailHeader = styled.div`
     display: flex;
-    padding-bottom: 8px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
 `;
 
 /** 목록으로 돌아가는 '뒤로가기' 버튼 */
@@ -29,6 +33,13 @@ export const BackButton = styled.button`
         background-color: #f1f3f5;
         color: #343a40;
     }
+`;
+
+/** 헤더에 표시될 날짜 */
+export const HeaderDate = styled.span`
+  font-size: 16px;
+  font-weight: 600;
+  color: #555;
 `;
 
 /** 일정의 제목 */

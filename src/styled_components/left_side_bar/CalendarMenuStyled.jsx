@@ -23,11 +23,11 @@ export const TagItem = styled.div`
   transition: background-color 0.2s, border-color 0.2s; // 부드러운 전환 효과
 
   /* $isSelected prop에 따라 스타일 변경 */
-  background-color: ${props => props.$isSelected ? '#e6f4ff' : 'transparent'};
-  border-color: ${props => props.$isSelected ? '#91caff' : 'transparent'};
+  background-color: ${props => props.$isSelected ? '#F3E2F3' : 'transparent'};
+  //border-color: ${props => props.$isSelected ? '#E099D8' : 'transparent'};
 
   &:hover {
-    background-color: ${props => props.$isSelected ? '#d9efff' : '#f0f0f0'}; // 호버 시 배경색 변경
+    background-color: ${props => props.$isSelected ? '#E3CBE3' : '#f0f0f0'}; // 호버 시 배경색 변경
   }
 `;
 

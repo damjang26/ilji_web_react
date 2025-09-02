@@ -14,10 +14,11 @@ import {
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleFormStyled.jsx";
 import { ActionButtons, Button } from "../../../styled_components/common/FormElementsStyled.jsx";
 
-const ScheduleForm = ({onSave, initialData, tags: tagsFromProp}) => {
+const ScheduleForm = ({ tags: tagsFromProp }) => {
     const formRef = useRef(null);
     // ✅ 1. Context에서 공유 폼 데이터와 태그 데이터를 가져옵니다.
-    const { formData: form, setFormData: setForm, goBackInSidebar } = useSchedule();
+    // ✅ [수정] 저장/수정/취소 함수를 모두 Context에서 직접 가져옵니다.
+    const { formData: form, setFormData: setForm, goBackInSidebar, addEvent, updateEvent } = useSchedule();
     const { tags: tagsFromContext } = useTags();
     const tags = tagsFromProp || tagsFromContext; // prop으로 받은 tags가 있으면 사용, 없으면 context의 것 사용
 
@@ -50,7 +51,8 @@ const ScheduleForm = ({onSave, initialData, tags: tagsFromProp}) => {
         const finalStart = allDay ? startDate : `${startDate}T${startTime}`;
         const finalEnd = allDay ? endDate : `${endDate}T${endTime}`;
 
-        onSave({
+        const eventData = {
+            id: form.id, // 폼 데이터에 id가 있으면 '수정', 없으면 '생성'으로 판단합니다.
             title: finalTitle,
             start: finalStart,
             end: finalEnd,
@@ -58,10 +60,15 @@ const ScheduleForm = ({onSave, initialData, tags: tagsFromProp}) => {
             extendedProps: {
                 description,
                 location,
-                tagId, // tags 대신 tagId 전송
+                tagId,
                 calendarId,
             }
-        });
+        };
+
+        // id 유무에 따라 생성 또는 업데이트 함수를 호출합니다.
+        form.id ? updateEvent(eventData) : addEvent(eventData);
+        // 저장 후, Context의 goBackInSidebar 함수를 호출해 이전 화면으로 돌아갑니다.
+        goBackInSidebar();
     };
 
     // 태그 선택 옵션을 생성
