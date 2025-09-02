@@ -42,7 +42,7 @@ const dataURLtoFile = (dataurl, filename) => {
 
 const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
     const {user} = useAuth(); // 현재 로그인한 유저 정보
-    const {addJournal} = useJournal(); // ✅ JournalContext에서 저장 함수 가져오기
+    const {createJournalEntry} = useJournal(); // ✅ 새로 만든 DB 저장 함수를 가져옵니다.
     const [isSubmitting, setIsSubmitting] = useState(false); // ✅ 제출 중 상태 추가
     const [editingImageInfo, setEditingImageInfo] = useState(null); // ✅ 이미지 편집 상태 관리
     const [isDragging, setIsDragging] = useState(false); // ✅ 드래그 상태를 관리할 state 추가
@@ -234,52 +234,33 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
         alert('이미지가 성공적으로 편집되었습니다.');
     };
 
-    // 일기 저장processFiles
+    // 일기 저장
     const onSubmit = async () => {
         if (isSubmitting) return; // 중복 제출 방지
         setIsSubmitting(true);
 
+        console.log("onSubmit selectedDate:", selectedDate);
+
+
         try {
-            // 1. 이미지들을 서버에 업로드하고 URL 목록을 받습니다.
-            const uploadPromises = images.map((image, index) => {
-                let fileToUpload;
-
-                if (image.file) {
-                    // 1-1. 편집되지 않은 원본 이미지: 저장된 File 객체를 사용합니다.
-                    fileToUpload = image.file;
-                } else if (image.preview.startsWith('data:image')) {
-                    // 1-2. 편집된 이미지: base64 데이터 URL을 File 객체로 변환합니다.
-                    const filename = `edited_${user.uid}_${Date.now()}_${index}.png`;
-                    fileToUpload = dataURLtoFile(image.preview, filename);
-                } else {
-                    // 예외 처리: 업로드할 파일이 없는 경우
-                    return Promise.resolve(null);
-                }
-
-                // ❗ TODO: 실제 이미지 업로드 로직을 여기에 구현하세요. (예: Firebase Storage)
-                // 아래는 실제 업로드 함수의 예시입니다.
-                // return uploadImageToFirebase(fileToUpload);
-
-                // 지금은 시뮬레이션을 위해 파일 이름을 반환합니다.
-                console.log("업로드 준비 완료:", fileToUpload.name);
-                return Promise.resolve(`https://your-server.com/images/${fileToUpload.name}`);
-            });
-
-            const imageUrls = (await Promise.all(uploadPromises)).filter(url => url !== null);
-
-            // 2. 업로드된 이미지 URL들과 함께 일기 데이터를 저장합니다.
-            const journalData = {
-                content: content,
-                images: imageUrls,
-                authorId: user.uid,
-                isPrivate: isPrivate, // ✅ 비공개 여부 추가
+            // Context 함수에 전달할 데이터 묶음(payload)을 만듭니다.
+            const journalPayload = {
+                images,
+                content,
+                selectedDate,
+                isPrivate,
+                user, // user 정보도 넘겨주어 Context에서 userId를 사용할 수 있게 합니다.
             };
 
-            await addJournal(selectedDate, journalData);
+            // Context에 있는 함수를 호출하여 모든 작업을 위임합니다.
+            await createJournalEntry(journalPayload);
+
+            alert('일기가 성공적으로 저장되었습니다!');
             onClose(); // 저장 후 모달 닫기
         } catch (error) {
             console.error("일기 저장 실패:", error);
-            alert('일기 저장에 실패했습니다.');
+            // 서버에서 보낸 에러 메시지가 있다면 보여주는 것이 더 좋습니다.
+            alert(error.response?.data?.message || '일기 저장에 실패했습니다.');
         } finally {
             setIsSubmitting(false); // 제출 상태 해제
         }
@@ -358,7 +339,7 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
                                 </IconButton>
                                 {showEmojiPicker && (
                                     <EmojiPickerWrapper>
-                                        <EmojiPicker onEmojiClick={onEmojiClick} />
+                                        <EmojiPicker onEmojiClick={onEmojiClick}/>
                                     </EmojiPickerWrapper>
                                 )}
                             </ActionButtonWrapper>

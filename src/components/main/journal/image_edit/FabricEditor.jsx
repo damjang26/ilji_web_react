@@ -31,7 +31,7 @@ const FabricEditor = forwardRef(({croppedImage}, ref) => {
             if (!canvas) return null;
 
             // 1. 캔버스에 저장해 둔 원본 이미지의 크기를 가져옵니다.
-            // const originalSize = canvas._originalSize;
+            const originalSize = canvas._originalSize;
             // if (!originalSize || !originalSize.width) {
             //     console.warn("원본 이미지 크기를 찾을 수 없어 현재 크기로 내보냅니다.");
             //     return canvas.toDataURL({
@@ -41,13 +41,13 @@ const FabricEditor = forwardRef(({croppedImage}, ref) => {
             // }
 
             // 2. 현재 캔버스 크기 대비 원본 크기의 비율(multiplier)을 계산합니다.
-            // const multiplier = originalSize.width / canvas.getWidth();
+            const multiplier = originalSize.width / canvas.getWidth();
 
             // 3. toDataURL에 multiplier 옵션을 주어 원본 해상도로 이미지를 추출합니다.
             return canvas.toDataURL({
                 format: 'png',
                 quality: 1,
-                // multiplier: multiplier,
+                multiplier: multiplier,
             });
         }
     }));
@@ -103,7 +103,7 @@ const FabricEditor = forwardRef(({croppedImage}, ref) => {
                         evented: false,
                     });
                     canvas.add(img);
-                    canvas.sendToBack(img);
+                    // canvas.sendToBack(img);
 
                     // 원본 크기 저장해두기 (저장 시 사용)
                     fabricRef.current._originalSize = {width: img.width, height: img.height};
