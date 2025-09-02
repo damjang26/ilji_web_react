@@ -19,6 +19,17 @@ const FILTERS = {
     today: { icon: FaCalendarDay, label: "오늘 일정" },
 };
 
+// 1. 개별 일정 아이템을 별도의 메모이즈된 컴포넌트로 분리합니다.
+const ScheduleEventItem = React.memo(({ event, onDetail }) => {
+    return (
+        <Tooltip title="클릭하면 상세 보기" placement="left">
+            <EventItem onClick={() => onDetail(event)}>
+                {event.title}
+            </EventItem>
+        </Tooltip>
+    );
+});
+
 const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelectedDate }) => {
     // ✅ [수정] '오늘', '이번 달', '전체'를 전환하는 필터 상태. 기본값은 'today'.
     const [filterMode, setFilterMode] = useState('today');
@@ -111,11 +122,7 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
             {filteredEvents.length > 0 ? (
                 <EventList>
                     {filteredEvents.map((s) => (
-                        <Tooltip key={s.id} title="클릭하면 상세 보기" placement="left">
-                            <EventItem onClick={() => onDetail(s)}>
-                                {s.title}
-                            </EventItem>
-                        </Tooltip>
+                        <ScheduleEventItem key={s.id} event={s} onDetail={onDetail} />
                     ))}
                 </EventList>
             ) : (

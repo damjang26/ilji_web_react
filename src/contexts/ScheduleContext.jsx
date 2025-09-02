@@ -231,6 +231,7 @@ export function ScheduleProvider({children}) {
     // ✅ 태그 ID를 인자로 받아 스케줄을 로드하는 핵심 함수
     const fetchSchedulesByTags = useCallback(
         async (tagIds = []) => {
+            console.log("[DEBUG] fetchSchedulesByTags 호출됨. tagIds:", tagIds);
             if (!user) {
                 setEvents([]);
                 setLoading(false);
@@ -238,19 +239,20 @@ export function ScheduleProvider({children}) {
             }
             setLoading(true);
             try {
-                let url = "/api/schedules";
                 // tagIds 배열이 비어있지 않으면 쿼리 파라미터를 추가합니다.
                 if (tagIds && tagIds.length > 0) {
+                    let url = "/api/schedules";
                     const params = new URLSearchParams();
-                    params.append("tagIds", tagIds.join(",")); // tagIds : 4,7
+                    params.append("tagIds", tagIds.join(","));
                     url += `?${params.toString()}`;
+                    const response = await api.get(url);
+                    const formattedEvents = response.data.map(formatEventForCalendar);
+                    setEvents(formattedEvents);
+                    setError(null);
+                }else{
+                    setEvents([]);
+                    setError(null);
                 }
-
-                const response = await api.get(url);
-                const formattedEvents = response.data.map(formatEventForCalendar);
-
-                setEvents(formattedEvents);
-                setError(null);
             } catch (err) {
                 console.error("일정 로딩 실패:", err);
                 setError(err);
@@ -346,46 +348,44 @@ export function ScheduleProvider({children}) {
 
     const updateEvent = useCallback(
         async (eventData) => {
-            const requestData = {
-                calendarId: eventData.extendedProps.calendarId,
-                title: eventData.title,
-                location: eventData.extendedProps.location,
-                tagId: eventData.extendedProps.tagId, // tags -> tagId로 수정
-                description: eventData.extendedProps.description,
-                startTime: formatDateTimeForBackend(
-                    eventData.start,
-                    eventData.allDay,
-                    false
-                ),
-                endTime: formatDateTimeForBackend(
-                    eventData.end || eventData.start,
-                    eventData.allDay,
-                    true
-                ),
-                isAllDay: eventData.allDay,
-                rrule: eventData.extendedProps.rrule,
-            };
             try {
-                // 성공 시에는 아무것도 할 필요가 없습니다.
+                const requestData = {
+                    calendarId: eventData.extendedProps.calendarId,
+                    title: eventData.title,
+                    location: eventData.extendedProps.location,
+                    tagId: eventData.extendedProps.tagId,
+                    description: eventData.extendedProps.description,
+                    startTime: formatDateTimeForBackend(
+                        eventData.start,
+                        eventData.allDay,
+                        false
+                    ),
+                    endTime: formatDateTimeForBackend(
+                        eventData.end || eventData.start,
+                        eventData.allDay,
+                        true
+                    ),
+                    isAllDay: eventData.allDay,
+                    rrule: eventData.extendedProps.rrule,
+                };
                 const response = await api.put(`/api/schedules/${eventData.id}`, requestData);
                 const updatedEvent = formatEventForCalendar(response.data);
-                setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
+                setEvents(prev => prev.map(e => (String(e.id) === String(updatedEvent.id) ? updatedEvent : e)));
             } catch (err) {
-                // 실패 시, UI를 원래 상태로 되돌립니다 (롤백).
-                console.error("일정 업데이트 실패 (롤백 실행):", err);
-                setEvents(originalEvents);
+                console.error("일정 업데이트 실패:", err);
             }
         },
         [events]
     );
+
     const deleteEvent = useCallback(async (eventId) => {
         try {
-            await api.delete(`/api/schedules/${eventId}`);
-            setEvents((prev) => prev.filter((e) => e.id !== eventId));
+            setEvents((prev) => prev.filter((e) => String(e.id) !== String(eventId)));
+            const response = await api.delete(`/api/schedules/${eventId}`);
         } catch (err) {
             console.error("일정 삭제 실패:", err);
         }
-    }, []);
+    }, [events]);
     // --- UI 제어 함수 ---
 
     // 사이드바 관련 함수들
@@ -521,8 +521,8 @@ export function ScheduleProvider({children}) {
             events,
             loading,
             error,
-            formData, // ✅ 공유
-            setFormData, // ✅ 공유
+            formData, //  공유
+            setFormData, //  공유
             // 사이드바 상태 및 함수
             isSidebarOpen,
             selectedInfo,
@@ -536,12 +536,13 @@ export function ScheduleProvider({children}) {
             popupState,
             openPopup,
             closePopup,
-            showEventDetails, // ✅ 추가
-            goBackInSidebar, // ✅ 추가
+            showEventDetails,
+            goBackInSidebar,
             // CRUD 함수 (deleteEvent는 confirmDelete 내부에서 사용됩니다)
             addEvent,
             updateEvent,
-            requestDeleteConfirmation, // ✅ [수정] 외부에서는 이 함수를 통해 삭제를 요청합니다.
+            requestDeleteConfirmation, // 외부에서는 이 함수를 통해 삭제를 요청합니다.
+            fetchSchedulesByTags, //  태그 필터링 함수
         }),
         [
             events,
@@ -565,7 +566,8 @@ export function ScheduleProvider({children}) {
             showEventDetails,
             goBackInSidebar,
             confirmDelete,
-            cancelDeleteConfirmation, // 의존성 배열 추가
+            cancelDeleteConfirmation,
+            fetchSchedulesByTags,
         ]
     );
 
