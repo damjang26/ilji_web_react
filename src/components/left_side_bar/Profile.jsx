@@ -42,7 +42,7 @@ const Profile = () => {
     };
   },[isModalSearch]);//상태가 변경될 때마다 이 효과를 다시 실행
 
-  console.log(user);
+
 
   if (loading) {
     return (
