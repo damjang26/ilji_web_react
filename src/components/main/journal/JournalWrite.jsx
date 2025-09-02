@@ -1,7 +1,8 @@
-import React, {useState, useRef, useMemo} from 'react';
+import React, {useState, useRef, useMemo, useEffect} from 'react';
 import {useAuth} from '../../../AuthContext';
 import {useJournal} from '../../../contexts/JournalContext.jsx';
 import {FaImage, FaSmile, FaUserTag} from 'react-icons/fa';
+import EmojiPicker from 'emoji-picker-react';
 import {
     FormContainer,
     ProfilePicture,
@@ -12,6 +13,8 @@ import {
     RemoveImageButton,
     ActionBar,
     ActionButtons,
+    ActionButtonWrapper,
+    EmojiPickerWrapper,
     IconButton,
     CharCounter,
     PostButton,
@@ -46,7 +49,26 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
     const [content, setContent] = useState('');
     const [isPrivate, setIsPrivate] = useState(false); // ✅ 비공개 여부 상태, 기본값: 비공개(true)
     const [images, setImages] = useState([]);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const fileInputRef = useRef(null);
+    const textareaRef = useRef(null);
+    const emojiPickerContainerRef = useRef(null);
+
+    // --- 이모지 피커 외부 클릭 감지 Hook ---
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            // emojiPickerContainerRef가 존재하고, 클릭된 곳이 피커/아이콘 외부일 때
+            if (emojiPickerContainerRef.current && !emojiPickerContainerRef.current.contains(event.target)) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        // 피커가 열려 있을 때만 이벤트 리스너를 추가합니다.
+        if (showEmojiPicker) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside); // 컴포넌트 언마운트 시 리스너 제거
+    }, [showEmojiPicker]);
 
     // 날짜 포맷팅 (e.g., "8월 25일")
     const formattedDate = useMemo(() => {
@@ -123,8 +145,29 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
         fileInputRef.current.click();
     };
 
-    // TODO: 이모티콘, 친구 태그 기능 구현
-    const handleEmojiClick = () => alert('이모티콘 기능 구현 예정');
+    // --- 이모지 관련 핸들러 ---
+    const handleEmojiIconClick = () => {
+        setShowEmojiPicker(prev => !prev); // 아이콘 클릭 시 피커 표시 상태 토글
+    };
+
+    const onEmojiClick = (emojiObject) => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+
+        const cursorPosition = textarea.selectionStart; // 현재 커서 위치
+        // 커서 위치에 이모지를 삽입한 새로운 텍스트 생성
+        const newText =
+            content.substring(0, cursorPosition) +
+            emojiObject.emoji +
+            content.substring(cursorPosition);
+
+        if (newText.length <= MAX_CHAR_LIMIT) {
+            setContent(newText);
+        }
+
+        setShowEmojiPicker(false); // 이모지 선택 후 피커 닫기
+    };
+
     const handleTagClick = () => alert('친구 태그 기능 구현 예정');
 
     // --- Drag & Drop 핸들러 추가 ---
@@ -267,6 +310,7 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
                     referrerPolicy="no-referrer"/>
                 <FormContent>
                     <StyledTextarea
+                        ref={textareaRef}
                         value={content}
                         onChange={handleContentChange}
                         onDragEnter={handleDragEnter}
@@ -308,9 +352,16 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
                             <IconButton onClick={handleImageButtonClick} disabled={images.length >= MAX_IMAGE_LIMIT}>
                                 <FaImage/>
                             </IconButton>
-                            <IconButton onClick={handleEmojiClick}>
-                                <FaSmile/>
-                            </IconButton>
+                            <ActionButtonWrapper ref={emojiPickerContainerRef}>
+                                <IconButton onClick={handleEmojiIconClick}>
+                                    <FaSmile/>
+                                </IconButton>
+                                {showEmojiPicker && (
+                                    <EmojiPickerWrapper>
+                                        <EmojiPicker onEmojiClick={onEmojiClick} />
+                                    </EmojiPickerWrapper>
+                                )}
+                            </ActionButtonWrapper>
                             <IconButton onClick={handleTagClick}>
                                 <FaUserTag/>
                             </IconButton>
@@ -336,4 +387,3 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
 };
 
 export default JournalWrite;
-JournalWrite;

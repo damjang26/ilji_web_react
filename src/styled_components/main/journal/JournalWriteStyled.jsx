@@ -150,6 +150,17 @@ export const IconButton = styled.button`
     }
 `;
 
+export const ActionButtonWrapper = styled.div`
+  position: relative; /* EmojiPickerWrapper의 기준점이 됩니다 */
+`;
+
+export const EmojiPickerWrapper = styled.div`
+  position: absolute;
+  bottom: 100%; /* 아이콘 버튼 바로 위에 위치 */
+  left: 0;
+  z-index: 1000; /* 다른 요소들 위에 오도록 z-index 설정 */
+`;
+
 export const CharCounter = styled.div`
     font-size: 13px;
     color: ${({error}) => (error ? '#d93025' : '#888')};
