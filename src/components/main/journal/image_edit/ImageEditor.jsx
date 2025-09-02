@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.min.css';
 import {FaArrowLeft} from 'react-icons/fa';
@@ -11,26 +11,35 @@ import {
 } from '../../../../styled_components/main/journal/JournalWriteStyled';
 import FabricEditor from "./FabricEditor.jsx";
 
-const ImageEditor = ({imageInfo, onSave, onCancel}) => {
+const ImageEditor = ({imageInfo, onSave, onCancel, onFabricModeChange}) => {
     const [editingStep, setEditingStep] = useState('crop'); // 'crop' | 'fabric'
     const [croppedImage, setCroppedImage] = useState(null);
+    const fabricEditorRef = useRef(null); // ✅ FabricEditor를 참조하기 위한 ref
     const cropperRef = useRef(null);
+
+    useEffect(() => {
+        if (onFabricModeChange) {
+            onFabricModeChange(editingStep === 'fabric');
+        }
+    }, [editingStep, onFabricModeChange]);
+
+    useEffect(() => {
+        // 컴포넌트가 언마운트되거나 croppedImage가 변경될 때
+        // 이전에 생성된 Blob URL을 해제하여 메모리 누수를 방지합니다.
+        return () => {
+            if (croppedImage) {
+                URL.revokeObjectURL(croppedImage);
+            }
+        };
+    }, [croppedImage]);
 
     // --- Cropper.js 핸들러 ---
     const handleNextStep = () => {
         const cropper = cropperRef.current?.cropper;
-        console.log("✅ cropperRef:", cropperRef.current);
-        console.log("✅ cropper 인스턴스:", cropper);
         if (typeof cropper === 'undefined') return;
 
-
-        console.log("✅ cropData:", cropper.getData(true));
-        const croppedCanvas = cropper.getCroppedCanvas({
-            width: cropper.getData(true).width,
-            height: cropper.getData(true).height,
-        });
-        console.log("✅ croppedCanvas:", croppedCanvas);
-        console.log("✅ croppedCanvas 크기:", croppedCanvas?.width, croppedCanvas?.height);
+        // ❗ 중요: 옵션 없이 getCroppedCanvas()를 호출해야 원본 해상도의 잘린 이미지를 얻을 수 있습니다.
+        const croppedCanvas = cropper.getCroppedCanvas();
 
         croppedCanvas.toBlob((blob) => {
             if (!blob) {
@@ -38,15 +47,19 @@ const ImageEditor = ({imageInfo, onSave, onCancel}) => {
                 return;
             }
             const blobUrl = URL.createObjectURL(blob);
-            console.log("✅ Blob URL:", blobUrl);
             setCroppedImage(blobUrl);
         }, 'image/png');
         setEditingStep('fabric');
     };
 
+    // FabricEditor로부터 최종 편집된 이미지를 받아 부모에게 전달하는 함수
     const handleSaveEdit = () => {
-        if (!croppedImage) return;
-        onSave(croppedImage); // 부모 컴포넌트로 최종 이미지 데이터 전달
+        // ✅ fabricEditorRef를 통해 FabricEditor의 exportCanvas 함수를 호출
+        if (fabricEditorRef.current) {
+            const editedImageDataUrl = fabricEditorRef.current.exportCanvas();
+            // 부모 컴포넌트(JournalWrite)의 onSave 함수를 호출하여 데이터 전달
+            onSave(editedImageDataUrl);
+        }
     };
 
     const handleCancelEdit = () => {
@@ -99,13 +112,7 @@ const ImageEditor = ({imageInfo, onSave, onCancel}) => {
                 </ModalHeader>
                 <ImageEditorContainer>
                     {/*{croppedImage && <FabricEditor croppedImage={croppedImage}/>}*/}
-                    {croppedImage && (
-                        <>
-                            <FabricEditor croppedImage={croppedImage}/>
-                            {/* 바로 확인용 */}
-                            <img src={croppedImage} alt="테스트 이미지" style={{maxWidth: '300px'}}/>
-                        </>
-                    )}
+                    {croppedImage && <FabricEditor ref={fabricEditorRef} croppedImage={croppedImage}/>}
                 </ImageEditorContainer>
             </div>
         </>

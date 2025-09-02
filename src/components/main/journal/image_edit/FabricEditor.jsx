@@ -1,19 +1,57 @@
-import React, {useRef, useEffect} from "react";
+import React, {useRef, useEffect, useState, forwardRef, useImperativeHandle} from "react";
 import * as fabric from 'fabric';
-import {CanvasContainer, EditContainer} from "../../../../styled_components/main/journal/JournalWriteStyled.jsx";
+import {
+    CanvasContainer,
+    EditContainer, EditTab, EditTabContent,
+    EditTabMenuContainer, EditTabWrapper
+} from "../../../../styled_components/main/journal/JournalWriteStyled.jsx";
 import {HiOutlineFaceSmile} from "react-icons/hi2";
 import {MdPhotoFilter} from "react-icons/md";
-import {FaPenToSquare} from "react-icons/fa6";
 import {CgFormatText} from "react-icons/cg";
+import {LuPencilLine} from "react-icons/lu";
+import Filter from "./editcontent/Filter.jsx";
+import Draw from "./editcontent/Draw.jsx";
+import Text from "./editcontent/Text.jsx";
+import Sticker from "./editcontent/Sticker.jsx";
 
-const FabricEditor = ({croppedImage}) => {
+const FabricEditor = forwardRef(({croppedImage}, ref) => {
     const canvasRef = useRef(null);
-    // fabric 인스턴스는 한 번 생성된 후, 이미지가 바뀔 때마다 재사용되거나 재생성될 수 있습니다.
-    // 이 인스턴스를 useEffect 스코프 밖에서 추적하기 위해 ref를 사용합니다.
     const fabricRef = useRef(null);
+    const [canvasHeight, setCanvasHeight] = useState(400);
+    const [editTab, seteditTab] = useState('sticker');
 
-    // croppedImage가 변경될 때마다 이 effect가 실행됩니다.
-    // 캔버스 초기화, 이미지 로딩, 그리고 정리를 모두 여기서 처리합니다.
+    // 부모 컴포넌트(ImageEditor)가 ref를 통해 이 컴포넌트의 함수를 호출할 수 있도록 설정합니다.
+    useImperativeHandle(ref, () => ({
+        /**
+         * 현재 캔버스의 상태를 base64 데이터 URL로 변환하여 반환합니다.
+         * @returns {string|null} 이미지 데이터 URL 또는 canvas가 없을 경우 null
+         */
+        exportCanvas: () => {
+            const canvas = fabricRef.current;
+            if (!canvas) return null;
+
+            // 1. 캔버스에 저장해 둔 원본 이미지의 크기를 가져옵니다.
+            // const originalSize = canvas._originalSize;
+            // if (!originalSize || !originalSize.width) {
+            //     console.warn("원본 이미지 크기를 찾을 수 없어 현재 크기로 내보냅니다.");
+            //     return canvas.toDataURL({
+            //         format: 'png',
+            //         quality: 0.9,
+            //     });
+            // }
+
+            // 2. 현재 캔버스 크기 대비 원본 크기의 비율(multiplier)을 계산합니다.
+            // const multiplier = originalSize.width / canvas.getWidth();
+
+            // 3. toDataURL에 multiplier 옵션을 주어 원본 해상도로 이미지를 추출합니다.
+            return canvas.toDataURL({
+                format: 'png',
+                quality: 1,
+                // multiplier: multiplier,
+            });
+        }
+    }));
+
     useEffect(() => {
         if (!croppedImage || !canvasRef.current) {
             return;
@@ -34,27 +72,47 @@ const FabricEditor = ({croppedImage}) => {
             });
             fabricRef.current = canvas;
 
-            const width = 300;  // fallback
-            const height = 300; // 임의 높이 설정
-            canvas.setDimensions({width, height});
+            // 2. 이미지 로딩 및 캔버스에 적용 (async/await 사용)
+            // fabric.Image.fromURL은 Promise를 반환하므로, 콜백 방식 대신 async/await를 사용해야 안정적으로 동작합니다.
+            // 특히 Blob URL을 다룰 때 이 방식이 필수적입니다.
+            const loadImage = async () => {
+                try {
+                    const img = await fabric.Image.fromURL(croppedImage, {
+                        crossOrigin: "anonymous",
+                    });
+                    console.log("✅ 이미지 로드 성공!", img.width, img.height);
 
-            //2. 이미지 로딩 및 캔버스에 적용
-            // fabric.Image.fromURL(
-            //     croppedImage,
-            //     (img) => {
-            //         console.log("✅ 이미지 로드 성공!", img.width, img.height);
-            //
-            //         const scale = Math.min(container.clientWidth / img.width, 1);
-            //         const canvasWidth = img.width * scale;
-            //         const canvasHeight = img.height * scale;
-            //         canvas.setDimensions({width: canvasWidth, height: canvasHeight});
-            //         canvas.backgroundImage = img;
-            //         img.scaleToWidth(canvas.width);
-            //         img.scaleToHeight(canvas.height);
-            //         canvas.renderAll();
-            //     },
-            //     {crossOrigin: "anonymous"}
-            // );
+                    const scale = Math.min(
+                        container.clientWidth / img.width,
+                        container.clientHeight / img.height * 1.2,
+                        1
+                    );
+
+                    const displayWidth = img.width * scale;
+                    const displayHeight = img.height * scale;
+                    setCanvasHeight(displayHeight);
+
+                    canvas.setDimensions({width: displayWidth, height: displayHeight});
+
+                    img.set({
+                        scaleX: scale,
+                        scaleY: scale,
+                        left: 0,
+                        top: 0,
+                        selectable: false,
+                        evented: false,
+                    });
+                    canvas.add(img);
+                    canvas.sendToBack(img);
+
+                    // 원본 크기 저장해두기 (저장 시 사용)
+                    fabricRef.current._originalSize = {width: img.width, height: img.height};
+                } catch (error) {
+                    console.error("❌ Fabric.js 이미지 로딩 실패:", error);
+                }
+            };
+
+            loadImage();
         }, 0);
 
 
@@ -74,13 +132,25 @@ const FabricEditor = ({croppedImage}) => {
             <CanvasContainer>
                 <canvas ref={canvasRef} id="journal-fabric-canvas"/>
             </CanvasContainer>
-            <EditContainer>
-                <HiOutlineFaceSmile/>
-                <MdPhotoFilter/>
-                <FaPenToSquare/>
-                <CgFormatText/>
+            <EditContainer canvasHeight={canvasHeight}>
+                <EditTabMenuContainer>
+                    <EditTab click={editTab === 'sticker'}
+                             onClick={() => seteditTab('sticker')}><HiOutlineFaceSmile/></EditTab>
+                    <EditTab click={editTab === 'filter'}
+                             onClick={() => seteditTab('filter')}><MdPhotoFilter/></EditTab>
+                    <EditTab click={editTab === 'draw'} onClick={() => seteditTab('draw')}><LuPencilLine/></EditTab>
+                    <EditTab click={editTab === 'text'} onClick={() => seteditTab('text')}><CgFormatText/></EditTab>
+                </EditTabMenuContainer>
+                <EditTabContent>
+                    <EditTabWrapper>
+                        {editTab === 'sticker' && <Sticker canvas={fabricRef.current}/>}
+                        {editTab === 'filter' && <Filter canvas={fabricRef.current}/>}
+                        {editTab === 'draw' && <Draw canvas={fabricRef.current}/>}
+                        {editTab === 'text' && <Text canvas={fabricRef.current}/>}
+                    </EditTabWrapper>
+                </EditTabContent>
             </EditContainer>
         </>);
-};
+});
 
 export default FabricEditor;
