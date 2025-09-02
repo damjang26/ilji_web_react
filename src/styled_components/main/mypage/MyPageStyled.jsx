@@ -134,6 +134,13 @@ export const MyPageMain = styled.main`
    align-items: center;
  `;
 
+// 프로필 이미지를 감싸서 위치(마진 등)를 조정하기 위한 래퍼
+export const ImgWrapper = styled.div`
+   position: relative;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+ `;
 
 //  탭에 따라 선택된 기능이 표시될 영역
 export const FeatureContent = styled.main`
