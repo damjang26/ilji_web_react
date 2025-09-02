@@ -32,30 +32,50 @@ const groupOptions = [
 
 const CalendarMenu = () => {
   const { tags, addTag, deleteTag, loading } = useTags();
-  // ToDo: fetchSchedulesByTags 함수는 다음 단계에서 ScheduleContext에 구현 예정
   const { fetchSchedulesByTags } = useSchedule();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTagIds, setSelectedTagIds] = useState([]); // 선택된 태그 ID 목록 state
+  const [selectedTagIds, setSelectedTagIds] = useState([]);
+  const [isInitialTagLoad, setIsInitialTagLoad] = useState(true);
   const [form] = Form.useForm();
 
-  // --- 태그 관련 핸들러 ---
-  const handleTagClick = (tagId) => {
-    // 클릭된 태그 ID가 이미 목록에 있는지 확인
-    setSelectedTagIds(
-      (prevIds) =>
-        prevIds.includes(tagId)
-          ? prevIds.filter((id) => id !== tagId) // 있으면 제거 (선택 해제)
-          : [...prevIds, tagId] // 없으면 추가 (선택)
-    );
-  };
-  // --- 태그 필터링 로직 ---
-  // selectedTagIds 상태가 변경될 때마다 필터링된 일정을 가져옵니다.
+  // 1. 태그 목록이 로드되면 '전체 선택'을 기본값으로 설정하는 로직
   useEffect(() => {
+    if (tags.length > 0 && isInitialTagLoad) {
+      setSelectedTagIds(tags.map((tag) => tag.id));
+      setIsInitialTagLoad(false);
+    }
+  }, [tags, isInitialTagLoad]);
+
+  // 2. 태그 필터링 로직 (기존과 동일)
+  useEffect(() => {
+    // 초기 로드 시 fetchSchedulesByTags가 아직 없을 수 있으므로 확인
     if (fetchSchedulesByTags) {
       fetchSchedulesByTags(selectedTagIds);
     }
   }, [selectedTagIds, fetchSchedulesByTags]);
+
+
+  // 3. '전체 선택' 체크박스의 상태를 파생
+  const isAllSelected = tags.length > 0 && selectedTagIds.length === tags.length;
+
+  // 4. '전체 선택' 클릭 핸들러
+  const handleSelectAllClick = () => {
+    if (isAllSelected) {
+      setSelectedTagIds([]); // 모두 선택된 상태면, 전체 선택 해제
+    } else {
+      setSelectedTagIds(tags.map((tag) => tag.id)); // 그렇지 않으면, 전체 선택
+    }
+  };
+
+  // 5. 개별 태그 클릭 핸들러 (기존과 동일)
+  const handleTagClick = (tagId) => {
+    setSelectedTagIds((prevIds) =>
+      prevIds.includes(tagId)
+        ? prevIds.filter((id) => id !== tagId)
+        : [...prevIds, tagId]
+    );
+  };
 
   // --- 그룹 변경 핸들러 ---
   const handleGroupChange = (value) => {
@@ -71,7 +91,6 @@ const CalendarMenu = () => {
     form
       .validateFields()
       .then(async (values) => {
-        // color 값이 객체인지 문자열인지 확인하여 처리합니다.
         const colorValue =
           typeof values.color === "object" && values.color !== null
             ? values.color.toHexString()
@@ -138,29 +157,46 @@ const CalendarMenu = () => {
               <Spin />
             </div>
           ) : (
-            tags.map((tag) => (
-              <Dropdown
-                key={tag.id}
-                menu={{
-                  items: menuItems,
-                  onClick: ({ key }) => {
-                    if (key === "delete") {
-                      deleteTag(tag.id);
-                    }
-                  },
-                }}
-                trigger={["contextMenu"]}
-              >
-                {/* isSelected prop을 전달하여 선택 상태에 따라 다른 스타일을 적용 */}
-                <S.TagItem
-                  onClick={() => handleTagClick(tag.id)}
-                  $isSelected={selectedTagIds.includes(tag.id)}
+            <>
+              {/* '전체 선택' 체크박스 */}
+              <S.TagItem>
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={handleSelectAllClick}
+                  style={{ marginRight: '8px' }}
+                />
+                <S.ColorSquare color={"#8c8c8c"} />
+                <S.TagLabel>전체 선택</S.TagLabel>
+              </S.TagItem>
+
+              {/* 개별 태그 체크박스 */}
+              {tags.map((tag) => (
+                <Dropdown
+                  key={tag.id}
+                  menu={{
+                    items: menuItems,
+                    onClick: ({ key }) => {
+                      if (key === "delete") {
+                        deleteTag(tag.id);
+                      }
+                    },
+                  }}
+                  trigger={["contextMenu"]}
                 >
-                  <S.ColorSquare color={tag.color} />
-                  <S.TagLabel>{tag.label}</S.TagLabel>
-                </S.TagItem>
-              </Dropdown>
-            ))
+                  <S.TagItem>
+                    <input
+                      type="checkbox"
+                      checked={selectedTagIds.includes(tag.id)}
+                      onChange={() => handleTagClick(tag.id)}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <S.ColorSquare color={tag.color} />
+                    <S.TagLabel>{tag.label}</S.TagLabel>
+                  </S.TagItem>
+                </Dropdown>
+              ))}
+            </>
           )}
         </S.TagListContainer>
       ),
