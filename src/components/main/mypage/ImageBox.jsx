@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ImageModal from './ImageModal'; // 방금 수정한 '액자' 컴포넌트를 가져옵니다.
-import { ModalBody, ModalFooter } from '../../../styled_components/main/mypage/ImageModalStyled';
+import { ModalBody, ModalFooter, ImagePreview } from '../../../styled_components/main/mypage/ImageModalStyled';
 import {
     FormLabel,
     FormInput,
@@ -26,6 +26,10 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, onConfirm, imageType }) =>
     return (
         <ImageModal isOpen={isOpen} onClose={onClose} title={`${imageType === 'profileImage' ? '프로필' : '배너'} 이미지 변경`}>
             <ModalBody>
+                {/* 이미지 미리보기 영역 */}
+                <ImagePreview imageUrl={newUrl} imageType={imageType}>
+                    {!newUrl && "이미지 URL을 입력하세요"}
+                </ImagePreview>
                 <FormLabel htmlFor="imageUrlInput">새 이미지 URL:</FormLabel>
                 <FormInput
                     id="imageUrlInput"
