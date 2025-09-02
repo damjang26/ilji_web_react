@@ -50,9 +50,8 @@ const CalendarMenu = () => {
     );
   };
   // --- 태그 필터링 로직 ---
-  // selectedTagIds 상태가 변경될 때마다 실행됩니다.
+  // selectedTagIds 상태가 변경될 때마다 필터링된 일정을 가져옵니다.
   useEffect(() => {
-    // ToDo: fetchSchedulesByTags가 정의되면 아래 주석을 해제합니다.
     if (fetchSchedulesByTags) {
       fetchSchedulesByTags(selectedTagIds);
     }
