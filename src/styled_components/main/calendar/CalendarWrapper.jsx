@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 
 export const CalendarWrapper = styled.div`
 
@@ -263,4 +263,41 @@ export const DiaryPopoverButton = styled.button`
     &:hover {
         background-color: #f0f2f5;
     }
+`;
+
+// --- 로딩 스피너 관련 스타일 ---
+
+// 스피너 회전 애니메이션
+const spin = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+// 스피너를 캘린더 중앙에 위치시키기 위한 래퍼
+export const SpinnerWrapper = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7); // 반투명 배경
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; // 캘린더 위에 표시
+  border-radius: 8px; // 부모 컨테이너와 맞춤
+`;
+
+// 스피너 자체의 스타일
+export const Spinner = styled.div`
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #9781ff; // 스피너 색상 (테마 색상과 유사하게)
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: ${spin} 1s linear infinite;
 `;

@@ -1,5 +1,6 @@
 import React, {useState} from "react";
 import {BrowserRouter, useLocation, Routes, Route} from "react-router-dom";
+import { Spin } from 'antd';
 
 import LeftSideBar from "./components/LeftSideBar.jsx";
 import RightSideBar from "./components/RightSideBar.jsx";
@@ -20,6 +21,14 @@ const AppWrapper = styled.div`
     overflow: hidden; /* 전체 페이지의 스크롤바를 방지 */
 `;
 
+const FullPageSpinner = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+`;
+
 const ContentWrapper = styled.div`
     flex-grow: 1; /* 남는 공간을 모두 차지 */
     display: flex;
@@ -37,7 +46,11 @@ const AppContent = () => {
     const background = location.state && location.state.backgroundLocation;
 
     if (loading) {
-        return <div>Loading...</div>;
+        return (
+            <FullPageSpinner>
+                <Spin size="large" />
+            </FullPageSpinner>
+        );
     }
 
     return user ? (
