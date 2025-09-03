@@ -26,6 +26,33 @@ export const PostHeader = styled.header`
     gap: 12px;
 `;
 
+// ✅ [신규] 포스트 헤더의 액션 버튼 (수정, 삭제 등)
+export const PostHeaderActions = styled.div`
+    margin-left: auto; /* 헤더의 오른쪽 끝으로 밀어냄 */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 20px; /* 아이콘 크기 */
+        color: #8e8e8e; /* 아이콘 색상 */
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        transition: background-color 0.2s, color 0.2s;
+
+        &:hover {
+            background-color: #f0f2f5;
+            color: #262626;
+        }
+    }
+`;
+
 // 프로필 이미지
 export const ProfileImage = styled.img`
     width: 32px;
