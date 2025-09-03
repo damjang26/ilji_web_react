@@ -36,7 +36,7 @@ export default function FullCalendarExample() {
   const location = useLocation();
 
   // 일기 팝오버 상태 관리
-  const { hasJournal } = useJournal();
+  const { hasJournal, getJournal, deleteJournal } = useJournal();
   const [diaryPopover, setDiaryPopover] = useState({
     visible: false,
     date: null,
@@ -44,6 +44,28 @@ export default function FullCalendarExample() {
     left: 0,
   });
   const popoverHideTimer = useRef(null);
+
+  const handleDeleteJournal = async () => {
+    // 1. 팝오버의 날짜를 이용해 삭제할 일기 객체를 가져옵니다. (id를 알아내기 위함)
+    const journalToDelete = getJournal(diaryPopover.date);
+    if (!journalToDelete) {
+      alert("삭제할 일기를 찾을 수 없습니다.");
+      return;
+    }
+
+    // 2. 사용자에게 정말 삭제할 것인지 확인받습니다.
+    if (window.confirm("정말로 이 일기를 삭제하시겠습니까?")) {
+      try {
+        // 3. Context의 deleteJournal 함수를 호출합니다. (id와 날짜를 넘겨줍니다)
+        await deleteJournal(journalToDelete.id, diaryPopover.date);
+        alert("일기가 삭제되었습니다.");
+        // 4. 성공적으로 삭제되면 팝오버를 닫습니다.
+        setDiaryPopover((p) => ({ ...p, visible: false }));
+      } catch (error) {
+        alert("일기 삭제에 실패했습니다.");
+      }
+    }
+  };
 
   const coloredEvents = useMemo(() => {
     if (tags.length === 0) return events;
@@ -242,7 +264,7 @@ export default function FullCalendarExample() {
               >
                 <FaBookOpen /> 일기 보기
               </DiaryPopoverButton>
-              <DiaryPopoverButton>
+              <DiaryPopoverButton onClick={handleDeleteJournal}>
                 <FaTrash /> 일기 삭제
               </DiaryPopoverButton>
               <DiaryPopoverButton>
