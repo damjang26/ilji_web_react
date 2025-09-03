@@ -16,6 +16,7 @@ const TabMenu = ({toggleButtonRef, onToggle}) => {
             <ToggleButton ref={toggleButtonRef} onClick={onToggle}>
                 <FaBell/> Notifications
             </ToggleButton>
+            
         </TabMenuContainer>
     );
 };
