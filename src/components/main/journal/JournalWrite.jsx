@@ -207,7 +207,7 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
     // ✅ ImageEditor로부터 최종 편집된 이미지 데이터를 받아 처리하는 함수
     const handleSaveEdit = (editedImageDataUrl) => {
         // 1. FabricEditor가 반환한 고해상도 base64 데이터를 File 객체로 변환합니다.
-        const filename = `edited_${user.uid}_${Date.now()}.png`;
+        const filename = `edited_mz_${Date.now()}.png`;
         const editedFile = dataURLtoFile(editedImageDataUrl, filename);
 
         // 2. 이 File 객체로부터 새로운 blob URL을 생성하여 미리보기에 사용합니다.

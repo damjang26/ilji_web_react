@@ -38,20 +38,21 @@ const ContentWrapper = styled.div`
 `;
 
 const AppContent = () => {
-    const {user, loading} = useAuth();
+    // const {user, loading} = useAuth();
+    const [user, setUser] = useState(true);
     const location = useLocation();
 
     // navigate로 전달받은 state에 backgroundLocation이 있는지 확인합니다.
     // 이것이 모달을 띄울지, 일반 페이지를 띄울지 결정하는 키입니다.
     const background = location.state && location.state.backgroundLocation;
 
-    if (loading) {
-        return (
-            <FullPageSpinner>
-                <Spin size="large" />
-            </FullPageSpinner>
-        );
-    }
+    // if (loading) {
+    //     return (
+    //         <FullPageSpinner>
+    //             <Spin size="large" />
+    //         </FullPageSpinner>
+    //     );
+    // }
 
     return user ? (
         <AppWrapper>

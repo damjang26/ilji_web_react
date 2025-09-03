@@ -12,6 +12,7 @@ import {
     NoEventsMessage
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleListStyled.jsx";
 import { ActionButtons, Button } from "../../../styled_components/common/FormElementsStyled.jsx";
+import axios from "axios";
 
 const FILTERS = {
     all: { icon: FaInfinity, label: "전체 일정" },
@@ -112,6 +113,98 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
             });
     };
 
+    // mz's work.. >>>>>>>>>>>>>>
+    const [file, setFile] = useState(null);
+    const onFileChange = (e) => {
+        setFile(e.target.files[0]);
+    };
+    const uploadHandler = async () => {
+        if (!file) {
+            alert("파일을 선택하세요.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await axios.post('http://localhost:8080/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            alert("업로드 성공: " + response.data);
+        } catch (error) {
+            console.error("업로드 실패", error);
+            alert("업로드 실패");
+        }
+
+        // server code.. >>>>>>>>>>>>>>>>>>>>
+        /*
+@PostMapping("/firebase")
+    public ResponseEntity<String> handleFileUpload(@RequestParam("file") MultipartFile file) {
+        try {
+            // 저장 경로 지정
+//            String uploadDir = "C:\\mzz\\springboot_intellij\\upload\\";
+            FileInputStream serviceAccount = new FileInputStream("src/main/resources/firebase-config.json");
+
+            Storage storage = StorageOptions.newBuilder()
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .build()
+                    .getService();
+
+
+            String fileName = "memory/" + UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+            BlobInfo blobInfo = BlobInfo.newBuilder("mz-test-46f03.appspot.com", fileName)
+                    .setContentType(file.getContentType())
+                    .build();
+
+            storage.create(blobInfo, file.getBytes());
+
+            String fileUrl = "https://firebasestorage.googleapis.com/v0/b/" +
+                    "mz-test-46f03.appspot.com/o/" +
+                    fileName.replaceAll("/", "%2F") +
+                    "?alt=media";
+
+            return ResponseEntity.ok(fileUrl);
+
+//            String filePath = uploadDir + file.getOriginalFilename();
+//            file.transferTo(new File(filePath));
+//            return ResponseEntity.ok("파일 업로드 성공: " + file.getOriginalFilename());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("파일 업로드 실패");
+        }
+    }
+        ++ firebase-config.json 필요
+    FirebaseConfig.java -------------------------
+@Configuration
+public class FirebaseConfig {
+    @PostConstruct
+    public void initializeFirebase() throws IOException {
+        List<FirebaseApp> firebaseApps = FirebaseApp.getApps();
+        if (firebaseApps == null || firebaseApps.isEmpty()) {
+            FileInputStream serviceAccount =
+                    new FileInputStream("src/main/resources/firebase-config.json");
+
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .setStorageBucket("mz-test-46f03.appspot.com")
+                    .build();
+
+            FirebaseApp.initializeApp(options);
+            System.out.println("✅ Firebase initialized.");
+        } else {
+            System.out.println("⚠️ Firebase already initialized.");
+        }
+    }
+}
+
+
+         */
+
+
+    };
     return (
         <ListWrapper>
             <ListHeader>
@@ -132,6 +225,11 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
             <ActionButtons>
                 <Button className="primary" onClick={onAdd}>일정 추가</Button>
             </ActionButtons>
+            <hr/>
+            <div>mz-section (firebase file upload)
+                <input type="file" onChange={onFileChange} />
+                <button onClick={uploadHandler}>upload</button>
+            </div>
         </ListWrapper>
     )
 }
