@@ -1,6 +1,7 @@
 import React, {useState, useEffect, useMemo, useRef, useCallback} from 'react';
 import {useJournal} from "../../../../contexts/JournalContext.jsx";
 import {useAuth} from "../../../../AuthContext.jsx"; // ❗ 사용자 정보(프로필 사진 등)를 가져오기 위해 추가
+import {useNavigate} from "react-router-dom"; // ✅ 페이지 이동을 위해 추가
 import {
     FeedContainer,
     PostActions,
@@ -10,19 +11,23 @@ import {
     PostImage,
     ProfileImage,
     UserInfo,
+    EmptyFeedContainer,
+    EmptyFeedText,
+    WriteJournalButton,
 } from "../../../../styled_components/main/post/PostListStyled.jsx";
-import { FaRegComment, FaRegHeart, FaRegShareSquare } from "react-icons/fa";
-import { HiPencilAlt } from "react-icons/hi";
-import { MdDeleteForever } from "react-icons/md";
+import {FaRegComment, FaRegHeart, FaRegShareSquare} from "react-icons/fa";
+import {HiPencilAlt} from "react-icons/hi";
+import {MdDeleteForever} from "react-icons/md";
 
 // 한 번에 불러올 일기 개수
 const JOURNALS_PER_PAGE = 10;
 
 const JournalList = () => {
     // 1. Context에서 전체 일기 목록(Map)과 로딩 상태를 가져옵니다.
-    const { journals, loading: journalLoading, deleteJournal } = useJournal();
+    const {journals, loading: journalLoading, deleteJournal} = useJournal();
     // 2. 사용자 정보를 가져옵니다 (프로필 사진, 이름 등).
     const {user} = useAuth();
+    const navigate = useNavigate(); // ✅ navigate 함수 가져오기
 
     // 3. 화면에 보여줄 일기 목록(페이지네이션)과 관련된 상태를 관리합니다.
     const [page, setPage] = useState(1);
@@ -67,7 +72,6 @@ const JournalList = () => {
         if (node) observer.current.observe(node); // 새 노드 관찰 시작
     }, [journalLoading, hasMore]);
 
-    // ✅ [신규] 일기 삭제 핸들러
     const handleDelete = async (journalId, journalDate) => {
         // 사용자가 정말 삭제할 것인지 확인
         if (window.confirm("정말로 이 일기를 삭제하시겠습니까?")) {
@@ -86,7 +90,18 @@ const JournalList = () => {
         return <div>일기를 불러오는 중...</div>;
     }
     if (!journalLoading && sortedJournals.length === 0) {
-        return <div>작성된 일기가 없습니다. 첫 일기를 작성해보세요!</div>;
+        return (
+            <EmptyFeedContainer>
+                <FaRegComment size={64}/>
+                <h2>아직 작성된 일기가 없습니다</h2>
+                <EmptyFeedText>
+                    오늘의 첫 일기를 작성해보세요!
+                </EmptyFeedText>
+                <WriteJournalButton onClick={() => navigate('/journal/write')}>
+                    ✏️ 일기 작성하기
+                </WriteJournalButton>
+            </EmptyFeedContainer>
+        );
     }
 
     return (
@@ -108,10 +123,11 @@ const JournalList = () => {
                                 {/* ✅ [신규] 수정 및 삭제 아이콘을 담는 컨테이너 */}
                                 <PostHeaderActions>
                                     <button title="수정">
-                                        <HiPencilAlt />
+                                        <HiPencilAlt/>
                                     </button>
-                                    <button title="삭제" onClick={() => handleDelete(journal.id, journal.ilogDate.split('T')[0])}>
-                                        <MdDeleteForever />
+                                    <button title="삭제"
+                                            onClick={() => handleDelete(journal.id, journal.ilogDate.split('T')[0])}>
+                                        <MdDeleteForever/>
                                     </button>
                                 </PostHeaderActions>
                             </PostHeader>

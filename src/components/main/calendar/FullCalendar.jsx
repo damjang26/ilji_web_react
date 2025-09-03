@@ -1,4 +1,4 @@
-import React, {useState, useRef, useMemo, useEffect} from "react";
+import React, {useState, useRef, useMemo} from "react";
 import ReactDOM from "react-dom";
 import {
     CalendarWrapper,
