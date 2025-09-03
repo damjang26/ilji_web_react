@@ -225,6 +225,12 @@ export default function FullCalendarExample() {
      * - React 방식으로 마우스 호버 이벤트를 처리하여 일기 팝오버를 띄웁니다.
      */
     const renderDayCellContent = (dayCellInfo) => {
+        // ✅ [수정] 월(dayGridMonth) 뷰에서만 커스텀 렌더링을 적용합니다.
+        if (dayCellInfo.view.type !== "dayGridMonth") {
+            // 다른 뷰(week, day)에서는 FullCalendar 기본 렌더링을 사용
+            return null;
+        }
+
         const dateStr = formatDate(dayCellInfo.date); // ✅ [수정] 타임존 안전한 함수 사용
         const journal = getJournal(dateStr); // isPrivate 속성을 포함한 일기 객체
         const isToday = dayCellInfo.isToday;

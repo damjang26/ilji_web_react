@@ -206,7 +206,6 @@ export const CalendarWrapper = styled.div`
         align-items: center;
 
         &.plus {
-            color: #9781ff;
         }
 
         &.check {
@@ -214,7 +213,7 @@ export const CalendarWrapper = styled.div`
         }
 
         &.lock {
-            color: #6c757d;
+            color: #7d6d6c;
         }
     }
 
@@ -244,7 +243,7 @@ export const CalendarWrapper = styled.div`
 
     .fc-event {
         border: none; /* 기본 파란 테두리 제거 */
-        background: transparent; /* 필요 없으면 배경도 투명 */
+        /* background: transparent; */ /* ❗[수정] 이 속성 때문에 day/week 뷰에서 일정이 보이지 않으므로 주석 처리합니다. */
         box-shadow: none; /* 혹시 그림자 있으면 제거 */
     }
 

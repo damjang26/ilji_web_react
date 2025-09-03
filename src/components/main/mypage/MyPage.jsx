@@ -90,7 +90,7 @@ const MyPage = () => {
             <ContentBox>
                 <MyPageHeader>
                     {/* 클릭 가능한 프로필 이미지 */}
-                    <ImgWrapper style={{marginTop: '0px', marginBottom: '20px'}}>
+                    <ImgWrapper style={{marginTop: '10px', marginBottom: '10px'}}>
                         <img
                             src={profile.profileImage || '/default-profile.png'}
                             alt="Profile"
@@ -110,7 +110,7 @@ const MyPage = () => {
                         <UserInfo>
                             <div className="nickname">{profile.nickname || 'Guest'}</div>
                             <div className="email">{profile.email || 'guest@example.com'}</div>
-                            <div>{profile.bio || '자기소개가 없습니다.'}</div>
+                            <div>{profile.bio || ''}</div>
                         </UserInfo>
                         <UserActions>
                             <div>post</div>
