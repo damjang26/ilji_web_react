@@ -1,0 +1,63 @@
+import React, {useState, useRef, useEffect} from "react";
+import ReactDOM from "react-dom";
+import Profile from "./left_side_bar/Profile.jsx";
+import CalendarMenu from "./left_side_bar/CalendarMenu.jsx";
+import TabMenu from "./left_side_bar/TabMenu.jsx";
+import {
+    MenuItemsContainer,
+    MenuItemWrapper,
+    SidebarContainer,
+    NotiSidebarWrapper,
+    Overlay,
+} from "../styled_components/LeftSideBarStyled.jsx";
+
+
+const LeftSideBar = () => {
+    const [isNotiOpen, setNotiOpen] = useState(false);
+    const notiSidebarRef = useRef(null);
+    const toggleButtonRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (
+                isNotiOpen &&
+                notiSidebarRef.current &&
+                !notiSidebarRef.current.contains(e.target) &&
+                toggleButtonRef.current &&
+                !toggleButtonRef.current.contains(e.target)
+            ) {
+                setNotiOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [isNotiOpen]);
+
+    return (
+        <>
+            {/* ✅ [수정] mousedown 이벤트의 전파를 막아, 다른 팝업(일정 팝업 등)이 닫히는 현상을 방지합니다. */}
+            <SidebarContainer onMouseDown={(e) => e.stopPropagation()}>
+                <MenuItemsContainer>
+                    <MenuItemWrapper><Profile/></MenuItemWrapper>
+                    <MenuItemWrapper>
+                        <TabMenu toggleButtonRef={toggleButtonRef} onToggle={() => setNotiOpen(!isNotiOpen)}/>
+                    </MenuItemWrapper>
+                    <MenuItemWrapper><CalendarMenu/></MenuItemWrapper>
+                </MenuItemsContainer>
+            </SidebarContainer>
+
+            {ReactDOM.createPortal(
+                <>
+                    <Overlay open={isNotiOpen} onClick={() => setNotiOpen(false)}/>
+                    <NotiSidebarWrapper ref={notiSidebarRef} open={isNotiOpen} onMouseDown={(e) => e.stopPropagation()}>
+                        <h2>Notifications</h2>
+                        <p>여기에 내용 넣기</p>
+                    </NotiSidebarWrapper>
+                </>,
+                document.body
+            )}
+        </>
+    );
+};
+
+export default LeftSideBar;
