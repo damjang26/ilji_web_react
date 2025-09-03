@@ -176,6 +176,7 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("파일 업로드 실패");
         }
     }
+    implementation 'com.google.firebase:firebase-admin:9.2.0'
         ++ firebase-config.json 필요
     FirebaseConfig.java -------------------------
 @Configuration
