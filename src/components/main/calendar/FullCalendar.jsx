@@ -256,6 +256,17 @@ export default function FullCalendarExample() {
 
         // --- 팝오버 이벤트 핸들러 ---
         const handleMouseEnter = (e) => {
+            // ✅ [추가] 오늘 날짜와 비교하여 미래의 날짜인지 확인합니다.
+            const today = new Date();
+            // 시간, 분, 초를 0으로 설정하여 날짜만 비교하도록 합니다.
+            today.setHours(0, 0, 0, 0);
+
+            // 마우스가 올라간 날짜가 오늘보다 미래라면, 팝업을 띄우지 않고 함수를 종료합니다.
+            if (dayCellInfo.date > today) {
+                return;
+            }
+
+            // 과거 또는 오늘 날짜일 경우에만 팝업을 띄웁니다.
             clearHideTimer();
             const rect = e.currentTarget.getBoundingClientRect();
             setDiaryPopover({

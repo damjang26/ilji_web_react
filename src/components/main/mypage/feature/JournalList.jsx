@@ -72,18 +72,20 @@ const JournalList = () => {
         if (node) observer.current.observe(node); // 새 노드 관찰 시작
     }, [journalLoading, hasMore]);
 
-    const handleDelete = async (journalId, journalDate) => {
+    // ✅ [수정] handleDelete 함수를 useCallback으로 감싸 불필요한 재생성을 방지합니다.
+    const handleDelete = useCallback(async (journalId, journalDate) => {
         // 사용자가 정말 삭제할 것인지 확인
         if (window.confirm("정말로 이 일기를 삭제하시겠습니까?")) {
             try {
                 // Context의 deleteJournal 함수 호출
                 await deleteJournal(journalId, journalDate);
                 alert("일기가 삭제되었습니다.");
+                // 삭제 성공 후 특별한 페이지 이동은 필요 없으므로, 상태 업데이트에 따라 UI가 자동으로 갱신됩니다.
             } catch (error) {
                 alert("일기 삭제 중 오류가 발생했습니다.");
             }
         }
-    };
+    }, [deleteJournal]); // deleteJournal 함수가 변경될 때만 이 함수를 재생성합니다.
 
     // 초기 로딩 중이거나, 작성된 일기가 없을 때의 UI 처리
     if (journalLoading && sortedJournals.length === 0) {
@@ -137,10 +139,11 @@ const JournalList = () => {
                                 </UserInfo>
                                 {/* ✅ [신규] 수정 및 삭제 아이콘을 담는 컨테이너 */}
                                 <PostHeaderActions>
-                                    <button title="수정">
+                                    {/* TODO: 수정 버튼 클릭 시 JournalWrite 모달을 수정 모드로 열기 */}
+                                    <button data-tooltip="수정" onClick={() => alert('수정 모달 열기 기능 구현 예정')}>
                                         <HiPencilAlt/>
                                     </button>
-                                    <button title="삭제"
+                                    <button data-tooltip="삭제"
                                             onClick={() => handleDelete(journal.id, journal.ilogDate.split('T')[0])}>
                                         <MdDeleteForever/>
                                     </button>
