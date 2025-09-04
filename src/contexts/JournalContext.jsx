@@ -56,51 +56,50 @@ export const JournalProvider = ({children}) => {
      * 서버에 새로운 일기를 생성하는 함수 (이미지 업로드 포함)
      * @param {object} journalPayload - { images, content, selectedDate, isPrivate, user }
      */
+        // ✅ [수정] 백엔드에서 이미지와 데이터를 한번에 처리하도록 로직 변경
     const createJournalEntry = useCallback(async (journalPayload) => {
-        const {images, content, selectedDate, isPrivate, user} = journalPayload;
+            const {images, content, selectedDate, isPrivate, user} = journalPayload;
 
-        // --- 1단계: 이미지 업로드 (현재 비활성화) ---
-        // ❗ 나중에 이미지 업로드 API가 준비되면 이 부분의 주석을 해제하세요.
-        /*
-        const uploadPromises = images.map(image => {
+            // --- 1단계: 서버에 보낼 FormData 객체 생성 ---
             const formData = new FormData();
-            formData.append('image', image.file);
-            return axios.post('/api/upload', formData, {
+
+            // 이미지 파일들을 formData에 추가합니다.
+            if (images && images.length > 0) {
+                images.forEach(image => {
+                    // 백엔드의 @RequestPart("images")와 키 이름을 일치시킵니다.
+                    formData.append("images", image.file);
+                });
+            }
+
+            // 일기 데이터(JSON)를 formData에 추가합니다.
+            // 백엔드의 ILogCreateRequest DTO와 필드를 맞춥니다.
+            const requestData = {
+                userId: user.id,
+                ilogDate: new Date(selectedDate).toISOString().split('T')[0], // DTO 필드명 'ilogDate'에 맞춤
+                content: content,
+                visibility: isPrivate ? 2 : 0,
+            };
+
+            // JSON 객체를 Blob으로 변환하여 "request" 키로 추가합니다.
+            formData.append("request", new Blob([JSON.stringify(requestData)], {type: "application/json"}));
+
+            // --- 2단계: 통합된 FormData를 서버에 한번만 POST 요청합니다. ---
+            const response = await api.post('/api/i-log', formData, {
                 headers: {'Content-Type': 'multipart/form-data'},
             });
-        });
-        const uploadResponses = await Promise.all(uploadPromises);
-        const imageUrls = uploadResponses.map(res => res.data.url);
-        */
+            const newJournalEntry = response.data; // 서버가 생성된 일기 데이터를 반환한다고 가정
 
-        // --- 2단계: 일기 데이터를 최종적으로 조합하여 서버에 저장합니다. ---
-        const journalDataToSave = {
-            // ❗ 중요: user 객체에 DB의 숫자 ID인 'id'가 있다고 가정합니다.
-            userId: user.id,
-            // 'YYYY-MM-DD' 형식으로 날짜를 변환합니다.
-            ilogDate: new Date(selectedDate).toISOString().split('T')[0],
-            content: content,
-            // ❗ 중요: 이미지 업로드 기능이 비활성화되었으므로, imgUrl을 null로 보냅니다.
-            imgUrl: null,
-            // isPrivate(boolean)를 visibility(숫자)로 변환합니다. (0: 공개, 2: 비공개)
-            visibility: isPrivate ? 2 : 0,
-        };
+            // --- 3단계: UI 즉시 업데이트 ---
+            // DB 저장 성공 후, 화면을 새로고침하지 않아도 바로 일기가 보이도록 Context의 상태를 업데이트합니다.
+            setJournals(prev => {
+                const newJournals = new Map(prev);
+                // 서버 응답에 있는 날짜(newJournalEntry.ilogDate)를 사용하는 것이 더 안전합니다.
+                newJournals.set(newJournalEntry.ilogDate, newJournalEntry);
+                return newJournals;
+            });
 
-        // `axios`로 최종 일기 데이터를 서버에 POST 요청합니다.
-        // 이제 api 인스턴스를 사용하므로, 인증 헤더가 자동으로 추가됩니다.
-        const response = await api.post('/api/i-log', journalDataToSave);
-        const newJournalEntry = response.data; // 서버가 생성된 일기 데이터를 반환한다고 가정
-
-        // --- 3단계: UI 즉시 업데이트 ---
-        // DB 저장 성공 후, 화면을 새로고침하지 않아도 바로 일기가 보이도록 Context의 상태를 업데이트합니다.
-        setJournals(prev => {
-            const newJournals = new Map(prev);
-            newJournals.set(journalDataToSave.ilogDate, newJournalEntry);
-            return newJournals;
-        });
-
-        return newJournalEntry; // 생성된 일기 데이터 반환
-    }, [user]); // `user`가 변경될 때 함수가 최신 `user` 정보를 참조하도록 의존성 배열에 추가합니다.
+            return newJournalEntry; // 생성된 일기 데이터 반환
+        }, [user]); // `user`가 변경될 때 함수가 최신 `user` 정보를 참조하도록 의존성 배열에 추가합니다.
 
     const deleteJournal = useCallback(async (logId, date) => {
         try {
