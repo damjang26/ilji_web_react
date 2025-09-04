@@ -138,10 +138,25 @@ export const MyPageMain = styled.main`
 // 프로필 이미지를 감싸서 위치(마진 등)를 조정하기 위한 래퍼
 export const ImgWrapper = styled.div`
     position: relative;
+    margin-top: 10px;
+    margin-bottom: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
 `;
+
+// 사용자의 프로필 이미지를 스타일링하는 컴포넌트 (원형, 그림자 효과 등)
+export const ProfileImage = styled.img`
+   width: 120px;
+   height: 120px;
+   border-radius: 50%;
+   object-fit: cover;
+   border: 4px solid #fff;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+   cursor: pointer;
+   background-color: #f0f0f0; /* 이미지가 없을 때를 위한 배경색 */
+ `;
+
 
 //  탭에 따라 선택된 기능이 표시될 영역
 export const FeatureContent = styled.main`

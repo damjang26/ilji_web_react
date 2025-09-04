@@ -1,5 +1,11 @@
 import styled, { css } from 'styled-components';
 
+// 설정 페이지의 제목 스타일 (예: "프로필 수정")
+export const SettingsTitle = styled.h2`
+   margin-bottom: 16px;
+ `;
+
+
 // 프로필 수정 폼 전체를 감싸는 메인 컨테이너
 export const SettingsForm = styled.form`
   display: flex;
@@ -108,6 +114,7 @@ export const SubmitButton = styled.button`
   /* margin-top: 16px; */ /* 다른 필드와 간격을 둠 - 현재는 ButtonGroup에서 관리 */
   transition: background-color 0.2s ease-in-out;
 
+  flex: 1; /* 버튼 그룹 내에서 유연하게 공간을 차지하도록 설정 */
   &:hover {
     background-color: #0b5ed7;
   }

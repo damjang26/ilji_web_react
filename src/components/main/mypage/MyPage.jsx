@@ -14,6 +14,7 @@ import {
   MyPageHeader,
   MypageImg,
   MyPageMain,
+  ProfileImage,
   Tab,
   TabMenuContainer,
   UserActions,
@@ -70,25 +71,27 @@ const MyPage = () => {
     // Self-hosting 방식으로 파일을 서버에 업로드하기 위해 FormData를 사용합니다.
     const formData = new FormData();
     formData.append("image", imageFile);
-    // 먼저 화면에 즉시 반영되도록 로컬 상태를 업데이트
-    const updatedProfile = { ...profile, [imageType]: newUrl };
-    setProfile(updatedProfile);
+
+    // 1. 낙관적 업데이트: 임시 URL로 화면을 즉시 변경
+    const tempImageUrl = URL.createObjectURL(imageFile);
+    const originalProfile = { ...profile }; // 롤백을 위해 원래 상태 저장
+    setProfile({ ...profile, [imageType]: tempImageUrl });
 
     try {
-      // 1. 이미지를 서버에 업로드하고 새로운 URL을 받아옵니다.
+      // 2. 이미지를 서버에 업로드하고 실제 URL을 받아옵니다.
       const uploadResponse = await api.post("/api/upload/image", formData);
       const newImageUrl = uploadResponse.data.imageUrl;
 
-      // 2. 받아온 URL로 프로필 정보를 업데이트합니다.
+      // 3. 받아온 실제 URL로 프로필 정보를 DB에 업데이트합니다.
       const updatedProfile = { ...profile, [imageType]: newImageUrl };
-      await api.put(`/api/profiles/user/${user.id}`, updatedProfile);
+      const profileUpdateResponse = await api.put(`/api/profiles/user/${user.id}`, updatedProfile);
 
       alert("이미지가 성공적으로 업데이트되었습니다.");
-      setProfile(updatedProfile); // 화면에 즉시 반영
+      setProfile(profileUpdateResponse.data); // 서버로부터 받은 최신 데이터로 최종 업데이트
     } catch (err) {
       console.error("이미지 업데이트 실패:", err);
       alert("이미지 업데이트 중 오류가 발생했습니다.");
-      fetchProfile(); // 실패 시 원래 데이터로 복구
+      setProfile(originalProfile); // 실패 시 저장해둔 원래 프로필로 롤백
     }
   };
 
@@ -125,28 +128,17 @@ const MyPage = () => {
       <MypageImg
         style={{
           backgroundImage: `url(${profile.bannerImage || ""})`,
-          cursor: "pointer",
-          position: "relative",
         }}
         onClick={() => handleImageClick("bannerImage")}
-      ></MypageImg>
+      />
       <ContentBox>
         <MyPageHeader>
           {/* 클릭 가능한 프로필 이미지 */}
-          <ImgWrapper style={{ marginTop: "10px", marginBottom: "10px" }}>
-            <img
+          <ImgWrapper>
+            <ProfileImage
               src={profile.profileImage || "/default-profile.png"}
               alt="Profile"
               onClick={() => handleImageClick("profileImage")}
-              style={{
-                width: "120px",
-                height: "120px",
-                borderRadius: "50%",
-                objectFit: "cover",
-                border: "4px solid #fff",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
-                cursor: "pointer",
-              }}
             />
           </ImgWrapper>
           <HeaderContent>

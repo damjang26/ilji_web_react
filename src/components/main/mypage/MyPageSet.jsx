@@ -17,7 +17,7 @@ import {
     FormSelect,
     CheckboxGroup,
     FormCheckbox,
-    SubmitButton,
+    SettingsTitle, SubmitButton,
     ButtonGroup,
     CancelButton
 } from '../../../styled_components/main/mypage/MyPageSetStyled';
@@ -122,24 +122,19 @@ const MyPageSet = () => {
         <MyPageContainer>
             {/* MyPage.jsx와 동일한 배경 배너 */}
             <MypageImg
-                style={{
-                    backgroundImage: `url(${profile.bannerImage || ''})`,
-                    cursor: 'pointer',
-                    position: 'relative'
-                }}
+                style={{ backgroundImage: `url(${profile.bannerImage || ''})` }}
                 onClick={() => handleImageClick('bannerImage')}
-            >
-            </MypageImg>
+            />
 
             {/* MyPage.jsx와 동일한 흰색 콘텐츠 박스 */}
             <ContentBox>
-                <ImgWrapper style={{ marginTop: '-20px', marginBottom: '20px' }}>
-                </ImgWrapper>
+                {/* 배너와 폼 사이의 간격을 위한 빈 공간 */}
+                <ImgWrapper />
                 <MyPageMain>
                     {/* 콘텐츠를 중앙에 배치하기 위한 래퍼 */}
                     <FeatureContent>
                         <SettingsForm onSubmit={handleSubmit}>
-                            <h2 style={{ marginBottom: '16px' }}>프로필 수정</h2>
+                            <SettingsTitle>프로필 수정</SettingsTitle>
 
                             <FormGroup>
                                 <FormLabel htmlFor="email">이메일</FormLabel>
