@@ -92,6 +92,35 @@ export const FormCheckbox = styled.input`
   cursor: pointer;
 `;
 
+export const UserName = styled.h1`
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+`;
+
+export const UserIntroduction = styled.p`
+    font-size: 1rem;
+    color: #6c757d;
+    margin: 4px 0 0 0;
+`;
+
+export const EditButton = styled.button`
+     padding: 8px 16px;
+     font-size: 0.9rem;
+     font-weight: 600;
+     color: #495057;
+     background-color: #f1f3f5;
+     border: 1px solid #dee2e6;
+     border-radius: 6px;
+     cursor: pointer;
+     transition: background-color 0.2s;
+ 
+     &:hover {
+         background-color: #e9ecef;
+     }
+ `;
+
+
 // '저장', '취소' 등 여러 버튼을 묶어서 정렬하는 컨테이너
 export const ButtonGroup = styled.div`
    display: flex;

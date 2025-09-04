@@ -110,7 +110,7 @@ export const TabMenuContainer = styled.div`
 
 // 개별 탭 버튼
 export const Tab = styled.button`
-    padding: 12px 20px;
+    padding: 15px 20px;
     font-size: 1rem;
     font-weight: ${props => (props.active ? '600' : '500')}; /* active prop에 따라 글자 굵기 변경 (활성/비활성) */
     color: ${props => (props.active ? '#343a40' : '#868e96')}; /* active prop에 따라 글자 색상 변경 */
@@ -175,3 +175,8 @@ export const FeatureBox = styled.div`
     border-radius: 8px;
     font-size: 1.2rem;
 `;
+
+export const Contents = styled.div`
+     padding: 20px;
+     /* 추가적인 스타일링 (예: 게시물 목록) */
+ `;
