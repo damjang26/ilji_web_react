@@ -32,49 +32,52 @@ const groupOptions = [
 
 const CalendarMenu = () => {
   const { tags, addTag, deleteTag, loading } = useTags();
-  const { fetchSchedulesByTags } = useSchedule();
+  const { fetchSchedulesByTags, restoreCachedEvents } = useSchedule();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTagIds, setSelectedTagIds] = useState([]);
   const [isInitialTagLoad, setIsInitialTagLoad] = useState(true);
   const [form] = Form.useForm();
 
-  // 1. 태그 목록이 로드되면 '전체 선택'을 기본값으로 설정하는 로직
+  // 1. 태그 목록 첫 로드 시, 모든 태그를 선택하고 일정을 가져옵니다.
   useEffect(() => {
-    if (tags.length > 0 && isInitialTagLoad) {
-      setSelectedTagIds(tags.map((tag) => tag.id));
+    if (tags.length > 0 && isInitialTagLoad && fetchSchedulesByTags) {
+      const allTagIds = tags.map((tag) => tag.id);
+      setSelectedTagIds(allTagIds);
+      fetchSchedulesByTags(allTagIds, { showLoading: true }); // 초기 로드는 로딩 표시
       setIsInitialTagLoad(false);
     }
-  }, [tags, isInitialTagLoad]);
+  }, [tags, isInitialTagLoad, fetchSchedulesByTags]);
 
-  // 2. 태그 필터링 로직 (기존과 동일)
-  useEffect(() => {
-    // 초기 로드 시 fetchSchedulesByTags가 아직 없을 수 있으므로 확인
-    if (fetchSchedulesByTags) {
-      fetchSchedulesByTags(selectedTagIds);
-    }
-  }, [selectedTagIds, fetchSchedulesByTags]);
-
-
-  // 3. '전체 선택' 체크박스의 상태를 파생
+  // 2. '전체 선택' 체크박스의 상태를 파생합니다.
   const isAllSelected = tags.length > 0 && selectedTagIds.length === tags.length;
 
-  // 4. '전체 선택' 클릭 핸들러
+  // 3. '전체 선택' 클릭 핸들러를 수정합니다.
   const handleSelectAllClick = () => {
     if (isAllSelected) {
-      setSelectedTagIds([]); // 모두 선택된 상태면, 전체 선택 해제
+      // 전체 선택 해제: UI를 즉시 업데이트하고, 서버에 변경 사항을 알립니다.
+      setSelectedTagIds([]);
+      fetchSchedulesByTags([], { showLoading: true }); // 빈 배열로 호출하여 일정을 지웁니다.
     } else {
-      setSelectedTagIds(tags.map((tag) => tag.id)); // 그렇지 않으면, 전체 선택
+      // 전체 선택 (옵티미스틱 업데이트):
+      // 1. 캐시된 데이터로 UI를 즉시 복원합니다.
+      restoreCachedEvents();
+      // 2. 체크박스 상태를 업데이트합니다.
+      const allTagIds = tags.map((tag) => tag.id);
+      setSelectedTagIds(allTagIds);
+      // 3. 백그라운드에서 최신 데이터를 조용히 가져옵니다.
+      fetchSchedulesByTags(allTagIds, { showLoading: false });
     }
   };
 
-  // 5. 개별 태그 클릭 핸들러 (기존과 동일)
+  // 4. 개별 태그 클릭 핸들러를 수정합니다.
   const handleTagClick = (tagId) => {
-    setSelectedTagIds((prevIds) =>
-      prevIds.includes(tagId)
-        ? prevIds.filter((id) => id !== tagId)
-        : [...prevIds, tagId]
-    );
+    const newSelectedIds = selectedTagIds.includes(tagId)
+      ? selectedTagIds.filter((id) => id !== tagId)
+      : [...selectedTagIds, tagId];
+
+    setSelectedTagIds(newSelectedIds);
+    fetchSchedulesByTags(newSelectedIds, { showLoading: true }); // 개별 변경은 로딩 표시
   };
 
   // --- 그룹 변경 핸들러 ---
