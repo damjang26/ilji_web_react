@@ -89,20 +89,6 @@ const Sticker = ({canvas}) => {
         };
     }, [canvas]);
 
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if ((e.key === "Delete" || e.key === "Backspace") && canvas) {
-                const activeObject = canvas.getActiveObject();
-                if (activeObject) {
-                    canvas.remove(activeObject);
-                    canvas.discardActiveObject();
-                    canvas.requestRenderAll();
-                }
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [canvas]);
 
     return (
         <div>

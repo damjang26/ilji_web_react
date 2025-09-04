@@ -26,19 +26,13 @@ const FabricEditor = forwardRef(({croppedImage}, ref) => {
          * 현재 캔버스의 상태를 base64 데이터 URL로 변환하여 반환합니다.
          * @returns {string|null} 이미지 데이터 URL 또는 canvas가 없을 경우 null
          */
+        //exportCanvas라는 이름의 함수를 부모가 쓸 수 있도록 열어둡니다.
         exportCanvas: () => {
             const canvas = fabricRef.current;
             if (!canvas) return null;
 
             // 1. 캔버스에 저장해 둔 원본 이미지의 크기를 가져옵니다.
             const originalSize = canvas._originalSize;
-            // if (!originalSize || !originalSize.width) {
-            //     console.warn("원본 이미지 크기를 찾을 수 없어 현재 크기로 내보냅니다.");
-            //     return canvas.toDataURL({
-            //         format: 'png',
-            //         quality: 0.9,
-            //     });
-            // }
 
             // 2. 현재 캔버스 크기 대비 원본 크기의 비율(multiplier)을 계산합니다.
             const multiplier = originalSize.width / canvas.getWidth();
@@ -126,6 +120,28 @@ const FabricEditor = forwardRef(({croppedImage}, ref) => {
             }
         };
     }, [croppedImage]);
+
+    // ✅ [신규] 캔버스 전체에 적용될 키보드 이벤트를 여기서 한 번만 관리합니다.
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            const canvas = fabricRef.current;
+            if (!canvas) return;
+
+            // 'Delete' 또는 'Backspace' 키로 선택된 객체 삭제
+            // 텍스트 입력 중에는 삭제가 동작하지 않도록, 활성 객체가 편집 모드가 아닐 때만 실행합니다.
+            if ((e.key === "Delete")) {
+                const activeObject = canvas.getActiveObject();
+                if (activeObject && !activeObject.isEditing) {
+                    e.preventDefault(); // 브라우저의 뒤로가기 등 기본 동작 방지
+                    canvas.remove(activeObject);
+                    canvas.discardActiveObject().renderAll();
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []); // canvas가 생성/제거될 때마다 이벤트 리스너를 추가/제거할 필요 없이, 컴포넌트 생애주기 동안 한 번만 실행합니다.
 
     return (
         <>
