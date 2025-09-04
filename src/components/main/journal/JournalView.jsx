@@ -79,8 +79,7 @@ const JournalView = () => {
                     <button title="수정">
                         <HiPencilAlt/>
                     </button>
-                    <button title="삭제"
-                            onClick={() => handleDelete(journal.id, journal.ilogDate.split('T')[0])}>
+                    <button title="삭제" onClick={() => handleDelete(journal.id, journal.ilogDate.split('T')[0])}>
                         <MdDeleteForever/>
                     </button>
                 </PostHeaderActions>

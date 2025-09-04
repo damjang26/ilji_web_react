@@ -110,6 +110,21 @@ const JournalList = () => {
                 {displayedJournals.map((journal, index) => {
                     // 현재 렌더링하는 요소가 마지막 요소인지 확인
                     const isLastElement = displayedJournals.length === index + 1;
+
+                    // ✅ [추가] imgUrl(JSON 문자열)을 파싱하여 첫 번째 이미지 URL을 추출합니다.
+                    let firstImageUrl = null;
+                    if (journal.imgUrl) {
+                        try {
+                            const parsedUrls = JSON.parse(journal.imgUrl);
+                            if (Array.isArray(parsedUrls) && parsedUrls.length > 0) {
+                                firstImageUrl = parsedUrls[0];
+                            }
+                        } catch (e) {
+                            // 파싱에 실패해도 앱이 중단되지 않도록 오류를 콘솔에만 기록합니다.
+                            console.error(`Failed to parse imgUrl for journal ${journal.id}:`, journal.imgUrl);
+                        }
+                    }
+
                     return (
                         // ✅ [수정] PostListStyled 디자인에 journal 객체의 데이터를 매핑합니다.
                         <PostContainer key={journal.id} ref={isLastElement ? lastJournalElementRef : null}>
@@ -132,7 +147,9 @@ const JournalList = () => {
                                 </PostHeaderActions>
                             </PostHeader>
 
-                            {journal.imgUrl && <PostImage src={journal.imgUrl} alt="Journal image"/>}
+                            <div>
+                                {firstImageUrl && <PostImage src={firstImageUrl} alt="Journal image"/>}
+                            </div>
                             <PostContent>{journal.content}</PostContent>
 
                             <PostActions>
