@@ -12,6 +12,8 @@ import {
     NoEventsMessage
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleListStyled.jsx";
 import { ActionButtons, Button } from "../../../styled_components/common/FormElementsStyled.jsx";
+import axios from "axios";
+import {api} from "../../../api.js";
 
 const FILTERS = {
     all: { icon: FaInfinity, label: "전체 일정" },
@@ -45,13 +47,13 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
         const now = new Date();
         switch (filterMode) {
             case 'today':
-                const todayStr = now.toISOString().split('T')[0];
-                return allEvents.filter(e => e.start?.startsWith(todayStr));
+                { const todayStr = now.toISOString().split('T')[0];
+                return allEvents.filter(e => e.start?.startsWith(todayStr)); }
             case 'month':
-                const year = now.getFullYear();
+                { const year = now.getFullYear();
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const monthPrefix = `${year}-${month}`;
-                return allEvents.filter(e => e.start?.startsWith(monthPrefix));
+                return allEvents.filter(e => e.start?.startsWith(monthPrefix)); }
             case 'all':
                 return allEvents;
             default:
@@ -112,6 +114,34 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
             });
     };
 
+
+
+    const [file, setFile] = useState(null);
+    const onFileChange = (e) => {
+        setFile(e.target.files[0]);
+    };
+    const uploadHandler = async () => {
+        if (!file) {
+            alert("파일을 선택하세요.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await api.post('/api/firebase', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            alert("업로드 성공: " + response.data);
+        } catch (error) {
+            console.error("업로드 실패", error);
+            alert("업로드 실패");
+
+        }
+    }
     return (
         <ListWrapper>
             <ListHeader>
@@ -132,6 +162,11 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
             <ActionButtons>
                 <Button className="primary" onClick={onAdd}>일정 추가</Button>
             </ActionButtons>
+
+            {/*<div>mz-section (firebase file upload)*/}
+            {/*    <input type="file" onChange={onFileChange} />*/}
+            {/*    <button onClick={uploadHandler}>upload</button>*/}
+            {/*</div>*/}
         </ListWrapper>
     )
 }
