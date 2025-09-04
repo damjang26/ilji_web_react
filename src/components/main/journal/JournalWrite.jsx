@@ -240,10 +240,7 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
     const onSubmit = async () => {
         if (isSubmitting) return; // 중복 제출 방지
         setIsSubmitting(true);
-
         console.log("onSubmit selectedDate:", selectedDate);
-
-
         try {
             // Context 함수에 전달할 데이터 묶음(payload)을 만듭니다.
             const journalPayload = {
