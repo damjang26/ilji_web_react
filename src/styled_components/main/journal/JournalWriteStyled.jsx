@@ -22,7 +22,7 @@ export const FormContent = styled.div`
 
 export const StyledTextarea = styled.textarea`
     width: 100%;
-    min-height: 120px;
+    min-height: 160px;
     border: none;
     resize: none;
     font-size: 18px;
@@ -131,7 +131,7 @@ export const ActionButtons = styled.div`
 export const IconButton = styled.button`
     background: none;
     border: none;
-    color: #7b5fff; /* Twitter blue */
+    color: #7b5fff;
     font-size: 20px;
     cursor: pointer;
     padding: 8px;
@@ -139,6 +139,7 @@ export const IconButton = styled.button`
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative; /* 툴팁 위치 기준 */
 
     &:hover {
         background-color: rgba(131, 29, 240, 0.1);
@@ -148,7 +149,32 @@ export const IconButton = styled.button`
         color: #c3b3ff;
         cursor: not-allowed;
     }
+
+    /* 툴팁 기본 숨김 */
+
+    &::after {
+        content: attr(data-tooltip); /* data-tooltip 속성에서 텍스트 가져오기 */
+        position: absolute;
+        bottom: 120%; /* 버튼 위쪽 위치 */
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #333;
+        color: #fff;
+        padding: 4px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+        font-size: 12px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s, transform 0.2s;
+    }
+
+    &:hover::after {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-4px);
+    }
 `;
+
 
 export const ActionButtonWrapper = styled.div`
     position: relative; /* EmojiPickerWrapper의 기준점이 됩니다 */

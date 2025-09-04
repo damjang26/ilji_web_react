@@ -1,5 +1,5 @@
 import React, {useMemo} from 'react';
-import {useParams} from 'react-router-dom';
+import {useParams, useNavigate} from 'react-router-dom';
 import {useJournal} from '../../../contexts/JournalContext';
 import {useAuth} from '../../../AuthContext';
 import {
@@ -20,6 +20,7 @@ import {PostHeaderActions} from "../../../styled_components/main/post/PostListSt
 const JournalView = () => {
     const {date} = useParams(); // URL에서 날짜 파라미터를 가져옵니다.
     const {getJournal, deleteJournal} = useJournal();
+    const navigate = useNavigate(); // ✅ 페이지 이동을 위해 useNavigate 훅을 사용합니다.
     const {user} = useAuth(); // 작성자 정보를 위해 user를 가져옵니다.
 
     const journal = useMemo(() => getJournal(date), [getJournal, date]);
@@ -51,13 +52,15 @@ const JournalView = () => {
         return <ViewContainer><p>해당 날짜의 일기를 찾을 수 없습니다.</p></ViewContainer>;
     }
 
-    const handleDelete = async (journalId, journalDate) => {
+    const handleDelete = async (journalId, pageDate) => {
         // 사용자가 정말 삭제할 것인지 확인
         if (window.confirm("정말로 이 일기를 삭제하시겠습니까?")) {
             try {
                 // Context의 deleteJournal 함수 호출
-                await deleteJournal(journalId, journalDate);
+                await deleteJournal(journalId, pageDate);
                 alert("일기가 삭제되었습니다.");
+                // ✅ 삭제 성공 후, 이전 페이지(일기 목록)로 이동시킵니다.
+                navigate(-1);
             } catch (error) {
                 alert("일기 삭제 중 오류가 발생했습니다.");
             }
@@ -76,10 +79,11 @@ const JournalView = () => {
                     <DateDisplay>{formattedDate}</DateDisplay>
                 </AuthorInfo>
                 <PostHeaderActions>
-                    <button title="수정">
+                    {/* TODO: 수정 버튼 클릭 시 JournalWrite 모달을 수정 모드로 열기 */}
+                    <button data-tooltip="수정" onClick={() => alert('수정 모달 열기 기능 구현 예정')}>
                         <HiPencilAlt/>
                     </button>
-                    <button title="삭제" onClick={() => handleDelete(journal.id, journal.ilogDate.split('T')[0])}>
+                    <button data-tooltip="삭제" onClick={() => handleDelete(journal.id, date)}>
                         <MdDeleteForever/>
                     </button>
                 </PostHeaderActions>
