@@ -9,14 +9,30 @@ import {
 } from "../../../../../styled_components/main/journal/JournalWriteStyled.jsx";
 
 // 폰트, 글자 크기, 색상
-const FONTS = ["sans-serif", "serif", "monospace", "Arial", "Courier New", "Times New Roman"];
+// ✅ [수정] 대부분의 컴퓨터에 기본 설치된 '안전한' 한/영 폰트 목록으로 교체
+const FONTS = [
+    // --- 한글/영문 공용 폰트 ---
+    "Malgun Gothic",  // 윈도우의 기본 고딕체 (가장 무난함)
+    "Dotum",          // 윈도우의 전통적인 돋움체
+    "Batang",         // 윈도우의 기본 명조체(바탕체)
+    "Gungsuh",        // 윈도우의 궁서체 (붓글씨 느낌)
+    // --- 영문 전용 폰트 (한글은 시스템 기본값으로 표시됨) ---
+    "Arial",          // 가장 기본적인 영문 고딕체
+    "Times New Roman",// 가장 기본적인 영문 명조체
+    "Courier New",    // 타자기로 친 듯한 고정폭 글씨체
+    // --- 일본어 공용 폰트 (Windows/macOS) ---
+    "Meiryo",         // 메이리오 (Windows의 모던 고딕체)
+    "Yu Gothic",      // 유고딕 (Win/Mac 공용 모던 고딕체)
+    "Hiragino Sans",  // 히라기노 산스 (macOS의 기본 고딕체)
+    "MS PMincho",     // MS P민초 (Windows의 기본 명조체)
+];
 const FONT_SIZES = [12, 16, 20, 24, 32, 40, 48];
 const COLORS = ["#000000", "#E53E3E", "#3182CE", "#38A169", "#D69E2E", "#ffffff", "#7B5FFF"];
 
 const Text = ({canvas}) => {
     // UI 컨트롤(폰트, 크기, 색상)을 위한 상태
     const [selectedFont, setSelectedFont] = useState("sans-serif");
-    const [selectedSize, setSelectedSize] = useState(40);
+    const [selectedSize, setSelectedSize] = useState(16);
     const [selectedColor, setSelectedColor] = useState("#333333");
 
     // 캔버스 상태(선택된 텍스트, 텍스트 총 개수)를 추적하기 위한 상태
@@ -168,21 +184,34 @@ const Text = ({canvas}) => {
             {activeText && (
                 <div style={{display: "flex", gap: "15px", flexWrap: "wrap", marginTop: "20px"}}>
                     {/* 폰트 선택 */}
+                    {/* ✅ [수정] 폰트 미리보기가 가능하도록 스타일을 개선합니다. */}
                     <select value={selectedFont} onChange={(e) => setSelectedFont(e.target.value)} style={{
-                        padding: "6px 10px",
-                        borderRadius: "5px",
-                        border: "1px solid #ccc",
-                        cursor: "pointer"
+                        padding: "8px 12px",
+                        borderRadius: "6px",
+                        border: "1px solid #ced4da",
+                        backgroundColor: "white",
+                        cursor: "pointer",
+                        fontFamily: selectedFont, // 선택된 폰트를 select 태그 자체에도 적용
+                        fontSize: "14px",
+                        outline: "none",
                     }}>
-                        {FONTS.map(font => (<option key={font} value={font}>{font}</option>))}
+                        {FONTS.map(font => (
+                            <option key={font} value={font} style={{fontFamily: font, fontSize: "14px"}}>
+                                {font}
+                            </option>
+                        ))}
                     </select>
 
                     {/* 글자 크기 선택 */}
+                    {/* ✅ [수정] 폰트 선택 UI와 통일감을 주기 위해 스타일을 개선합니다. */}
                     <select value={selectedSize} onChange={(e) => setSelectedSize(parseInt(e.target.value))} style={{
-                        padding: "6px 10px",
-                        borderRadius: "5px",
-                        border: "1px solid #ccc",
-                        cursor: "pointer"
+                        padding: "8px 12px",
+                        borderRadius: "6px",
+                        border: "1px solid #ced4da",
+                        backgroundColor: "white",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        outline: "none",
                     }}>
                         {FONT_SIZES.map(size => (<option key={size} value={size}>{size}px</option>))}
                     </select>

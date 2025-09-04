@@ -47,13 +47,13 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
         const now = new Date();
         switch (filterMode) {
             case 'today':
-                const todayStr = now.toISOString().split('T')[0];
-                return allEvents.filter(e => e.start?.startsWith(todayStr));
+                { const todayStr = now.toISOString().split('T')[0];
+                return allEvents.filter(e => e.start?.startsWith(todayStr)); }
             case 'month':
-                const year = now.getFullYear();
+                { const year = now.getFullYear();
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const monthPrefix = `${year}-${month}`;
-                return allEvents.filter(e => e.start?.startsWith(monthPrefix));
+                return allEvents.filter(e => e.start?.startsWith(monthPrefix)); }
             case 'all':
                 return allEvents;
             default:
@@ -162,12 +162,11 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
             <ActionButtons>
                 <Button className="primary" onClick={onAdd}>일정 추가</Button>
             </ActionButtons>
-            <hr/>
 
-            <div>mz-section (firebase file upload)
-                <input type="file" onChange={onFileChange} />
-                <button onClick={uploadHandler}>upload</button>
-            </div>
+            {/*<div>mz-section (firebase file upload)*/}
+            {/*    <input type="file" onChange={onFileChange} />*/}
+            {/*    <button onClick={uploadHandler}>upload</button>*/}
+            {/*</div>*/}
         </ListWrapper>
     )
 }

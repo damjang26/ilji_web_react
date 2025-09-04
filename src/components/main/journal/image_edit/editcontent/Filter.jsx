@@ -38,7 +38,7 @@ const Filter = ({canvas}) => {
         if (!canvas) return;
         const image = canvas.getObjects()[0];
         if (image && image.type === 'image' && image.customFilterState) {
-            const { activePreset, brightness, contrast, saturation } = image.customFilterState;
+            const {activePreset, brightness, contrast, saturation} = image.customFilterState;
             setActivePreset(activePreset || 'None');
             setBrightness(brightness || 0);
             setContrast(contrast || 0);
@@ -134,6 +134,21 @@ const Filter = ({canvas}) => {
     const isAdjusted = brightness !== 0 || contrast !== 0 || saturation !== 0;
     const selectedFilter = PRESET_FILTERS.find(f => f.type === activePreset);
 
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if ((e.key === "Delete" || e.key === "Backspace") && canvas) {
+                const activeObject = canvas.getActiveObject();
+                if (activeObject) {
+                    canvas.remove(activeObject);
+                    canvas.discardActiveObject();
+                    canvas.requestRenderAll();
+                }
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [canvas]);
+
     return (
         <FilterContainer>
             <FilterLabel>Preset Filters</FilterLabel>
@@ -160,15 +175,18 @@ const Filter = ({canvas}) => {
                     <FilterLabel>Adjustments</FilterLabel>
                     <FilterSliderContainer>
                         <span>Brightness</span>
-                        <FilterSlider type="range" min="-0.3" max="0.3" step="0.01" value={brightness} onChange={handleSliderChange(setBrightness)}/>
+                        <FilterSlider type="range" min="-0.3" max="0.3" step="0.01" value={brightness}
+                                      onChange={handleSliderChange(setBrightness)}/>
                     </FilterSliderContainer>
                     <FilterSliderContainer>
                         <span>Contrast</span>
-                        <FilterSlider type="range" min="-0.3" max="0.3" step="0.01" value={contrast} onChange={handleSliderChange(setContrast)}/>
+                        <FilterSlider type="range" min="-0.3" max="0.3" step="0.01" value={contrast}
+                                      onChange={handleSliderChange(setContrast)}/>
                     </FilterSliderContainer>
                     <FilterSliderContainer>
                         <span>Saturation</span>
-                        <FilterSlider type="range" min="-1" max="1" step="0.01" value={saturation} onChange={handleSliderChange(setSaturation)}/>
+                        <FilterSlider type="range" min="-1" max="1" step="0.01" value={saturation}
+                                      onChange={handleSliderChange(setSaturation)}/>
                     </FilterSliderContainer>
 
                     <ResetButton onClick={resetAll}>Reset All</ResetButton>
