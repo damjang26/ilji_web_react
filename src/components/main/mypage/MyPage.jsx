@@ -52,23 +52,55 @@ const MyPage = () => {
     };
 
     // 모달에서 '확인'을 눌렀을 때, 이미지를 즉시 서버에 업데이트하는 함수
-    const handleImageUpdate = async (imageType, newUrl) => {
-        if (!profile) return;
+    const handleImageUpdate = async (imageType, imageFile) => {
+        if (!profile || !imageFile) return;
 
-        // 먼저 화면에 즉시 반영되도록 로컬 상태를 업데이트
-        const updatedProfile = { ...profile, [imageType]: newUrl };
-        setProfile(updatedProfile);
+        // Self-hosting 방식으로 파일을 서버에 업로드하기 위해 FormData를 사용합니다.
+        const formData = new FormData();
+        formData.append('image', imageFile);
 
         try {
-            // 서버에 변경된 전체 프로필 정보를 전송하여 저장
+            // 1. 이미지를 서버에 업로드하고 새로운 URL을 받아옵니다.
+            const uploadResponse = await api.post('/api/upload/image', formData);
+            const newImageUrl = uploadResponse.data.imageUrl;
+
+            // 2. 받아온 URL로 프로필 정보를 업데이트합니다.
+            const updatedProfile = { ...profile, [imageType]: newImageUrl };
             await api.put(`/api/profiles/user/${user.id}`, updatedProfile);
+
             alert('이미지가 성공적으로 업데이트되었습니다.');
+            setProfile(updatedProfile); // 화면에 즉시 반영
         } catch (err) {
             console.error("이미지 업데이트 실패:", err);
             alert('이미지 업데이트 중 오류가 발생했습니다.');
             fetchProfile(); // 실패 시 원래 데이터로 복구
         }
     };
+
+    // 기본 구글 이미지로 되돌리는 함수
+    const handleRevertToDefaultImage = async (imageType) => {
+        // 이 기능은 프로필 이미지에만 적용됩니다.
+        if (imageType !== 'profileImage' || !user || !user.picture) {
+            alert('기본 이미지로 되돌릴 수 없습니다.');
+            return;
+        }
+
+        const defaultImageUrl = user.picture; // useAuth에서 가져온 기본 구글 프로필 이미지 URL
+
+        try {
+            // 받아온 URL로 프로필 정보를 업데이트합니다.
+            const updatedProfile = { ...profile, profileImage: defaultImageUrl };
+            await api.put(`/api/profiles/user/${user.id}`, updatedProfile);
+
+            alert('프로필 이미지가 기본 이미지로 복원되었습니다.');
+            setProfile(updatedProfile); // 화면에 즉시 반영
+        } catch (err) {
+            console.error("기본 이미지 복원 실패:", err);
+            alert('기본 이미지로 복원하는 중 오류가 발생했습니다.');
+        }
+    };
+
+
 
     if (loading) return <div>로딩 중...</div>;
     if (error) return <div style={{ color: 'red' }}>{error}</div>;
@@ -141,6 +173,7 @@ const MyPage = () => {
                 currentImageUrl={profile[editingImageType]}
                 onConfirm={handleImageUpdate}
                 imageType={editingImageType}
+                onRevert={handleRevertToDefaultImage} // 새로 만든 함수를 prop으로 전달
             />
         </MyPageContainer>
     )
