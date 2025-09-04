@@ -6,6 +6,8 @@ export const ViewContainer = styled.div`
     gap: 20px;
     padding: 8px;
     min-height: 300px;
+    max-height: 70vh; // 화면 높이의 85%를 최대 높이로 제한합니다.
+    overflow-y: auto;
 `;
 
 export const ProfileSection = styled.div`
@@ -45,7 +47,7 @@ export const ContentSection = styled.div`
 export const ImageGrid = styled.div`
     display: grid;
     gap: 8px;
-    grid-template-columns: repeat(${({ imageCount }) => Math.min(imageCount, 2)}, 1fr);
+    grid-template-columns: repeat(${({imageCount}) => Math.min(imageCount, 2)}, 1fr);
 `;
 
 export const JournalImage = styled.img`

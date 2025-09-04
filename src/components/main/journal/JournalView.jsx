@@ -30,6 +30,23 @@ const JournalView = () => {
         return d.toLocaleDateString('ko-KR', {year: 'numeric', month: 'long', day: 'numeric'});
     }, [date]);
 
+    // ✅ [추가] DB에 저장된 imgUrl(JSON 문자열)을 실제 이미지 URL 배열로 파싱합니다.
+    const imageUrls = useMemo(() => {
+        if (journal && journal.imgUrl) {
+            try {
+                const parsedUrls = JSON.parse(journal.imgUrl);
+                // 파싱된 결과가 배열인지 확인합니다.
+                if (Array.isArray(parsedUrls)) {
+                    return parsedUrls;
+                }
+            } catch (error) {
+                console.error("일기 이미지 URL을 파싱하는 데 실패했습니다:", error);
+                return [];
+            }
+        }
+        return [];
+    }, [journal]);
+
     if (!journal) {
         return <ViewContainer><p>해당 날짜의 일기를 찾을 수 없습니다.</p></ViewContainer>;
     }
@@ -62,16 +79,17 @@ const JournalView = () => {
                     <button title="수정">
                         <HiPencilAlt/>
                     </button>
-                    <button title="삭제"
-                            onClick={() => handleDelete(journal.id, journal.ilogDate.split('T')[0])}>
+                    <button title="삭제" onClick={() => handleDelete(journal.id, journal.ilogDate.split('T')[0])}>
                         <MdDeleteForever/>
                     </button>
                 </PostHeaderActions>
             </ProfileSection>
-            {journal.images && journal.images.length > 0 && (
-                <ImageGrid imageCount={journal.images.length}>
-                    {journal.images.map((imgSrc, index) => <JournalImage key={index} src={imgSrc}
-                                                                         alt={`journal image ${index + 1}`}/>)}
+            {/* ✅ [수정] 파싱된 imageUrls 배열을 사용하여 이미지를 렌더링합니다. */}
+            {imageUrls.length > 0 && (
+                <ImageGrid imageCount={imageUrls.length}>
+                    {imageUrls.map((imgSrc, index) => (
+                        <JournalImage key={index} src={imgSrc} alt={`journal image ${index + 1}`}/>
+                    ))}
                 </ImageGrid>
             )}
             <ContentSection>
