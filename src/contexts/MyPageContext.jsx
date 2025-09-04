@@ -59,75 +59,51 @@ export const MyPageProvider = ({ children }) => {
     }
   }, [user?.id, fetchProfile]);
 
-    // profile 상태가 변경될 때마다 로그를 남깁니다.
-    useEffect(() => {
-        console.log(`[CONTEXT] profile 상태 변경 감지. 현재 profile:`, profile);
-    }, [profile]);
 
-
-
-    // 이미지 업데이트 함수
-  const handleImageUpdate = async (imageType, imageFile) => {
-    if (!profile || !imageFile) return;
-
-    const formData = new FormData();
-    formData.append("image", imageFile);
-
-    const originalProfile = { ...profile };
-    const tempImageUrl = URL.createObjectURL(imageFile);
-    setProfile({ ...profile, [imageType]: tempImageUrl }); // 낙관적 업데이트
-
-    try {
-      const uploadResponse = await api.post("/api/upload/image", formData);
-      const newImageUrl = uploadResponse.data.imageUrl;
-
-      const updatedProfile = { ...profile, [imageType]: newImageUrl };
-      const profileUpdateResponse = await api.put(
-        `/api/profiles/user/${user.id}`,
-        updatedProfile
-      );
-      setProfile(profileUpdateResponse.data); // 최종 데이터로 업데이트
-    } catch (err) {
-      console.error("이미지 업데이트 실패:", err);
-      setProfile(originalProfile); // 실패 시 롤백
-      alert("이미지 업데이트 중 오류가 발생했습니다.");
-    }
-  };
-
-  // 기본 이미지로 되돌리는 함수
-  const handleRevertToDefaultImage = async (imageType) => {
-    if (imageType !== "profileImage" || !user?.picture) return;
-
-    const defaultImageUrl = user.picture;
-    const updatedProfile = { ...profile, profileImage: defaultImageUrl };
-
-    try {
-      await api.put(`/api/profiles/user/${user.id}`, updatedProfile);
-      setProfile(updatedProfile);
-    } catch (err) {
-      console.error("기본 이미지 복원 실패:", err);
-      alert("기본 이미지로 복원하는 중 오류가 발생했습니다.");
-    }
-  };
 
     // 프로필 정보 업데이트 함수 (가장 중요한 변경)
-    const updateProfile = async (updatedProfileData) => {
-        if (!profile || !profile.userId) {
+    const updateProfile = async (profileData, profileImageFile, bannerImageFile) => {
+        if (!user?.id) {
             throw new Error('사용자 정보가 없어 업데이트할 수 없습니다.');
-        }console.log(`[CONTEXT] updateProfile 함수 시작. 전달받은 데이터:`, updatedProfileData);
+        }
+        console.log(`[CONTEXT] updateProfile 시작`, { profileData, profileImageFile, bannerImageFile });
+
+        const formData = new FormData();
+
+        // 1. 프로필 데이터(JSON)를 'request' 파트에 추가
+        formData.append('request', new Blob([JSON.stringify(profileData)], { type: 'application/json' }));
+
+        // 2. 이미지 파일들을 각 파트에 추가 (파일이 있을 경우에만)
+        if (profileImageFile) {
+            formData.append('profileImage', profileImageFile);
+        }
+        if (bannerImageFile) {
+            formData.append('bannerImage', bannerImageFile);
+        }
+        // FormData의 내용을 확인하기 위한 로그 (직접 확인은 어려우므로, 각 key가 존재하는지만 확인)
+        console.log(`[CONTEXT] 2. FormData 생성됨. 'request' 존재:`, formData.has('request'));
+        console.log(`[CONTEXT] 2. FormData 생성됨. 'profileImage' 존재:`, formData.has('profileImage'));
+        console.log(`[CONTEXT] 2. FormData 생성됨. 'bannerImage' 존재:`, formData.has('bannerImage'));
+
+
         try {
-            // 1. 서버에 업데이트 요청
-            const response = await api.put(`/api/profiles/user/${profile.userId}`, updatedProfileData);
-            console.log(`[CONTEXT] 서버로부터 응답 받음:`, response.data);
-            // 2. 성공 시 Context의 상태를 업데이트합니다.
-            //    서버 응답 본문이 비어있을 수 있으므로, 요청에 사용했던 데이터로 상태를 업데이트합니다.
-            setProfile(updatedProfileData);
-            console.log(`[CONTEXT] setProfile(updatedProfileData) 호출 완료.`);
-            // 3. 성공했다는 의미로 Promise를 통해 성공 결과를 반환 (예: true)
+            // 3. 서버에 PUT 요청으로 FormData 전송
+            console.log(`[CONTEXT] 3. API 요청 전송 시작. URL: /api/profiles/user/${user.id}`);
+
+            await api.put(`/api/profiles/user/${user.id}`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            // 4. 성공 시, 최신 프로필 정보를 다시 불러와 상태를 업데이트
+            await fetchProfile();
+
+            console.log(`[CONTEXT] 프로필 업데이트 및 리프레시 성공`);
             return true;
         } catch (err) {
             console.error("[CONTEXT] updateProfile 함수에서 오류 발생", err);
-            // 4. 실패 시 에러를 던져서 호출한 쪽에서 알 수 있게 함
+            // 5. 실패 시 에러를 던져서 호출한 쪽에서 알 수 있게 함
             throw err;
         }
     };
@@ -143,8 +119,7 @@ export const MyPageProvider = ({ children }) => {
     }, []);
 
     const value = {
-        profile, loading, error, fetchProfile, setProfile,
-        handleImageUpdate, handleRevertToDefaultImage, updateProfile,
+        profile, loading, error, fetchProfile, updateProfile,
         isEditing, handleEdit, handleCancel // Context 값으로 제공합니다.
     };
 

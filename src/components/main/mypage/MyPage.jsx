@@ -27,12 +27,10 @@ const MyPage = () => {
     profile,
     loading,
     error,
-    handleImageUpdate,
-    handleRevertToDefaultImage,
+    updateProfile, // 통합된 업데이트 함수를 가져옵니다.
     handleEdit, // Context에서 수정 모드 전환 함수를 가져옵니다.
   } = useMyPage();
 
-  console.log(`[MyPage] 컴포넌트 렌더링. Context로부터 받은 profile:`, profile);
 
   const [activeTab, setActiveTab] = useState("feature1");
 
@@ -44,6 +42,28 @@ const MyPage = () => {
   const handleImageClick = (imageType) => {
     setEditingImageType(imageType);
     setIsModalOpen(true);
+  };
+
+  // 모달에서 '확인'을 눌렀을 때 호출될 함수
+  const handleImageConfirm = async (imageType, imageFile) => {
+    if (!profile || !imageFile) return;
+
+    console.log(`[MyPage] 1. 이미지 확인됨. 타입: ${imageType}, 파일:`, imageFile);
+
+    try {
+      // Context의 updateProfile 함수를 호출합니다.
+      // 첫 번째 인자: 기존 프로필 데이터 (텍스트 정보)
+      // 두/세 번째 인자: 변경할 이미지 파일
+      await updateProfile(
+        profile,
+        imageType === 'profileImage' ? imageFile : null,
+        imageType === 'bannerImage' ? imageFile : null
+      );
+      alert('이미지가 성공적으로 업데이트되었습니다.');
+    } catch (err) {
+      console.error('이미지 업데이트 실패:', err);
+      alert('이미지 업데이트 중 오류가 발생했습니다.');
+    }
   };
 
   if (loading) return <div>로딩 중...</div>;
@@ -121,9 +141,8 @@ const MyPage = () => {
         onClose={() => setIsModalOpen(false)}
         // profile이 로드되기 전에 모달이 열리는 경우를 대비
         currentImageUrl={profile ? profile[editingImageType] : ""}
-        onConfirm={handleImageUpdate}
+        onConfirm={handleImageConfirm}
         imageType={editingImageType}
-        onRevert={handleRevertToDefaultImage} // 새로 만든 함수를 prop으로 전달
       />
     </MyPageContainer>
   );
