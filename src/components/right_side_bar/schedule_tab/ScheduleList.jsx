@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
-import { FaCalendarDay, FaCalendarWeek, FaInfinity } from 'react-icons/fa';
-import { Tooltip } from 'antd';
+import React, {useState, useMemo} from 'react';
+import {FaCalendarDay, FaCalendarWeek, FaInfinity} from 'react-icons/fa';
+import {Tooltip} from 'antd';
 import {
     DateTitle,
     EventItem,
@@ -11,18 +11,18 @@ import {
     ListWrapper,
     NoEventsMessage
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleListStyled.jsx";
-import { ActionButtons, Button } from "../../../styled_components/common/FormElementsStyled.jsx";
+import {ActionButtons, Button} from "../../../styled_components/common/FormElementsStyled.jsx";
 import axios from "axios";
 import {api} from "../../../api.js";
 
 const FILTERS = {
-    all: { icon: FaInfinity, label: "전체 일정" },
-    month: { icon: FaCalendarWeek, label: "이번 달 일정" },
-    today: { icon: FaCalendarDay, label: "오늘 일정" },
+    all: {icon: FaInfinity, label: "전체 일정"},
+    month: {icon: FaCalendarWeek, label: "이번 달 일정"},
+    today: {icon: FaCalendarDay, label: "오늘 일정"},
 };
 
 // 1. 개별 일정 아이템을 별도의 메모이즈된 컴포넌트로 분리합니다.
-const ScheduleEventItem = React.memo(({ event, onDetail }) => {
+const ScheduleEventItem = React.memo(({event, onDetail}) => {
     return (
         <Tooltip title="클릭하면 상세 보기" placement="left">
             <EventItem onClick={() => onDetail(event)}>
@@ -32,7 +32,7 @@ const ScheduleEventItem = React.memo(({ event, onDetail }) => {
     );
 });
 
-const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelectedDate }) => {
+const ScheduleList = ({allEvents, onAdd, onDetail, selectedDate, onClearSelectedDate}) => {
     // ✅ [수정] '오늘', '이번 달', '전체'를 전환하는 필터 상태. 기본값은 'today'.
     const [filterMode, setFilterMode] = useState('today');
 
@@ -46,14 +46,16 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
         // 2. 특정 날짜가 선택되지 않은 경우, '오늘' 또는 '이번 달' 필터를 적용합니다.
         const now = new Date();
         switch (filterMode) {
-            case 'today':
-                { const todayStr = now.toISOString().split('T')[0];
-                return allEvents.filter(e => e.start?.startsWith(todayStr)); }
-            case 'month':
-                { const year = now.getFullYear();
+            case 'today': {
+                const todayStr = now.toISOString().split('T')[0];
+                return allEvents.filter(e => e.start?.startsWith(todayStr));
+            }
+            case 'month': {
+                const year = now.getFullYear();
                 const month = String(now.getMonth() + 1).padStart(2, '0');
                 const monthPrefix = `${year}-${month}`;
-                return allEvents.filter(e => e.start?.startsWith(monthPrefix)); }
+                return allEvents.filter(e => e.start?.startsWith(monthPrefix));
+            }
             case 'all':
                 return allEvents;
             default:
@@ -93,7 +95,7 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
                 return (
                     <Tooltip key={key} title={FILTERS[key].label} placement="bottom">
                         <FilterButton onClick={() => handleFilterClick(key)}>
-                            <FilterIcon />
+                            <FilterIcon/>
                         </FilterButton>
                     </Tooltip>
                 );
@@ -107,13 +109,12 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
                 return (
                     <Tooltip key={key} title={FILTERS[key].label} placement="bottom">
                         <FilterButton onClick={() => handleFilterClick(key)}>
-                            <FilterIcon />
+                            <FilterIcon/>
                         </FilterButton>
                     </Tooltip>
                 );
             });
     };
-
 
 
     const [file, setFile] = useState(null);
@@ -152,7 +153,7 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
             {filteredEvents.length > 0 ? (
                 <EventList>
                     {filteredEvents.map((s) => (
-                        <ScheduleEventItem key={s.id} event={s} onDetail={onDetail} />
+                        <ScheduleEventItem key={s.id} event={s} onDetail={onDetail}/>
                     ))}
                 </EventList>
             ) : (
@@ -163,10 +164,10 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
                 <Button className="primary" onClick={onAdd}>일정 추가</Button>
             </ActionButtons>
 
-            {/*<div>mz-section (firebase file upload)*/}
-            {/*    <input type="file" onChange={onFileChange} />*/}
-            {/*    <button onClick={uploadHandler}>upload</button>*/}
-            {/*</div>*/}
+            <div>mz-section (firebase file upload)
+                <input type="file" onChange={onFileChange}/>
+                <button onClick={uploadHandler}>upload</button>
+            </div>
         </ListWrapper>
     )
 }
