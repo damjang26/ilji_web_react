@@ -44,14 +44,41 @@ export const PostHeaderActions = styled.div`
         align-items: center;
         justify-content: center;
         border-radius: 50%;
+        position: relative; /* 툴팁 기준 */
         transition: background-color 0.2s, color 0.2s;
 
         &:hover {
             background-color: #f0f2f5;
             color: #262626;
         }
+
+        /* 툴팁 기본 숨김 */
+
+        &::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: 130%; /* 버튼 위쪽 */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 10;
+        }
+
+        &:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-4px);
+        }
     }
 `;
+
 
 // 프로필 이미지
 export const ProfileImage = styled.img`
