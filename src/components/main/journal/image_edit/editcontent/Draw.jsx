@@ -140,6 +140,7 @@ const Draw = ({canvas}) => {
                     />
                 </ColorPickerLabel>
             </EditDrawColorList>
+
         </div>
     );
 };

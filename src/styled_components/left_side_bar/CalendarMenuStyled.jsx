@@ -12,22 +12,17 @@ export const TagListContainer = styled.div`
   overflow-y: auto;
 `;
 
-export const TagItem = styled.div`
+export const TagItem = styled.label`
   display: flex;
   align-items: center;
   margin-bottom: 8px;
   cursor: pointer;
-  padding: 4px 8px; // 패딩 조정
+  padding: 4px 8px;
   border-radius: 4px;
-  border: 1px solid transparent; // 기본 테두리
-  transition: background-color 0.2s, border-color 0.2s; // 부드러운 전환 효과
-
-  /* $isSelected prop에 따라 스타일 변경 */
-  background-color: ${props => props.$isSelected ? '#F3E2F3' : 'transparent'};
-  //border-color: ${props => props.$isSelected ? '#E099D8' : 'transparent'};
+  transition: background-color 0.2s;
 
   &:hover {
-    background-color: ${props => props.$isSelected ? '#E3CBE3' : '#f0f0f0'}; // 호버 시 배경색 변경
+    background-color: #f0f0f0;
   }
 `;
 
