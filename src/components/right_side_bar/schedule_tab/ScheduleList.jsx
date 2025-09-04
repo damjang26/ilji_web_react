@@ -163,10 +163,10 @@ const ScheduleList = ({ allEvents, onAdd, onDetail, selectedDate, onClearSelecte
                 <Button className="primary" onClick={onAdd}>일정 추가</Button>
             </ActionButtons>
 
-            {/*<div>mz-section (firebase file upload)*/}
-            {/*    <input type="file" onChange={onFileChange} />*/}
-            {/*    <button onClick={uploadHandler}>upload</button>*/}
-            {/*</div>*/}
+            <div>mz-section (firebase file upload)
+                <input type="file" onChange={onFileChange} />
+                <button onClick={uploadHandler}>upload</button>
+            </div>
         </ListWrapper>
     )
 }
