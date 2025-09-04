@@ -146,6 +146,7 @@ export function ScheduleProvider({children}) {
     // --- 데이터 상태 관리 ---
     const [formData, setFormData] = useState(null); // ✅ 폼 데이터 중앙 관리 상태
     const [events, setEvents] = useState([]);
+    const [cachedEvents, setCachedEvents] = useState([]); // 옵티미스틱 업데이트를 위한 캐시
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -260,26 +261,29 @@ export function ScheduleProvider({children}) {
 
     // ✅ 태그 ID를 인자로 받아 스케줄을 로드하는 핵심 함수
     const fetchSchedulesByTags = useCallback(
-        async (tagIds = []) => {
-            console.log("[DEBUG] fetchSchedulesByTags 호출됨. tagIds:", tagIds);
+        async (tagIds = [], options = {}) => {
+            const { showLoading = true } = options;
+            console.log(`[DEBUG] fetchSchedulesByTags 호출됨. tagIds: ${tagIds}, showLoading: ${showLoading}`);
+
             if (!user) {
                 setEvents([]);
-                setLoading(false);
+                if (showLoading) setLoading(false);
                 return;
             }
-            setLoading(true);
+
+            if (showLoading) setLoading(true);
+
             try {
-                // tagIds 배열이 비어있지 않으면 쿼리 파라미터를 추가합니다.
                 if (tagIds && tagIds.length > 0) {
-                    let url = "/api/schedules";
                     const params = new URLSearchParams();
                     params.append("tagIds", tagIds.join(","));
-                    url += `?${params.toString()}`;
+                    const url = `/api/schedules?${params.toString()}`;
                     const response = await api.get(url);
                     const formattedEvents = response.data.map(formatEventForCalendar);
                     setEvents(formattedEvents);
+                    setCachedEvents(formattedEvents); // 캐시 업데이트
                     setError(null);
-                }else{
+                } else {
                     setEvents([]);
                     setError(null);
                 }
@@ -287,7 +291,7 @@ export function ScheduleProvider({children}) {
                 console.error("일정 로딩 실패:", err);
                 setError(err);
             } finally {
-                setLoading(false);
+                if (showLoading) setLoading(false);
             }
         },
         [user]
@@ -309,6 +313,7 @@ export function ScheduleProvider({children}) {
                 const response = await api.get(`/api/schedules`);
                 const formattedEvents = response.data.map(formatEventForCalendar);
                 setEvents(formattedEvents);
+                setCachedEvents(formattedEvents); // 캐시 업데이트
                 setError(null);
             } catch (err) {
                 console.error("일정 로딩 실패:", err);
@@ -561,6 +566,10 @@ export function ScheduleProvider({children}) {
         setDeleteModalState({isOpen: false, eventId: null});
     }, [deleteModalState.eventId, deleteEvent, selectedInfo, goBackInSidebar]);
 
+    const restoreCachedEvents = useCallback(() => {
+        setEvents(cachedEvents);
+    }, [cachedEvents]);
+
     const value = useMemo(
         () => ({
             // 데이터
@@ -590,6 +599,7 @@ export function ScheduleProvider({children}) {
             updateEvent,
             requestDeleteConfirmation, // 외부에서는 이 함수를 통해 삭제를 요청합니다.
             fetchSchedulesByTags, //  태그 필터링 함수
+            restoreCachedEvents, // 옵티미스틱 업데이트를 위한 함수
         }),
         [
             events,
@@ -616,6 +626,7 @@ export function ScheduleProvider({children}) {
             confirmDelete,
             cancelDeleteConfirmation,
             fetchSchedulesByTags,
+            restoreCachedEvents,
         ]
     );
 

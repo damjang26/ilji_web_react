@@ -10,6 +10,8 @@ import {
 } from "../../styled_components/login/LoginPageStyled.jsx";
 
 const LoginPage = () => {
+
+
   return (
     <LoginPageContainer>
       <LoginForm>
@@ -18,6 +20,7 @@ const LoginPage = () => {
         <Button>이메일로 회원가입하기</Button>
         <Separator></Separator>
         <SocialLogin />
+
       </LoginForm>
     </LoginPageContainer>
   );
