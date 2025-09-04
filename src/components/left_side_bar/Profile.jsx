@@ -76,14 +76,14 @@ const Profile = () => {
           <ProfileImageArea>
             <ImageWrapper to="/mypage">
               <img
-                src={user.picture}
-                alt={`${user.name} 프로필`}
+                src={user.picture || "/default-profile.png"}
+                alt={`${user.nickname || user.name} 프로필`}
                 referrerPolicy="no-referrer"
               />
             </ImageWrapper>
           </ProfileImageArea>
           <InfoWrapper>
-            <Nickname>{user.name}</Nickname>
+            <Nickname>{user.nickname || user.name}</Nickname>
             <Email>{user.email}</Email>
             <ButtonContainer>
               <LogoutButton onClick={logout}>로그아웃</LogoutButton>
