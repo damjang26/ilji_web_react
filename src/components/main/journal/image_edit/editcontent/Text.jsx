@@ -153,20 +153,6 @@ const Text = ({canvas}) => {
         }
     }, [selectedFont, selectedSize, selectedColor, activeText, canvas]);
 
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if ((e.key === "Delete") && canvas) {
-                const activeObject = canvas.getActiveObject();
-                if (activeObject) {
-                    canvas.remove(activeObject);
-                    canvas.discardActiveObject();
-                    canvas.requestRenderAll();
-                }
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [canvas]);
 
     return (
         <TextContainer>

@@ -211,12 +211,14 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
         const editedFile = dataURLtoFile(editedImageDataUrl, filename);
 
         // 2. 이 File 객체로부터 새로운 blob URL을 생성하여 미리보기에 사용합니다.
+        // File을 브라우저에서 바로 보여주려면 blob URL을 만들어야 함.
         // 이렇게 하면 항상 Cropper에 고화질의 blob URL이 전달됩니다.
         const newPreviewUrl = URL.createObjectURL(editedFile);
 
         const newImages = [...images];
 
         // 3. 이전 미리보기 URL이 blob URL이었다면 메모리에서 해제합니다.
+        // URL.revokeObjectURL을 안 하면 편집할 때마다 blob이 계속 쌓여서 브라우저 메모리를 잡아먹어요.
         const oldPreviewUrl = newImages[editingImageInfo.index].preview;
         if (oldPreviewUrl.startsWith('blob:')) {
             URL.revokeObjectURL(oldPreviewUrl);
