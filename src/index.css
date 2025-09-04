@@ -1,5 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Montserrat:wght@400;500;600;800&family=Noto+Sans:wght@200;300;400;600;800&display=swap');
+/* ✅ [수정] 개성있는 한/영 폰트들을 추가로 임포트합니다. */
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Gothic&family=Nanum+Myeongjo&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;600;700&display=swap');
 
-
-
-
+/* ✅ [신규] 앱 전체에 기본 폰트를 적용합니다. */
+body {
+    margin: 0;
+    /* ✅ [수정] 기본 폰트를 'Noto Sans KR'로 변경 */
+    font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

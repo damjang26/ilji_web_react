@@ -2,7 +2,7 @@ import styled from "styled-components";
 
 // 전체 피드를 감싸고 중앙 정렬하는 컨테이너
 export const FeedContainer = styled.div`
-    max-width: 600px; /* 피드의 최대 너비 */
+    width: 600px; /* 피드의 최대 너비 */
     margin: 20px auto; /* 페이지 중앙에 위치 */
     display: flex;
     flex-direction: column;
@@ -115,5 +115,52 @@ export const PostActions = styled.div`
         &:hover {
             opacity: 0.4;
         }
+    }
+`;
+
+// ✅ [신규] 피드가 비어있을 때 보여줄 컨테이너
+export const EmptyFeedContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 60vh;
+    color: #666;
+    text-align: center;
+
+    /* 컨테이너 안의 아이콘 스타일 */
+
+    svg {
+        margin-bottom: 16px;
+        color: #aaa;
+    }
+
+    h2 {
+        margin: 0;
+    }
+`;
+
+// ✅ [신규] 피드가 비어있을 때의 안내 문구
+export const EmptyFeedText = styled.p`
+    margin-top: 8px;
+    font-size: 14px;
+    color: #888;
+`;
+
+// ✅ [신규] '일기 작성하기' 버튼
+export const WriteJournalButton = styled.button`
+    margin-top: 20px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    background-color: #7b5fff;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+
+    &:hover {
+        background-color: #6a52e0;
     }
 `;

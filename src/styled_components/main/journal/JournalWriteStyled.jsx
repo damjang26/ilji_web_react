@@ -309,6 +309,7 @@ export const EditDrawBrushWidthBtn = styled.button`
     background-color: ${props => props.$active ? '#f0ebff' : 'white'};
     color: ${props => props.$active ? '#7b5fff' : '#333'};
     cursor: pointer;
+    font-size: 13px;
 
     &:disabled {
         cursor: not-allowed;
@@ -324,8 +325,8 @@ export const EditDrawColorList = styled.div`
 `;
 
 export const EditDrawColor = styled.div`
-    width: 28px;
-    height: 28px;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
     background-color: ${props => props.color};
     cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
@@ -337,8 +338,8 @@ export const EditDrawColor = styled.div`
 
 export const ColorPickerLabel = styled.label`
     display: inline-block;
-    width: 28px;
-    height: 28px;
+    width: 35px;
+    height: 35px;
     border-radius: 50%;
     cursor: pointer;
     /* 선택된 색상이 커스텀 색상일 경우 해당 색을, 아닐 경우 무지개 그래디언트를 배경으로 사용합니다. */
@@ -447,7 +448,6 @@ export const TextContainer = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
     font-family: sans-serif;
 `;
 
@@ -472,5 +472,5 @@ export const Description = styled.p`
     font-size: 14px;
     color: #666;
     text-align: center;
-    margin: 0;
+    margin-top: 20px;
 `;
