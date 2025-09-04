@@ -117,7 +117,7 @@ export const JournalProvider = ({children}) => {
             // 컴포넌트에서 에러를 인지하고 후속 처리(예: alert)를 할 수 있도록 에러를 다시 던집니다.
             throw err;
         }
-    }, []);
+    }, [setJournals]); // ✅ [수정] useCallback 의존성 배열에 setJournals를 추가하여 함수가 항상 최신 상태를 참조하도록 합니다.
 
     const hasJournal = useCallback((date) => journals.has(date), [journals]);
     // ✅ 특정 날짜의 일기 데이터를 가져오는 함수 추가
