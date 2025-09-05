@@ -4,8 +4,6 @@ import { Tooltip } from 'antd';
 import { FaTimes, FaPlus, FaEdit, FaTrash, FaArrowLeft } from 'react-icons/fa';
 import { useSchedule } from '../../../../contexts/ScheduleContext.jsx';
 import { useTags } from '../../../../contexts/TagContext.jsx';
-import ScheduleForm from '../../../right_side_bar/schedule_tab/ScheduleForm.jsx';
-import ScheduleEdit from '../../../right_side_bar/schedule_tab/ScheduleEdit.jsx';
 
 
 // --- Styled Components ---
@@ -227,13 +225,9 @@ const SchedulePopUp = () => {
         openSidebarForEdit,
         openSidebarForDetail,
         openSidebarForDate, // ✅ 사이드바의 리스트 뷰를 제어하기 위해 추가
-        selectedInfo,       // ✅ 사이드바의 상태를 감지하기 위해 추가
     } = useSchedule();
     const { tags } = useTags();
 
-    // --- ✅ 팝업 내부의 화면 전환을 위한 독립적인 상태 ---
-    const [viewMode, setViewMode] = useState('list'); // 'list', 'detail', 'form'
-    const [currentItem, setCurrentItem] = useState(null); // For detail/edit
     const [position, setPosition] = useState({ top: 0, left: 0 });
     const popupRef = useRef(null);
 
@@ -258,46 +252,6 @@ const SchedulePopUp = () => {
         }
         return null;
     }, [popupData]);
-
-    // ✅ [수정] 팝업의 뷰(list, detail, form)를 결정하는 로직을 하나로 통합합니다.
-    // 이 효과는 팝업이 열리거나 사이드바의 상태가 바뀔 때, 팝업의 뷰를 올바르게 설정하여
-    // 두 컴포넌트의 상태를 동기화합니다. useLayoutEffect를 사용하여 화면 깜빡임을 방지합니다.
-    useLayoutEffect(() => {
-        // 팝업이 닫혀있거나, 동기화의 기준이 되는 사이드바 정보가 없으면 아무것도 하지 않습니다.
-        if (!isOpen || !selectedInfo) {
-            return;
-        }
-
-        switch (selectedInfo.type) {
-            case 'list_for_date':
-                // '목록 보기'는 팝업의 날짜와 일치할 때만 동기화합니다.
-                if (date === selectedInfo.data?.startStr) {
-                    setViewMode('list');
-                    setCurrentItem(null);
-                }
-                break;
-            case 'detail':
-                // '상세 보기'는 항상 동기화합니다.
-                setViewMode('detail');
-                setCurrentItem(selectedInfo.data);
-                break;
-            case 'new':
-                // '새 일정' 폼은 팝업의 날짜와 일치할 때만 동기화합니다.
-                if (date === selectedInfo.data?.startStr) {
-                    setViewMode('form');
-                    setCurrentItem(null);
-                }
-                break;
-            case 'edit':
-                // '수정' 폼은 항상 동기화합니다.
-                setViewMode('form');
-                setCurrentItem(selectedInfo.data);
-                break;
-            default:
-                // 의도하지 않은 type에 대해서는 아무것도 하지 않습니다.
-                break;
-        }
-    }, [isOpen, selectedInfo, date]);
 
     // ✅ 2. 위치를 계산하고 조정합니다.
     // 이 효과는 위의 효과로 인해 viewMode가 'list'로 설정된 *후*의 렌더링 사이클에서 정확한 높이를 측정합니다.
@@ -341,7 +295,7 @@ const SchedulePopUp = () => {
         if (newTop !== position.top || newLeft !== position.left) {
             setPosition({ top: newTop, left: newLeft });
         }
-    }, [isOpen, popupData, viewMode, events, currentItem]); // ✅ currentItem을 추가하여 내용 변경 시 위치를 다시 계산하도록 수정
+    }, [isOpen, popupData, events]); // ✅ viewMode, currentItem 의존성 제거
 
     // ✅ [추가] '팝업 외부 클릭'을 감지하여 팝업을 닫는 로직
     useEffect(() => {
@@ -396,97 +350,38 @@ const SchedulePopUp = () => {
     }
 
     // --- ✅ 팝업 내부 동작 및 사이드바 연동 핸들러 ---
-    const handleBackToList = () => {
-        // 1. 팝업의 view를 list로 변경합니다.
-        setViewMode('list');
-        setCurrentItem(null);
-        // 2. ✅ 동시에 사이드바도 해당 날짜의 리스트 뷰로 변경합니다.
-        if (date) {
-            openSidebarForDate({ startStr: date });
-        }
-    };
-    const handleShowDetail = (item) => {
-        // 1. 팝업의 view를 detail로 변경합니다.
-        setCurrentItem(item);
-        setViewMode('detail');
-        // 2. ✅ 동시에 사이드바를 열고 상세 정보를 보여줍니다.
+    const handleDetailClick = (item) => {
         openSidebarForDetail(item);
+        closePopup();
     };
 
-    const handleShowForm = (item = null) => {
-        // 1. 팝업의 view를 form으로 변경합니다.
-        setCurrentItem(item);
-        setViewMode('form');
-
-        // 2. 동시에 사이드바를 엽니다.
-        if (item) {
-            // 기존 일정을 수정하는 경우
-            openSidebarForEdit(item);
-        } else {
-            // 새 일정을 추가하는 경우
-            openSidebarForNew({ startStr: date, endStr: date, allDay: true });
-        }
-    };
-
-    const handleSave = async (data) => {
-        try {
-            if (currentItem?.id) {
-                await updateEvent({ ...data, id: currentItem.id });
-            } else {
-                await addEvent(data);
-            }
-            handleBackToList();
-        } catch (error) {
-            console.error("Failed to save event:", error);
-            // 사용자에게 에러 알림을 표시하는 로직을 추가할 수 있습니다.
-        }
+    const handleAddClick = () => {
+        // 팝업의 날짜를 기준으로 새 일정 폼을 사이드바에 엽니다.
+        openSidebarForNew({ startStr: date, endStr: date, allDay: true });
+        closePopup();
     };
 
     // ✅ [수정] 삭제 버튼 클릭 시, Context의 중앙화된 삭제 확인 함수를 호출합니다.
     const handleDelete = (id) => {
         requestDeleteConfirmation(id);
-    };
-
-    const renderContent = () => {
-        switch (viewMode) {
-            case 'form':
-                const FormComponent = currentItem?.id ? ScheduleEdit : ScheduleForm;
-                // '새 일정' 모드일 때, 캘린더에서 전달받은 다중 날짜 정보(selectInfo)가 있으면 사용하고,
-                // 없으면 팝업의 단일 날짜(date)를 사용합니다.
-                const initialDataForNew = popupData?.selectInfo || { startStr: date, endStr: date, allDay: true };
-                const formProps = {
-                    tags: tags,
-                    onCancel: handleBackToList,
-                    onSave: handleSave,
-                    ...(currentItem?.id
-                        ? { item: currentItem }
-                        : { initialData: initialDataForNew })
-                };
-                return <FormComponent {...formProps} />;
-            case 'detail':
-                return <DetailView event={currentItem} onEdit={() => handleShowForm(currentItem)} tags={tags} />;
-            case 'list':
-            default:
-                return <EventListView
-                    events={eventsForDay}
-                    onAdd={() => handleShowForm()}
-                    onDetail={handleShowDetail}
-                    onDelete={handleDelete}
-                />;
-        }
+        // 팝업은 닫지 않고, 삭제 확인 모달이 위에 뜨도록 둡니다.
     };
 
     return (
         <PopupWrapper ref={popupRef} $visible={isOpen} style={{ top: position.top, left: position.left }}>
             <PopupHeader>
-                {viewMode !== 'list' && <HeaderButton onClick={handleBackToList}><FaArrowLeft /></HeaderButton>}
                 <span>{date}</span>
                 <Tooltip title="닫기" placement="bottom">
                     <HeaderButton onClick={closePopup}><FaTimes /></HeaderButton>
                 </Tooltip>
             </PopupHeader>
             <ContentWrapper>
-                {renderContent()}
+                <EventListView
+                    events={eventsForDay}
+                    onAdd={handleAddClick}
+                    onDetail={handleDetailClick}
+                    onDelete={handleDelete}
+                />
             </ContentWrapper>
         </PopupWrapper>
     );

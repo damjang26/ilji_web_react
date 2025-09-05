@@ -22,7 +22,7 @@ export const PostContainer = styled.article`
 export const PostHeader = styled.header`
     display: flex;
     align-items: center;
-    padding: 12px 16px;
+    padding: 20px 25px;
     gap: 12px;
 `;
 
@@ -44,14 +44,41 @@ export const PostHeaderActions = styled.div`
         align-items: center;
         justify-content: center;
         border-radius: 50%;
+        position: relative; /* 툴팁 기준 */
         transition: background-color 0.2s, color 0.2s;
 
         &:hover {
             background-color: #f0f2f5;
             color: #262626;
         }
+
+        /* 툴팁 기본 숨김 */
+
+        &::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            top: 130%; /* 버튼 위쪽 */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 10;
+        }
+
+        &:hover::after {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-4px);
+        }
     }
 `;
+
 
 // 프로필 이미지
 export const ProfileImage = styled.img`
@@ -81,20 +108,27 @@ export const UserInfo = styled.div`
 
 // 포스트 이미지
 export const PostImage = styled.img`
-    width: 100%;
+    width: 80%;
     height: auto;
     max-height: 750px; /* 이미지 최대 높이 제한 */
     object-fit: cover;
-    border-top: 1px solid #dbdbdb;
-    border-bottom: 1px solid #dbdbdb;
+
+    // ✅ [추가] 이미지를 블록 요소로 만들어 수평 중앙 정렬을 적용합니다.
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 `;
 
 // 포스트 본문 내용
 export const PostContent = styled.div`
-    padding: 12px 16px;
+    padding: 20px 25px;
     font-size: 14px;
     line-height: 1.5;
     color: #262626;
+    // ✅ [ 추가 ] 텍스트의 공백(스페이스) 과 줄바꿈(\\n) 을 HTML에 그대로 렌더링합니다. 
+    white-space: pre-wrap;
+    // 글자가 너무 길어질 경우 단어를 기준으로 줄바꿈합니다.
+    word-wrap: break-word;
 `;
 
 // 포스트 액션 버튼 (좋아요, 댓글 등)
@@ -102,7 +136,6 @@ export const PostActions = styled.div`
     display: flex;
     padding: 8px 16px;
     gap: 16px;
-    border-top: 1px solid #efefef;
 
     button {
         background: none;

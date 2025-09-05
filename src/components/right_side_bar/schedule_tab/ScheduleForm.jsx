@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react"; // useState 제거
 import { useTags } from "../../../contexts/TagContext.jsx";
 import { useSchedule } from "../../../contexts/ScheduleContext.jsx"; // ✅ useSchedule 훅 import
 import { Select } from "antd"; // AntD Select import
+import RRuleGenerator from "./RRuleGenerator.jsx";
+import RRuleSummary from "./RRuleSummary.jsx";
 import {
     CheckboxWrapper,
     CustomCheckbox,
@@ -17,8 +19,8 @@ import { ActionButtons, Button } from "../../../styled_components/common/FormEle
 const ScheduleForm = ({ tags: tagsFromProp }) => {
     const formRef = useRef(null);
     // ✅ 1. Context에서 공유 폼 데이터와 태그 데이터를 가져옵니다.
-    // ✅ [수정] 저장/수정/취소 함수를 모두 Context에서 직접 가져옵니다.
-    const { formData: form, setFormData: setForm, goBackInSidebar, addEvent, updateEvent } = useSchedule();
+    // ✅ [수정] selectedInfo를 추가로 가져와 뷰를 전환하는 데 사용합니다.
+    const { formData: form, setFormData: setForm, goBackInSidebar, addEvent, updateEvent, openSidebarForRRule, selectedInfo } = useSchedule();
     const { tags: tagsFromContext } = useTags();
     const tags = tagsFromProp || tagsFromContext; // prop으로 받은 tags가 있으면 사용, 없으면 context의 것 사용
 
@@ -45,8 +47,16 @@ const ScheduleForm = ({ tags: tagsFromProp }) => {
         }
     }, [form?.startDate, form?.startTime, form?.endDate, form?.endTime, setForm]); // ✅ 의존성 배열을 안전하게 변경
 
+    // ✅ [신규] RRuleGenerator의 변경사항을 받아 formData의 최상위 rrule을 업데이트하는 핸들러입니다.
+    const handleRRuleChange = (newRruleString) => {
+        setForm(prev => ({
+            ...prev,
+            rrule: newRruleString,
+        }));
+    };
+
     const handleSave = () => {
-        const { title, description, allDay, startDate, startTime, endDate, endTime, location, tagId, calendarId } = form;
+        const { title, description, allDay, startDate, startTime, endDate, endTime, location, tagId, calendarId, rrule } = form;
         const finalTitle = title.trim() ? title : "새 일정";
         const finalStart = allDay ? startDate : `${startDate}T${startTime}`;
         const finalEnd = allDay ? endDate : `${endDate}T${endTime}`;
@@ -57,6 +67,7 @@ const ScheduleForm = ({ tags: tagsFromProp }) => {
             start: finalStart,
             end: finalEnd,
             allDay,
+            rrule, // ✅ [버그 수정] rrule을 최상위 속성으로 이동시킵니다.
             extendedProps: {
                 description,
                 location,
@@ -79,6 +90,17 @@ const ScheduleForm = ({ tags: tagsFromProp }) => {
 
     // ✅ 3. Context의 formData가 아직 준비되지 않았다면 아무것도 렌더링하지 않습니다.
     if (!form) return null;
+
+    // ✅ [핵심 수정] selectedInfo.type에 따라 반복 규칙 생성기(RRuleGenerator)를 렌더링합니다.
+    if (selectedInfo.type === 'rrule_form') {
+        return (
+            <RRuleGenerator
+                value={form.rrule || ''} // ✅ 최상위 rrule 값을 전달합니다.
+                onChange={handleRRuleChange} // ✅ 최상위 rrule을 업데이트하는 핸들러를 전달합니다.
+                onClose={goBackInSidebar}
+            />
+        );
+    }
 
     return (
         <FormWrapper ref={formRef}>
@@ -128,6 +150,11 @@ const ScheduleForm = ({ tags: tagsFromProp }) => {
                         allowClear // 선택을 취소할 수 있는 x 버튼 추가
                         getPopupContainer={() => formRef.current} // 드롭다운을 form 내부에 렌더링
                     />
+                </FieldSet>
+
+                <FieldSet>
+                    <Label>반복</Label>
+                    <RRuleSummary rrule={form.rrule} onClick={openSidebarForRRule} />
                 </FieldSet>
 
                 <FieldSet>

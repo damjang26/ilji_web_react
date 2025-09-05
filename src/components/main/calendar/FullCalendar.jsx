@@ -10,6 +10,7 @@ import {
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import rrulePlugin from "@fullcalendar/rrule"; // ✅ rrule 플러그인 import
 import timeGridPlugin from "@fullcalendar/timegrid";
 import {useSchedule} from "../../../contexts/ScheduleContext.jsx";
 import {useTags} from "../../../contexts/TagContext.jsx";
@@ -76,6 +77,7 @@ export default function FullCalendarExample() {
                 // 4. 성공적으로 삭제되면 팝오버를 닫습니다.
                 setDiaryPopover((p) => ({...p, visible: false}));
             } catch (error) {
+                console.error("일기 삭제 실패:", error);
                 alert("일기 삭제에 실패했습니다.");
             }
         }
@@ -256,6 +258,17 @@ export default function FullCalendarExample() {
 
         // --- 팝오버 이벤트 핸들러 ---
         const handleMouseEnter = (e) => {
+            // ✅ [추가] 오늘 날짜와 비교하여 미래의 날짜인지 확인합니다.
+            const today = new Date();
+            // 시간, 분, 초를 0으로 설정하여 날짜만 비교하도록 합니다.
+            today.setHours(0, 0, 0, 0);
+
+            // 마우스가 올라간 날짜가 오늘보다 미래라면, 팝업을 띄우지 않고 함수를 종료합니다.
+            if (dayCellInfo.date > today) {
+                return;
+            }
+
+            // 과거 또는 오늘 날짜일 경우에만 팝업을 띄웁니다.
             clearHideTimer();
             const rect = e.currentTarget.getBoundingClientRect();
             setDiaryPopover({
@@ -350,7 +363,7 @@ export default function FullCalendarExample() {
             {ReactDOM.createPortal(<SchedulePopUp/>, document.body)}
 
             <FullCalendar
-                plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin]}
+                plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin, rrulePlugin]}
                 initialView="dayGridMonth"
                 headerToolbar={{
                     left: "today",
