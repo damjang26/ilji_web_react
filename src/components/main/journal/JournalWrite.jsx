@@ -40,12 +40,23 @@ const dataURLtoFile = (dataurl, filename) => {
     return new File([u8arr], filename, {type: mime});
 };
 
-const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
+// ✅ [추가] URL로부터 이미지를 가져와 File 객체로 변환하는 헬퍼 함수
+const urlToImageFile = async (url, filename) => {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new File([blob], filename, { type: blob.type });
+};
+
+const JournalWrite = ({onClose, selectedDate, onFabricModeChange, journalToEdit}) => {
     const {user} = useAuth(); // 현재 로그인한 유저 정보
-    const {createJournalEntry} = useJournal(); // ✅ 새로 만든 DB 저장 함수를 가져옵니다.
+    const {createJournalEntry, updateJournalEntry} = useJournal(); // ✅ 수정 함수도 가져옵니다.
+    const isEditMode = !!journalToEdit; // ✅ journalToEdit prop이 있으면 수정 모드!
+
     const [isSubmitting, setIsSubmitting] = useState(false); // ✅ 제출 중 상태 추가
     const [editingImageInfo, setEditingImageInfo] = useState(null); // ✅ 이미지 편집 상태 관리
     const [isDragging, setIsDragging] = useState(false); // ✅ 드래그 상태를 관리할 state 추가
+
+    // --- 상태 초기값 설정 ---
     const [content, setContent] = useState('');
     const [isPrivate, setIsPrivate] = useState(false); // ✅ 비공개 여부 상태, 기본값: 비공개(true)
     const [images, setImages] = useState([]);
@@ -53,6 +64,35 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
     const fileInputRef = useRef(null);
     const textareaRef = useRef(null);
     const emojiPickerContainerRef = useRef(null);
+
+    // --- ✅ [추가] 수정 모드일 때, 기존 데이터로 상태를 초기화하는 로직 ---
+    useEffect(() => {
+        if (isEditMode) {
+            setContent(journalToEdit.content || '');
+            setIsPrivate(journalToEdit.visibility === 2);
+
+            // 기존 이미지 URL들을 File 객체와 preview URL로 변환하여 상태에 설정
+            if (journalToEdit.imgUrl) {
+                try {
+                    const imageUrls = JSON.parse(journalToEdit.imgUrl);
+                    const imagePromises = imageUrls.map(async (url, index) => {
+                        // URL에서 파일 이름 추출 또는 생성
+                        const filename = url.substring(url.lastIndexOf('/') + 1).split('?')[0];
+                        const file = await urlToImageFile(url, filename);
+                        return { file, preview: url }; // 미리보기는 기존 URL을 그대로 사용
+                    });
+
+                    Promise.all(imagePromises).then(newImages => {
+                        setImages(newImages);
+                    });
+
+                } catch (e) {
+                    console.error("이미지 URL 파싱 또는 변환 실패:", e);
+                }
+            }
+        }
+    }, [isEditMode, journalToEdit]);
+
 
     // --- 이모지 피커 외부 클릭 감지 Hook ---
     useEffect(() => {
@@ -72,11 +112,13 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
 
     // 날짜 포맷팅 (e.g., "8월 25일")
     const formattedDate = useMemo(() => {
-        if (!selectedDate) return '';
-        const date = new Date(selectedDate);
+        // 수정 모드일 때는 journalToEdit의 날짜를, 생성 모드일 때는 selectedDate를 사용
+        const dateToFormat = isEditMode ? journalToEdit.ilogDate : selectedDate;
+        if (!dateToFormat) return '';
+        const date = new Date(dateToFormat);
         // toLocaleDateString은 브라우저/시스템의 로케일을 따르므로 일관된 결과를 위해 옵션 지정
         return date.toLocaleDateString('ko-KR', {month: 'long', day: 'numeric'});
-    }, [selectedDate]);
+    }, [selectedDate, isEditMode, journalToEdit]);
 
     const handleContentChange = (e) => {
         const text = e.target.value;
@@ -241,20 +283,29 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
         if (isSubmitting) return; // 중복 제출 방지
         setIsSubmitting(true);
         console.log("onSubmit selectedDate:", selectedDate);
+
+        // Context 함수에 전달할 데이터 묶음(payload)을 만듭니다.
+        const journalPayload = {
+            images,
+            content,
+            isPrivate,
+            user, // user 정보도 넘겨주어 Context에서 userId를 사용할 수 있게 합니다.
+        };
+
         try {
-            // Context 함수에 전달할 데이터 묶음(payload)을 만듭니다.
-            const journalPayload = {
-                images,
-                content,
-                selectedDate,
-                isPrivate,
-                user, // user 정보도 넘겨주어 Context에서 userId를 사용할 수 있게 합니다.
-            };
+            if (isEditMode) {
+                // ✅ 수정 모드일 경우
+                await updateJournalEntry(journalToEdit.id, journalPayload);
+                alert('일기가 성공적으로 수정되었습니다!');
+            } else {
+                // ✅ 생성 모드일 경우
+                // 페이로드에 생성에만 필요한 selectedDate 추가
+                const createPayload = { ...journalPayload, selectedDate };
+                await createJournalEntry(createPayload);
+                alert('일기가 성공적으로 저장되었습니다!');
+            }
 
-            // Context에 있는 함수를 호출하여 모든 작업을 위임합니다.
-            await createJournalEntry(journalPayload);
 
-            alert('일기가 성공적으로 저장되었습니다!');
             onClose(); // 저장 후 모달 닫기
         } catch (error) {
             console.error("일기 저장 실패:", error);
@@ -329,11 +380,12 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
                                 accept="image/*"
                                 style={{display: 'none'}}
                             />
-                            <IconButton onClick={handleImageButtonClick} disabled={images.length >= MAX_IMAGE_LIMIT}>
+                            <IconButton data-tooltip="이미지 추가" onClick={handleImageButtonClick}
+                                        disabled={images.length >= MAX_IMAGE_LIMIT}>
                                 <FaImage/>
                             </IconButton>
                             <ActionButtonWrapper ref={emojiPickerContainerRef}>
-                                <IconButton onClick={handleEmojiIconClick}>
+                                <IconButton data-tooltip="이모지 추가" onClick={handleEmojiIconClick}>
                                     <FaSmile/>
                                 </IconButton>
                                 {showEmojiPicker && (
@@ -342,7 +394,7 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
                                     </EmojiPickerWrapper>
                                 )}
                             </ActionButtonWrapper>
-                            <IconButton onClick={handleTagClick}>
+                            <IconButton data-tooltip="친구 태그 추가" onClick={handleTagClick}>
                                 <FaUserTag/>
                             </IconButton>
                         </ActionButtons>
@@ -357,7 +409,7 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange}) => {
                         </CheckboxLabel>
                         <PostButton onClick={onSubmit}
                                     disabled={(!content.trim() && images.length === 0) || isSubmitting}>
-                            {isSubmitting ? '저장 중...' : '게시하기'}
+                            {isSubmitting ? (isEditMode ? '수정 중...' : '저장 중...') : (isEditMode ? '수정하기' : '게시하기')}
                         </PostButton>
                     </ActionBar>
                 </FormContent>

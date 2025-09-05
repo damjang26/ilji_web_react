@@ -101,6 +101,53 @@ export const JournalProvider = ({children}) => {
             return newJournalEntry; // 생성된 일기 데이터 반환
         }, [user]); // `user`가 변경될 때 함수가 최신 `user` 정보를 참조하도록 의존성 배열에 추가합니다.
 
+    /**
+     * 서버에 기존 일기를 수정하는 함수
+     * @param {number} logId - 수정할 일기의 ID
+     * @param {object} journalPayload - { images, content, isPrivate, user }
+     */
+    const updateJournalEntry = useCallback(async (logId, journalPayload) => {
+        const { images, content, isPrivate, user } = journalPayload;
+
+        const formData = new FormData();
+
+        // ✅ [수정 로직] images 배열을 순회하며 기존 이미지(URL)와 새 이미지(File)를 구분합니다.
+        const existingImageUrls = [];
+        if (images && images.length > 0) {
+            images.forEach(image => {
+                if (image.file) { // 새로운 파일이 있으면 'images' 파트에 추가
+                    formData.append("images", image.file);
+                } else if (image.preview.startsWith('http')) { // 기존 URL이면 'existingImageUrls'에 추가
+                    existingImageUrls.push(image.preview);
+                }
+            });
+        }
+
+        const requestData = {
+            userId: user.id,
+            content: content,
+            visibility: isPrivate ? 2 : 0,
+            existingImageUrls: existingImageUrls, // ✅ 백엔드에 유지할 이미지 URL 목록 전달
+        };
+
+        formData.append("request", new Blob([JSON.stringify(requestData)], { type: "application/json" }));
+
+        // ✅ [수정 로직] POST 대신 PUT 메서드를 사용하고, URL에 logId를 포함합니다.
+        const response = await api.put(`/api/i-log/${logId}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        const updatedJournalEntry = response.data;
+
+        // ✅ [수정 로직] 로컬 상태(Map)를 업데이트합니다.
+        setJournals(prev => {
+            const newJournals = new Map(prev);
+            newJournals.set(updatedJournalEntry.ilogDate.split('T')[0], updatedJournalEntry);
+            return newJournals;
+        });
+
+        return updatedJournalEntry;
+    }, [user]);
+
     const deleteJournal = useCallback(async (logId, date) => {
         try {
             // 1. 백엔드에 삭제 요청을 보냅니다. (컨트롤러: @DeleteMapping("/{logId}"))
@@ -117,13 +164,13 @@ export const JournalProvider = ({children}) => {
             // 컴포넌트에서 에러를 인지하고 후속 처리(예: alert)를 할 수 있도록 에러를 다시 던집니다.
             throw err;
         }
-    }, []);
+    }, [setJournals]); // ✅ [수정] useCallback 의존성 배열에 setJournals를 추가하여 함수가 항상 최신 상태를 참조하도록 합니다.
 
     const hasJournal = useCallback((date) => journals.has(date), [journals]);
     // ✅ 특정 날짜의 일기 데이터를 가져오는 함수 추가
     const getJournal = useCallback((date) => journals.get(date), [journals]);
-
-    const value = {journals, loading, error, createJournalEntry, deleteJournal, hasJournal, getJournal};
+    
+    const value = {journals, loading, error, createJournalEntry, updateJournalEntry, deleteJournal, hasJournal, getJournal};
 
     return (
         <JournalContext.Provider value={value}>
