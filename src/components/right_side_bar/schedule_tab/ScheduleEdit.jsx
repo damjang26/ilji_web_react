@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useTags } from "../../../contexts/TagContext.jsx";
 import { useSchedule } from "../../../contexts/ScheduleContext.jsx";
 import { Select } from "antd";
+import RRuleSummary from "./RRuleSummary.jsx";
 import {
     ActionButtons,
     Button,
@@ -18,7 +19,7 @@ import {
 const ScheduleEdit = ({item, onSave, tags: tagsFromProp}) => {
     const formRef = useRef(null); // ref 생성
     const { tags: tagsFromContext } = useTags(); // TagContext에서 태그 목록 가져오기
-    const { formData: form, setFormData: setForm, goBackInSidebar } = useSchedule(); // ✅ Context에서 상태 가져오기
+    const { formData: form, setFormData: setForm, goBackInSidebar, openSidebarForRRule } = useSchedule(); // ✅ Context에서 상태 가져오기
     const tags = tagsFromProp || tagsFromContext; // prop으로 받은 tags가 있으면 사용, 없으면 context의 것 사용
 
     const set = (k) => (e) => {
@@ -47,7 +48,7 @@ const ScheduleEdit = ({item, onSave, tags: tagsFromProp}) => {
     }, [form?.startDate, form?.startTime, form?.endDate, form?.endTime, setForm]);
 
     const handleSave = () => {
-        const { id, title, description, allDay, startDate, startTime, endDate, endTime, location, tagId, calendarId } = form;
+        const { id, title, description, allDay, startDate, startTime, endDate, endTime, location, tagId, calendarId, rrule } = form;
 
         // 제목이 비어있으면 "새 일정"으로 기본값을 설정합니다.
         const finalTitle = title.trim() ? title : "새 일정";
@@ -68,6 +69,7 @@ const ScheduleEdit = ({item, onSave, tags: tagsFromProp}) => {
                 location,
                 tagId, // tags 대신 tagId 전송
                 calendarId,
+                rrule,
             }
         };
         onSave(updatedEvent);
@@ -129,6 +131,11 @@ const ScheduleEdit = ({item, onSave, tags: tagsFromProp}) => {
                         allowClear
                         getPopupContainer={() => formRef.current} // 드롭다운을 form 내부에 렌더링
                     />
+                </FieldSet>
+
+                <FieldSet>
+                    <Label>반복</Label>
+                    <RRuleSummary rrule={form.rrule} onClick={openSidebarForRRule} />
                 </FieldSet>
 
                 <FieldSet>
