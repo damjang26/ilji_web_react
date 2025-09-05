@@ -65,6 +65,7 @@ const transformInitialDataToFormState = (initialData) => {
         endDate: endDateStr,
         endTime: "10:00",
         calendarId: 1,
+        rrule: "", // ✅ 반복 규칙 필드 초기화
     };
 };
 
@@ -73,13 +74,41 @@ const transformInitialDataToFormState = (initialData) => {
  */
 const transformEventToFormState = (event) => {
     if (!event) return null;
-    const start = new Date(event.start);
+
+    // ✅ [핵심 수정] rrule 값을 안정적으로 읽어오기 위한 다단계 로직
+    // 1. 안정적인 API인 toPlainObject()를 우선 사용합니다.
+    const plainEvent = typeof event.toPlainObject === 'function' ? event.toPlainObject() : event;
+
+    // 2. plainEvent에서 rrule 값을 먼저 찾습니다.
+    let rruleValue = plainEvent.rrule || "";
+
+    // 3. 만약 plainEvent에 rrule이 없다면, FullCalendar의 내부 구조에 직접 접근하여 다시 시도합니다.
+    //    이는 toPlainObject가 rrule을 제대로 반환하지 않는 경우를 위한 예비 로직입니다.
+    if (!rruleValue) {
+        try {
+            const rruleSet = event._def?.recurringDef?.typeData?.rruleSet;
+            const mainRruleObject = rruleSet?._rrule?.[0];
+            if (mainRruleObject && typeof mainRruleObject.toString === 'function') {
+                rruleValue = mainRruleObject.toString();
+            }
+        } catch (e) {
+            console.error("내부 rrule 구조를 파싱하는 중 오류가 발생했습니다:", e);
+        }
+    }
+
+    // 4. 어떤 방식으로 rrule 값을 가져왔든, "RRULE:" 접두사가 있다면 제거하여
+    //    폼에서 사용할 수 있는 순수한 규칙 문자열로 만듭니다.
+    if (rruleValue.startsWith('RRULE:')) {
+        rruleValue = rruleValue.replace(/^RRULE:/, '');
+    }
+
+    const start = new Date(plainEvent.start);
     let inclusiveEnd;
-    if (event.allDay && event.end) {
-        inclusiveEnd = new Date(event.end);
+    if (plainEvent.allDay && plainEvent.end) {
+        inclusiveEnd = new Date(plainEvent.end);
         inclusiveEnd.setDate(inclusiveEnd.getDate() - 1);
     } else {
-        inclusiveEnd = event.end ? new Date(event.end) : new Date(start);
+        inclusiveEnd = plainEvent.end ? new Date(plainEvent.end) : new Date(start);
     }
     const toYYYYMMDD = (d) =>
         `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
@@ -88,17 +117,18 @@ const transformEventToFormState = (event) => {
     const toHHMM = (d) => d.toTimeString().substring(0, 5);
 
     return {
-        id: event.id,
-        title: event.title,
-        location: event.extendedProps?.location || "",
-        tagId: event.extendedProps?.tagId || null,
-        description: event.extendedProps?.description || "",
-        allDay: event.allDay,
+        id: plainEvent.id,
+        title: plainEvent.title,
+        location: plainEvent.extendedProps?.location || "",
+        tagId: plainEvent.extendedProps?.tagId || null,
+        description: plainEvent.extendedProps?.description || "",
+        allDay: plainEvent.allDay,
         startDate: toYYYYMMDD(start),
-        startTime: event.allDay ? "09:00" : toHHMM(start),
+        startTime: plainEvent.allDay ? "09:00" : toHHMM(start),
         endDate: toYYYYMMDD(inclusiveEnd),
-        endTime: event.allDay ? "10:00" : toHHMM(inclusiveEnd),
-        calendarId: event.extendedProps?.calendarId || 1,
+        endTime: plainEvent.allDay ? "10:00" : toHHMM(inclusiveEnd),
+        calendarId: plainEvent.extendedProps?.calendarId || 1,
+        rrule: rruleValue,
     };
 };
 
@@ -140,12 +170,12 @@ export function ScheduleProvider({children}) {
             title: event.title,
             // ✅ 위에서 판단한 정확한 값을 사용합니다.
             allDay: isAllDayEvent,
+            rrule: event.rrule, // ✅ rrule을 최상위 속성으로 이동
             extendedProps: {
                 description: event.description,
                 location: event.location,
                 tagId: event.tagId, // `tags`가 아닌 `tagId`를 매핑합니다.
                 calendarId: event.calendarId,
-                rrule: event.rrule,
             },
         };
 
@@ -329,7 +359,8 @@ export function ScheduleProvider({children}) {
                     true
                 ),
                 isAllDay: eventData.allDay,
-                rrule: eventData.extendedProps.rrule,
+                // ✅ [버그 수정] rrule은 최상위 속성이므로 eventData.rrule에서 가져옵니다.
+                rrule: eventData.rrule,
             };
 
             // 백그라운드에서 API 요청을 보냅니다.
@@ -371,7 +402,8 @@ export function ScheduleProvider({children}) {
                         true
                     ),
                     isAllDay: eventData.allDay,
-                    rrule: eventData.extendedProps.rrule,
+                    // ✅ [버그 수정] rrule은 최상위 속성이므로 eventData.rrule에서 가져옵니다.
+                    rrule: eventData.rrule,
                 };
                 const response = await api.put(`/api/schedules/${eventData.id}`, requestData);
                 const updatedEvent = formatEventForCalendar(response.data);
@@ -386,7 +418,7 @@ export function ScheduleProvider({children}) {
     const deleteEvent = useCallback(async (eventId) => {
         try {
             setEvents((prev) => prev.filter((e) => String(e.id) !== String(eventId)));
-            const response = await api.delete(`/api/schedules/${eventId}`);
+            await api.delete(`/api/schedules/${eventId}`);
         } catch (err) {
             console.error("일정 삭제 실패:", err);
         }
@@ -418,6 +450,11 @@ export function ScheduleProvider({children}) {
         setFormData(transformEventToFormState(event)); // ✅ 수정 폼 데이터 설정
     }, []);
 
+    const openSidebarForRRule = useCallback(() => {
+        // 현재 폼 데이터를 유지하면서, 뷰 타입만 변경합니다.
+        setSelectedInfo(prev => ({ ...prev, type: 'rrule_form' }));
+    }, []);
+
     const closeSidebar = useCallback(() => {
         setIsSidebarOpen(false);
         setSelectedInfo(null);
@@ -447,6 +484,15 @@ export function ScheduleProvider({children}) {
         }
         const {type, data} = selectedInfo;
         switch (type) {
+            // ✅ [신규] 반복 규칙 화면에서 뒤로 갈 때, 폼 데이터에 id 유무를 보고
+            // 수정 폼 또는 새 일정 폼으로 돌아갑니다.
+            case "rrule_form":
+                if (formData?.id) {
+                    setSelectedInfo(prev => ({ ...prev, type: 'edit' }));
+                } else {
+                    setSelectedInfo(prev => ({ ...prev, type: 'new' }));
+                }
+                break;
             case "edit":
                 openSidebarForDetail(data);
                 break;
@@ -481,7 +527,7 @@ export function ScheduleProvider({children}) {
             default:
                 closeSidebar();
         }
-    }, [selectedInfo, openSidebarForDetail, openSidebarForDate, closeSidebar]);
+    }, [selectedInfo, formData, openSidebarForDetail, openSidebarForDate, closeSidebar]);
 
     /**
      * ✅ [신규] 이벤트 상세보기를 위한 통합 함수
@@ -539,6 +585,7 @@ export function ScheduleProvider({children}) {
             openSidebarForNew,
             openSidebarForDetail,
             openSidebarForEdit, // 추가
+            openSidebarForRRule,
             closeSidebar,
             toggleSidebar,
             // 팝업 상태 및 함수
@@ -569,6 +616,7 @@ export function ScheduleProvider({children}) {
             openSidebarForNew,
             openSidebarForDetail,
             openSidebarForEdit,
+            openSidebarForRRule,
             closeSidebar,
             toggleSidebar,
             openPopup,
