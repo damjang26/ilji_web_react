@@ -3,16 +3,25 @@ import ImageModal from './ImageModal';
 import { ActionButtonGroup } from '../../../styled_components/main/mypage/ImageBoxStyled';
 import { ModalBody, ModalFooter, ImagePreview } from '../../../styled_components/main/mypage/ImageModalStyled';
 import { CancelButton, SubmitButton } from '../../../styled_components/main/mypage/MyPageSetStyled';
+import { useAuth } from '../../../AuthContext';
+import { useMyPage } from '../../../contexts/MyPageContext.jsx';
 
-const ImageBox = ({ isOpen, onClose, currentImageUrl, onConfirm, imageType, onRevert }) => {
+const DEFAULT_PROFILE_URL = import.meta.env.VITE_DEFAULT_PROFILE_URL; // 환경변수에 기본 이미지 링크
+
+const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
     const [imageFile, setImageFile] = useState(null);
     const [previewUrl, setPreviewUrl] = useState('');
+    const [revertMode, setRevertMode] = useState(false);
     const fileInputRef = useRef(null);
+
+    const { user } = useAuth();
+    const { profile, updateProfile } = useMyPage(); // Context에서 가져오기
 
     useEffect(() => {
         if (isOpen) {
             setPreviewUrl(currentImageUrl || '');
             setImageFile(null);
+            setRevertMode(false);
         }
     }, [isOpen, currentImageUrl]);
 
@@ -21,40 +30,80 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, onConfirm, imageType, onRe
         if (file) {
             setImageFile(file);
             setPreviewUrl(URL.createObjectURL(file));
+            setRevertMode(false);
         }
     };
 
-    const handleUploadButtonClick = () => {
-        fileInputRef.current.click();
+    const handleUploadButtonClick = () => fileInputRef.current?.click();
+
+    const handleRevert = () => {
+        // 기본 이미지 URL로 미리보기 변경
+        const defaultUrl = DEFAULT_PROFILE_URL || '';
+        setImageFile(null);
+        setPreviewUrl(defaultUrl);
+        setRevertMode(true);
     };
 
-    const handleConfirm = () => {
-        onConfirm(imageType, imageFile);
-        onClose();
-    };
+    const handleConfirm = async () => {
+        if (!profile) return;
 
-    const handleRevertClick = () => {
-        if (onRevert) {
-            onRevert(imageType);
+        try {
+            if (imageFile) {
+                // 새 이미지 업로드
+                await updateProfile(
+                    profile,
+                    imageType === 'profileImage' ? imageFile : null,
+                    imageType === 'bannerImage' ? imageFile : null
+                );
+            } else if (revertMode) {
+                // 기본 이미지로 복원
+                const defaultUrl = DEFAULT_PROFILE_URL || '';
+                await updateProfile(
+                    profile,
+                    null,
+                    null,
+                    imageType === 'profileImage' ? defaultUrl : null,
+                    imageType === 'bannerImage' ? defaultUrl : null
+                );
+            }
+            alert('이미지가 성공적으로 업데이트되었습니다.');
+            onClose();
+        } catch (err) {
+            console.error('이미지 업데이트 실패:', err);
+            alert('이미지 업데이트 중 오류가 발생했습니다.');
         }
-        onClose();
     };
 
     return (
-        <ImageModal isOpen={isOpen} onClose={onClose} title={`${imageType === 'profileImage' ? '프로필' : '배너'} 이미지 변경`}>
+        <ImageModal
+            isOpen={isOpen}
+            onClose={onClose}
+            title={`${imageType === 'profileImage' ? '프로필' : '배너'} 이미지 변경`}
+        >
             <ModalBody>
                 <ImagePreview imageUrl={previewUrl} imageType={imageType}>
                     {!previewUrl && "이미지를 업로드하세요"}
                 </ImagePreview>
-                <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
+
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={handleFileChange}
+                />
+
                 <ActionButtonGroup>
                     <SubmitButton type="button" onClick={handleUploadButtonClick}>이미지 선택</SubmitButton>
-                    {imageType === 'profileImage' && ( <CancelButton type="button" onClick={handleRevertClick}>기본으로 복원</CancelButton> )}
+                    {imageType === 'profileImage' && (
+                        <CancelButton type="button" onClick={handleRevert}>기본으로 복원</CancelButton>
+                    )}
                 </ActionButtonGroup>
             </ModalBody>
+
             <ModalFooter>
                 <CancelButton type="button" onClick={onClose}>취소</CancelButton>
-                <SubmitButton type="button" onClick={handleConfirm} disabled={!imageFile}>확인</SubmitButton>
+                <SubmitButton type="button" onClick={handleConfirm} disabled={!imageFile && !revertMode}>확인</SubmitButton>
             </ModalFooter>
         </ImageModal>
     );

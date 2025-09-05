@@ -61,12 +61,12 @@ export const MyPageProvider = ({ children }) => {
 
 
 
-    // 프로필 정보 업데이트 함수 (가장 중요한 변경)
-    const updateProfile = async (profileData, profileImageFile, bannerImageFile) => {
+    // 프로필 정보 업데이트 함수 (기존 코드 유지, 기본 이미지 복원만 추가)
+    const updateProfile = async (profileData, profileImageFile, bannerImageFile, profileImageUrl = null, bannerImageUrl = null) => {
         if (!user?.id) {
             throw new Error('사용자 정보가 없어 업데이트할 수 없습니다.');
         }
-        console.log(`[CONTEXT] updateProfile 시작`, { profileData, profileImageFile, bannerImageFile });
+        console.log(`[CONTEXT] updateProfile 시작`, { profileData, profileImageFile, bannerImageFile, profileImageUrl, bannerImageUrl });
 
         const formData = new FormData();
 
@@ -76,34 +76,38 @@ export const MyPageProvider = ({ children }) => {
         // 2. 이미지 파일들을 각 파트에 추가 (파일이 있을 경우에만)
         if (profileImageFile) {
             formData.append('profileImage', profileImageFile);
+        } else if (profileImageUrl) {
+            // File 없고 URL만 있을 경우 서버에 profileImageUrl로 전달
+            formData.append('profileImageUrl', profileImageUrl);
         }
+
         if (bannerImageFile) {
             formData.append('bannerImage', bannerImageFile);
+        } else if (bannerImageUrl) {
+            formData.append('bannerImageUrl', bannerImageUrl);
         }
-        // FormData의 내용을 확인하기 위한 로그 (직접 확인은 어려우므로, 각 key가 존재하는지만 확인)
-        console.log(`[CONTEXT] 2. FormData 생성됨. 'request' 존재:`, formData.has('request'));
-        console.log(`[CONTEXT] 2. FormData 생성됨. 'profileImage' 존재:`, formData.has('profileImage'));
-        console.log(`[CONTEXT] 2. FormData 생성됨. 'bannerImage' 존재:`, formData.has('bannerImage'));
 
+        // FormData 상태 확인
+        console.log(`[CONTEXT] FormData 상태 - 'request':`, formData.has('request'));
+        console.log(`[CONTEXT] FormData 상태 - 'profileImage':`, formData.has('profileImage'));
+        console.log(`[CONTEXT] FormData 상태 - 'profileImageUrl':`, formData.has('profileImageUrl'));
+        console.log(`[CONTEXT] FormData 상태 - 'bannerImage':`, formData.has('bannerImage'));
+        console.log(`[CONTEXT] FormData 상태 - 'bannerImageUrl':`, formData.has('bannerImageUrl'));
 
         try {
-            // 3. 서버에 PUT 요청으로 FormData 전송
+            // 3. 서버에 PUT 요청
             console.log(`[CONTEXT] 3. API 요청 전송 시작. URL: /api/profiles/user/${user.id}`);
-
             await api.put(`/api/profiles/user/${user.id}`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
 
-            // 4. 성공 시, 최신 프로필 정보를 다시 불러와 상태를 업데이트
+            // 4. 성공 시, 최신 프로필 정보를 다시 불러오기
             await fetchProfile();
 
             console.log(`[CONTEXT] 프로필 업데이트 및 리프레시 성공`);
             return true;
         } catch (err) {
             console.error("[CONTEXT] updateProfile 함수에서 오류 발생", err);
-            // 5. 실패 시 에러를 던져서 호출한 쪽에서 알 수 있게 함
             throw err;
         }
     };
