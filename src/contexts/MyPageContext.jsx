@@ -84,31 +84,40 @@ export const MyPageProvider = ({ children }) => {
 
 
             // 4. 서버에 PUT 요청 (multipart/form-data)
+
             // FormData를 전송할 때는 브라우저가 Content-Type(multipart/form-data)을 자동으로 설정하도록 헤더를 명시하지 않습니다.
-            const response = await api.put(`/api/user/profile`, formData, {
-                headers: {
-                    // 'Content-Type': 'multipart/form-data' 라고 명시하지 않아도,
-                    // axios가 formData를 보고 자동으로 설정해줍니다.
-                },
-            });
+            // const response = await api.put(`/api/user/profile`, formData, {
+            //     headers: {
+            //         // 'Content-Type': 'multipart/form-data' 라고 명시하지 않아도,
+            //         // axios가 formData를 보고 자동으로 설정해줍니다.
+            //     },
+            // });
+
+            await api.put(`/api/user/profile`, formData);
 
             // 5. 성공 시, 서버가 반환한 최신 프로필 데이터로 Context 상태를 업데이트
-            const updatedProfile = response.data;
-            const timestamp = `?_=${Date.now()}`;
+            // const updatedProfile = response.data;
+            // const timestamp = `?_=${Date.now()}`;
+            //
+            // // "Cache Busting": 이미지 URL이 존재하면, URL 뒤에 타임스탬프를 추가하여
+            // // 브라우저가 항상 새로운 이미지 파일을 서버에서 가져오도록 강제합니다.
+            // if (updatedProfile.profileImage) {
+            //     updatedProfile.profileImage += timestamp;
+            // }
+            // if (updatedProfile.bannerImage) {
+            //     updatedProfile.bannerImage += timestamp;
+            // }
+            //
+            // setProfile(updatedProfile);
+            // setError(null); // 이전 에러 상태 초기화
+            // console.log("프로필 업데이트 성공:", response.data);
+            // return response.data;
 
-            // "Cache Busting": 이미지 URL이 존재하면, URL 뒤에 타임스탬프를 추가하여
-            // 브라우저가 항상 새로운 이미지 파일을 서버에서 가져오도록 강제합니다.
-            if (updatedProfile.profileImage) {
-                updatedProfile.profileImage += timestamp;
-            }
-            if (updatedProfile.bannerImage) {
-                updatedProfile.bannerImage += timestamp;
-            }
+            // 5. [핵심] 업데이트 성공 후, fetchProfile()을 호출하여 앱의 상태를 서버와 동기화합니다.
+            // 이 방식이 PUT 응답을 직접 사용하는 것보다 데이터 일관성 측면에서 훨씬 안정적입니다.
+            await fetchProfile();
 
-            setProfile(updatedProfile);
-            setError(null); // 이전 에러 상태 초기화
-            console.log("프로필 업데이트 성공:", response.data);
-            return response.data;
+            console.log("프로필 업데이트 및 데이터 동기화 성공")
         } catch (err) {
             console.error("[CONTEXT] updateProfile 함수에서 오류 발생", err);
             const message = err.response?.data?.message || "프로필 업데이트 중 오류가 발생했습니다.";

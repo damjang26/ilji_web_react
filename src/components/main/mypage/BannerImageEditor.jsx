@@ -25,9 +25,9 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
     const handleFileChange = (e) => {
         const file = e.target.files?.[0];
         if (!file) {
-            // 파일 선택을 취소해도 모달을 닫지 않고,
-            // 사용자가 다시 선택할 수 있도록 합니다.
-            return;
+            // [수정] 사용자가 파일 선택을 취소하면 모달을 닫습니다.
+            onClose();
+            return; // 여기서 함수를 종료합니다.
         }
 
         const reader = new FileReader();
