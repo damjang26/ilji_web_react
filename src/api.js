@@ -23,3 +23,47 @@ api.interceptors.request.use(
         return Promise.reject(error);
     }
 );
+
+// =================================
+// 친구 관련 API
+// =================================
+
+/**
+ * 내가 팔로우하는 사용자 목록을 조회합니다.
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const getFollowingList = () => api.get('/api/friends/following');
+
+/**
+ * 나를 팔로우하는 사용자 목록을 조회합니다.
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const getFollowersList = () => api.get('/api/friends/followers');
+
+/**
+ * 다른 사용자를 팔로우합니다.
+ * @param {number} followingId - 팔로우할 사용자의 ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const followUser = (followingId) => api.post(`/api/friends/${followingId}`);
+
+/**
+ * 다른 사용자를 언팔로우합니다.
+ * @param {number} followingId - 언팔로우할 사용자의 ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const unfollowUser = (followingId) => api.delete(`/api/friends/${followingId}`);
+
+/**
+ * 특정 사용자와 나의 친구 관계 상태를 조회합니다.
+ * @param {number} userId - 확인할 사용자의 ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const getFriendStatus = (userId) => api.get(`/api/friends/${userId}/status`);
+
+/**
+ * 이메일 또는 닉네임으로 사용자를 검색합니다.
+ * @param {string} query - 검색어
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const searchUsers = (query) => api.get(`/api/users/search?q=${query}`);

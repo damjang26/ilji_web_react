@@ -130,6 +130,11 @@ export const LogoutButton = styled(BaseButton)`
   /* Inherits styles from BaseButton */
 `;
 
+// 친구 관리 버튼 (BaseButton 스타일 상속)
+export const FriendManageButton = styled(BaseButton)`
+  /* Inherits styles from BaseButton */
+`;
+
 // 로그인되지 않았을 때, 소셜 로그인 컴포넌트를 감싸는 컨테이너
 export const LoginWrapper = styled.div`
   width: 100%;
