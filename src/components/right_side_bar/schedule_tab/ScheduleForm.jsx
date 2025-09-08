@@ -67,7 +67,8 @@ const ScheduleForm = ({ tags: tagsFromProp }) => {
             start: finalStart,
             end: finalEnd,
             allDay,
-            rrule, // ✅ [버그 수정] rrule을 최상위 속성으로 이동시킵니다.
+            // ✅ [버그 수정] rrule이 빈 문자열("")일 경우, FullCalendar가 오류를 발생시키므로 null로 변환합니다.
+            rrule: rrule || null,
             extendedProps: {
                 description,
                 location,

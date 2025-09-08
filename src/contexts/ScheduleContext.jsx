@@ -170,7 +170,8 @@ export function ScheduleProvider({children}) {
             title: event.title,
             // ✅ 위에서 판단한 정확한 값을 사용합니다.
             allDay: isAllDayEvent,
-            rrule: event.rrule, // ✅ rrule을 최상위 속성으로 이동
+            // ✅ [버그 수정] 백엔드에서 rrule이 ""(빈 문자열)로 올 경우, FullCalendar 오류를 방지하기 위해 null로 변환합니다.
+            rrule: event.rrule || null,
             extendedProps: {
                 description: event.description,
                 location: event.location,
@@ -335,10 +336,10 @@ export function ScheduleProvider({children}) {
 
             // UI를 즉시 업데이트하기 위해 임시 이벤트를 생성합니다.
             // 서버로부터 실제 ID를 받기 전까지 사용할 임시 ID를 부여합니다.
-            const tempNewEvent = formatEventForCalendar({
+            const tempNewEvent = {
                 ...eventData,
                 id: `temp-${Date.now()}`,
-            });
+            };
             setEvents((prev) => [...prev, tempNewEvent]);
 
             // 프론트엔드 폼 데이터를 백엔드 DTO 형식으로 변환
