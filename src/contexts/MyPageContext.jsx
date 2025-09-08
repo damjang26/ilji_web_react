@@ -13,15 +13,21 @@ const MyPageContext = createContext(null);
 
 // 2. Provider 컴포넌트 생성
 export const MyPageProvider = ({ children }) => {
-  const { user } = useAuth();
+  // [MODIFY] Import the refreshUser function from AuthContext.
+  const { user, refreshUser } = useAuth();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     // 수정 모드를 관리하는 상태를 Context로 이동합니다.
     const [isEditing, setIsEditing] = useState(false);
     const [error, setError] = useState(null);
 
-  const fetchProfile = useCallback(async () => {
-    if (!user?.id) {
+
+    // [디버깅용] 프로필 업데이트를 감지하기 위한 '트리거' 상태
+    const [updateTrigger, setUpdateTrigger] = useState(0);
+
+  // [MODIFY] fetchProfile이 더 이상 외부 user 상태에 의존하지 않도록 userId를 인자로 받습니다.
+  const fetchProfile = useCallback(async (userId) => {
+    if (!userId) {
       setLoading(false);
       // 초기 로딩 시 user가 없을 수 있으므로 에러 메시지는 주석 처리
       // setError("사용자 정보를 불러올 수 없습니다.");
@@ -29,8 +35,15 @@ export const MyPageProvider = ({ children }) => {
     }
     try {
       setLoading(true);
+        console.log(`[MyPageContext] 🟡 5. fetchProfile 실행: 서버에 상세 프로필을 요청합니다. (userId: ${userId})`);
       const response = await api.get(`/api/user/profile`);
-      setProfile(response.data);
+      const newProfileData = response.data;
+
+      // [FIX] 함수형 업데이트와 객체 병합을 사용하여 상태를 '덮어쓰지' 않고 안전하게 '병합'합니다.
+      // 이렇게 하면 비동기 작업 중 발생할 수 있는 상태 유실을 방지하고,
+      // 기존 상태를 보존하면서 서버에서 받은 데이터로 갱신할 수 있습니다.
+      setProfile(prevProfile => ({ ...prevProfile, ...newProfileData }));
+
       setError(null);
     } catch (err) {
       console.error("프로필 정보 로딩 실패:", err);
@@ -38,14 +51,15 @@ export const MyPageProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, []); // 의존성 배열에서 user.id 제거
 
   useEffect(() => {
     // user.id가 있을 때만 프로필을 불러옵니다.
     if (user?.id) {
-      fetchProfile();
+        console.log("[MyPageContext] 🔵 4. useEffect 실행: 'user' 또는 'updateTrigger' 변경을 감지했습니다.");
+      fetchProfile(user.id); // 호출 시 user.id를 인자로 전달
     }
-  }, [user?.id, fetchProfile]);
+  }, [user?.id, fetchProfile, updateTrigger]); // useEffect의 의존성은 유지
 
 
 
@@ -92,7 +106,7 @@ export const MyPageProvider = ({ children }) => {
             //         // axios가 formData를 보고 자동으로 설정해줍니다.
             //     },
             // });
-
+            console.log("[MyPageContext] 🟢 1. updateProfile 실행: 서버에 프로필 변경을 요청합니다.");
             await api.put(`/api/user/profile`, formData);
 
             // 5. 성공 시, 서버가 반환한 최신 프로필 데이터로 Context 상태를 업데이트
@@ -113,11 +127,12 @@ export const MyPageProvider = ({ children }) => {
             // console.log("프로필 업데이트 성공:", response.data);
             // return response.data;
 
-            // 5. [핵심] 업데이트 성공 후, fetchProfile()을 호출하여 앱의 상태를 서버와 동기화합니다.
-            // 이 방식이 PUT 응답을 직접 사용하는 것보다 데이터 일관성 측면에서 훨씬 안정적입니다.
-            await fetchProfile();
+            console.log("[MyPageContext] 🟢 2. updateProfile: AuthContext의 refreshUser를 호출합니다.");
+            await refreshUser();
 
-            console.log("프로필 업데이트 및 데이터 동기화 성공")
+            console.log("[MyPageContext] 🟢 3. updateProfile: useEffect를 트리거하기 위해 내부 상태를 변경합니다.");
+            setUpdateTrigger(prev => prev + 1);
+
         } catch (err) {
             console.error("[CONTEXT] updateProfile 함수에서 오류 발생", err);
             const message = err.response?.data?.message || "프로필 업데이트 중 오류가 발생했습니다.";

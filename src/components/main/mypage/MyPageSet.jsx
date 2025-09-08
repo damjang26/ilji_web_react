@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useMyPage } from '../../../contexts/MyPageContext';
-import { api } from '../../../api'; // 설정해두신 axios 인스턴스를 직접 가져옵니다.
 import ImageBox from './ImageBox'; // 새로 만든 ImageBox 컴포넌트를 가져옵니다.
 
 // MyPage.jsx와 레이아웃을 공유하기 위해 기존 스타일 컴포넌트 가져오기
@@ -54,38 +53,53 @@ const MyPageSet = () => {
         setIsModalOpen(true);
     };
 
-    const handleImageUpdate = async (imageType, newUrl) => {
-        if (!localProfile) return;
-        const updatedLocalProfile = { ...localProfile, [imageType]: newUrl };
-        setLocalProfile(updatedLocalProfile); // 로컬 UI 즉시 업데이트
-
+    // ImageBox에서 '확인'을 눌렀을 때 호출될 함수 (File 객체를 받음)
+    const handleImageUpdate = async (imageType, imageFile) => {
+        if (!imageFile) return;
+        
         try {
-            // 서버에 변경된 정보를 전송하고, 성공 시 '전역 상태'를 업데이트합니다.
-            const response = await api.put(`/api/profiles/user/${globalProfile.userId}`, updatedLocalProfile);
-            updateProfile(response.data); // 이미지는 즉시 업데이트 되므로 updateProfile을 호출
+            // [개선] Context의 updateProfile을 사용하여 이미지 업데이트를 위임합니다.
+            // 이미지 업데이트 시에는 텍스트 데이터를 보내지 않으므로 첫 번째 인자는 빈 객체({})입니다.
+            const imageOptions = imageType === 'bannerImage'
+                ? { bannerImageFile: imageFile }
+                : { profileImageFile: imageFile };
+
+            await updateProfile({}, imageOptions);
+
             alert('이미지가 성공적으로 업데이트되었습니다.');
+            setIsModalOpen(false); // 성공 시 모달 닫기
         } catch (err) {
             console.error("이미지 업데이트 실패:", err);
-            alert('이미지 업데이트 중 오류가 발생했습니다.');
-            // 실패 시 로컬 상태를 이전 전역 상태로 롤백할 수 있습니다.
-            setLocalProfile(globalProfile);
+            // Context에서 alert를 이미 띄워주므로 여기서는 추가 작업이 필요 없습니다.
         }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!globalProfile || !globalProfile.userId) {
+        if (!localProfile) {
             alert('사용자 정보가 없어 저장할 수 없습니다.');
             return;
         }
         try {
-            // Context에 있는 updateProfile 함수를 호출하고 성공을 기다립니다.
-            await updateProfile(localProfile);
+            // [개선] 서버가 요구하는 수정 가능한 필드만 추출하여 전달합니다.
+            const profileDataForServer = {
+                nickname: localProfile.nickname,
+                birthdate: localProfile.birthdate,
+                phoneNumber: localProfile.phoneNumber,
+                gender: localProfile.gender,
+                region: localProfile.region,
+                bio: localProfile.bio,
+                interests: localProfile.interests,
+                isPrivate: localProfile.isPrivate,
+            };
+            // 텍스트 정보만 업데이트하므로 두 번째 인자는 빈 객체({})입니다.
+            await updateProfile(profileDataForServer, {});
 
             alert('프로필이 성공적으로 업데이트되었습니다.');
             handleCancel(); // 성공 후 보기 모드로 돌아갑니다.
         } catch (err) {
-            alert('프로필 업데이트 중 오류가 발생했습니다.');
+            // Context에서 alert를 이미 띄워주므로 여기서는 추가 작업이 필요 없습니다.
+            console.error("프로필 저장 실패:", err);
         }
     };
 

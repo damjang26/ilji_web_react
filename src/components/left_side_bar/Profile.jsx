@@ -24,6 +24,9 @@ const Profile = () => {
   const { user, loading: authLoading, logout } = useAuth();
   const { profile, loading: profileLoading } = useMyPage();
 
+  // [디버깅용] 컴포넌트가 렌더링될 때마다 현재 데이터를 로그로 남깁니다.
+  console.log("🎨 [LeftSideBar Profile] 렌더링 실행. 현재 데이터:", { user, profile });
+
   // MyPage에서 수정한 프로필 정보(profile)를 우선으로 사용하고, 없으면 소셜 로그인 정보(user)를 사용합니다.
   const displayImage = profile?.profileImage || user?.picture;
   const displayName = profile?.nickname || user?.name;
@@ -91,7 +94,7 @@ const Profile = () => {
           </ProfileImageArea>
           <InfoWrapper>
             <Nickname>{displayName}</Nickname>
-            <Email>{user.email}</Email>
+            {/*<Email>{user.email}</Email>*/}
             <ButtonContainer>
               <LogoutButton onClick={logout}>로그아웃</LogoutButton>
             </ButtonContainer>

@@ -56,38 +56,30 @@ const MyPage = () => {
 
   // BannerImageEditor가 편집을 완료했을 때 호출될 콜백 함수
   const handleBannerCropComplete = async (croppedFile) => {
-    await updateProfile({ nickname: profile.nickname, bio: profile.bio }, { bannerImageFile: croppedFile });
+    try {
+      // [개선] 이미지 업데이트 시에는 텍스트 데이터를 보내지 않습니다. (첫 번째 인자를 빈 객체로 전달)
+      await updateProfile({}, { bannerImageFile: croppedFile });
+      alert('배너 이미지가 성공적으로 업데이트되었습니다.');
+    } catch (err) {
+      console.error('배너 이미지 업데이트 실패:', err);
+    }
     setIsBannerEditorOpen(false); // 모달 닫기
   };
 
   // 모달에서 '확인'을 눌렀을 때 호출될 함수
-  // const handleImageConfirm = async (imageType, imageFile) => {
-  //   if (!profile || !imageFile) return;
-  //
-  //   console.log(`[MyPage] 1. 이미지 확인됨. 타입: ${imageType}, 파일:`, imageFile);
-  //
-  //   try {
-  //     // [수정] 첫 번째 인자로 profile 객체 전체가 아닌, 순수한 텍스트 정보만 전달합니다.
-  //     // 이렇게 해야 백엔드가 이전 이미지 URL(타임스탬프 포함)로 DB를 덮어쓰는 것을 방지할 수 있습니다.
-  //     const textProfileData = {
-  //       nickname: profile.nickname,
-  //       bio: profile.bio,
-  //     };
-  //
-  //     await updateProfile(
-  //       textProfileData,
-  //       {
-  //         profileImageFile: imageType === 'profileImage' ? imageFile : null,
-  //         bannerImageFile: imageType === 'bannerImage' ? imageFile : null
-  //       }
-  //     );
-  //     alert('이미지가 성공적으로 업데이트되었습니다.');
-  //     setIsModalOpen(false); // 성공 시 모달 닫기
-  //   } catch (err) {
-  //     console.error('이미지 업데이트 실패:', err);
-  //     alert('이미지 업데이트 중 오류가 발생했습니다.');
-  //   }
-  // };
+  const handleImageConfirm = async (imageType, imageFile) => {
+    if (!profile || !imageFile) return;
+
+    try {
+      // [개선] 이미지 업데이트 시에는 텍스트 데이터를 보내지 않습니다.
+      await updateProfile({}, { profileImageFile: imageFile });
+      alert('프로필 이미지가 성공적으로 업데이트되었습니다.');
+      setIsModalOpen(false); // 성공 시 모달 닫기
+    } catch (err) {
+      // Context에서 에러를 throw하면 alert가 자동으로 뜨므로 콘솔 로그만 남깁니다.
+      console.error('프로필 이미지 업데이트 실패:', err);
+    }
+  };
 
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div style={{ color: "red" }}>{error}</div>;
@@ -167,7 +159,7 @@ const MyPage = () => {
         currentImageUrl={(
           profile && editingImageType && profile[editingImageType]
         ) ? profile[editingImageType].split('?')[0] : ""}
-        // onConfirm={handleImageConfirm}
+        onConfirm={handleImageConfirm}
         imageType={editingImageType}
       />
 

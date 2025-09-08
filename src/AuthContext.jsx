@@ -47,7 +47,10 @@ export default function AuthProvider({ children }) {
             // 2. 방금 받은 appToken을 사용하여, 서버에서 완전한 사용자 정보를 다시 조회합니다.
             const meResponse = await api.get("/api/auth/me");
             const user = meResponse.data.user;
-            setUser(user);
+            console.log("[AuthContext] 🟡 2-1. refreshUser 실행: 서버로부터 받은 새 user 객체", user);
+            // React가 상태 변경을 확실히 감지하도록 항상 새로운 객체 참조를 생성합니다.
+            setUser({ ...user });
+            console.log("[AuthContext] 🟡 2-2. refreshUser: 전역 user 상태(state) 업데이트 완료.");
 
             return user;
         } catch (e) {
@@ -68,11 +71,29 @@ export default function AuthProvider({ children }) {
         setUser(null);
     };
 
+    // [추가] MyPage 등 다른 곳에서 프로필을 수정한 후,
+    // AuthContext의 user 상태를 최신으로 동기화하기 위한 함수입니다.
+    const refreshUser = async () => {
+        try {
+            const meResponse = await api.get("/api/auth/me");
+            const user = meResponse.data.user;
+            // [최종 수정] React가 상태 변경을 확실히 감지하도록 항상 새로운 객체 참조를 생성합니다.
+            // 이전 user 객체와 내용이 완전히 같더라도, {...user}는 새로운 메모리 주소를 가진
+            // 객체를 생성하므로, 이 상태를 구독하는 useEffect가 반드시 실행됩니다.
+            setUser({ ...user }); 
+            console.log("[AuthContext] User state has been refreshed.");
+            return user; // [CRITICAL] Return the newly fetched user object.
+        } catch (e) {
+            console.error("[AuthContext] Failed to refresh user state:", e);
+            return null; // Return null on failure.
+        }
+    };
+
     const value = useMemo(() => ({
         user, token, loading, error,
-        loginWithGoogle, logout,
+        loginWithGoogle, logout, refreshUser,
         isAuthenticated: !!user
-    }), [user, token, loading, error]);
+    }), [user, token, loading, error, refreshUser]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
