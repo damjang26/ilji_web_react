@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import MessageTab from "./right_side_bar/MessageTab.jsx";
 import { Tooltip } from "antd";
 import ScheduleTab from "./right_side_bar/ScheduleTab.jsx";
@@ -12,23 +12,36 @@ import {
     SidebarPanelWrapper,
 } from "../styled_components/RightSideBarStyled.jsx";
 import { useSchedule } from "../contexts/ScheduleContext.jsx";
+import ChatRoom from "./right_side_bar/ChatRoom.jsx";
 
 // 사이드바 패널의 전체 내용을 담는 컴포넌트
-const SidebarPanel = ({ onClose }) => (
-    <>
-        <PanelHeader>
-            <Tooltip title="사이드바 접기" placement="left">
-                <CloseButton onClick={onClose}>
-                    <FaChevronRight />
-                </CloseButton>
-            </Tooltip>
-        </PanelHeader>
-        <PanelBody>
-            <MessageTab />
-            <ScheduleTab />
-        </PanelBody>
-    </>
-);
+const SidebarPanel = ({ onClose }) => {
+    // 1. 사이드바 내부에서 보여줄 화면을 관리하는 상태 ('default' 또는 'chatRoom')
+    const [activeView, setActiveView] = useState('default');
+
+    return (
+        <>
+            <PanelHeader>
+                <Tooltip title="사이드바 접기" placement="left">
+                    <CloseButton onClick={onClose}>
+                        <FaChevronRight />
+                    </CloseButton>
+                </Tooltip>
+            </PanelHeader>
+            <PanelBody>
+                {/* 2. activeView 상태에 따라 조건부로 컴포넌트를 렌더링합니다. */}
+                {activeView === 'default' && (
+                    <>
+                        {/* MessageTab에게 채팅방을 보여달라는 함수를 props로 전달 */}
+                        <MessageTab onShowChatRoom={() => setActiveView('chatRoom')} />
+                        {/*<ScheduleTab />*/}
+                    </>
+                )}
+                {activeView === 'chatRoom' && <ChatRoom onBack={() => setActiveView('default')} />}
+            </PanelBody>
+        </>
+    );
+};
 
 const RightSideBar = () => {
     const { isSidebarOpen, closeSidebar, toggleSidebar } = useSchedule();
