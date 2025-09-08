@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ScheduleList from "./schedule_tab/ScheduleList.jsx";
 import ScheduleForm from "./schedule_tab/ScheduleForm.jsx";
 import ScheduleDetail from "./schedule_tab/ScheduleDetail.jsx";
+import RRuleGenerator from "./schedule_tab/RRuleGenerator.jsx";
 import { useSchedule } from "../../contexts/ScheduleContext.jsx";
 import { TabWrapper } from "../../styled_components/right_side_bar/ScheduleTabStyled.jsx";
 
@@ -12,11 +13,17 @@ const ScheduleTab = () => {
         events,
         requestDeleteConfirmation, // ✅ [수정] 중앙화된 삭제 요청 함수를 가져옵니다.
         selectedInfo,
+        formData, // ✅ rrule 값을 전달하기 위해 formData를 가져옵니다.
+        setFormData, // ✅ rrule 값을 업데이트하기 위해 setFormData를 가져옵니다.
         openSidebarForNew,
         openSidebarForDetail,
         openSidebarForEdit,
-        goBackInSidebar, // ✅ [수정] '뒤로가기' 로직을 처리하는 함수를 가져옵니다.
+        goBackInSidebar,
     } = useSchedule();
+
+    const handleRruleChange = useCallback((newRrule) => {
+        setFormData(prev => ({ ...prev, rrule: newRrule }));
+    }, [setFormData]);
 
     const mode = selectedInfo?.type || 'list';
     const selectedItem = useMemo(() => {
@@ -74,6 +81,15 @@ const ScheduleTab = () => {
             case 'edit':
                 // ✅ 'new'와 'edit' 모드 모두 props 없이 ScheduleForm을 렌더링합니다.
                 return <ScheduleForm />;
+            case 'rrule_form':
+                // ✅ 'rrule_form' 모드일 때 RRuleGenerator를 렌더링합니다.
+                return (
+                    <RRuleGenerator
+                        value={formData.rrule}
+                        onChange={handleRruleChange}
+                        onClose={goBackInSidebar}
+                    />
+                );
             case 'detail':
                 return <ScheduleDetail
                     item={selectedItem}
