@@ -2,6 +2,7 @@ import React, {useState, useRef, useMemo, useEffect} from 'react';
 import {useAuth} from '../../../AuthContext';
 import {useJournal} from '../../../contexts/JournalContext.jsx';
 import {FaImage, FaSmile, FaUserTag} from 'react-icons/fa';
+import {useLocation} from 'react-router-dom';
 import EmojiPicker from 'emoji-picker-react';
 import {
     FormContainer,
@@ -25,7 +26,7 @@ import {CloseButton, ModalHeader} from '../../../styled_components/main/journal/
 import ImageEditor from './image_edit/ImageEditor.jsx';
 
 const MAX_CHAR_LIMIT = 3000;
-const MAX_IMAGE_LIMIT = 3;
+const MAX_IMAGE_LIMIT = 1;
 
 // Base64 데이터 URL을 File 객체로 변환하는 헬퍼 함수
 const dataURLtoFile = (dataurl, filename) => {
@@ -41,16 +42,29 @@ const dataURLtoFile = (dataurl, filename) => {
 };
 
 // ✅ [추가] URL로부터 이미지를 가져와 File 객체로 변환하는 헬퍼 함수
-const urlToImageFile = async (url, filename) => {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return new File([blob], filename, { type: blob.type });
-};
+// const urlToImageFile = async (url, filename) => {
+//     const response = await fetch(url);
+//     const blob = await response.blob();
+//     return new File([blob], filename, {type: blob.type});
+// };
 
-const JournalWrite = ({onClose, selectedDate, onFabricModeChange, journalToEdit}) => {
+const JournalWrite = ({
+                          onClose,
+                          selectedDate: selectedDateFromProp,
+                          onFabricModeChange,
+                          journalToEdit: journalToEditFromProp
+                      }) => {
     const {user} = useAuth(); // 현재 로그인한 유저 정보
     const {createJournalEntry, updateJournalEntry} = useJournal(); // ✅ 수정 함수도 가져옵니다.
-    const isEditMode = !!journalToEdit; // ✅ journalToEdit prop이 있으면 수정 모드!
+
+    // ✅ [수정] props와 location.state 양쪽에서 데이터를 받을 수 있도록 로직 개선
+    const location = useLocation();
+
+    // 1. location.state를 우선으로 사용하고, 없으면 props에서 데이터를 가져옵니다.
+    const journalToEdit = location.state?.journalToEdit || journalToEditFromProp;
+    const selectedDate = location.state?.selectedDate || selectedDateFromProp;
+
+    const isEditMode = !!journalToEdit; // journalToEdit 데이터가 있으면 수정 모드!
 
     const [isSubmitting, setIsSubmitting] = useState(false); // ✅ 제출 중 상태 추가
     const [editingImageInfo, setEditingImageInfo] = useState(null); // ✅ 이미지 편집 상태 관리
@@ -65,29 +79,30 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange, journalToEdit}
     const textareaRef = useRef(null);
     const emojiPickerContainerRef = useRef(null);
 
-    // --- ✅ [추가] 수정 모드일 때, 기존 데이터로 상태를 초기화하는 로직 ---
     useEffect(() => {
         if (isEditMode) {
             setContent(journalToEdit.content || '');
             setIsPrivate(journalToEdit.visibility === 2);
 
-            // 기존 이미지 URL들을 File 객체와 preview URL로 변환하여 상태에 설정
+
             if (journalToEdit.imgUrl) {
+
                 try {
                     const imageUrls = JSON.parse(journalToEdit.imgUrl);
-                    const imagePromises = imageUrls.map(async (url, index) => {
-                        // URL에서 파일 이름 추출 또는 생성
+
+                    // ✅ 기존 이미지는 preview URL만 세팅, File 객체 없음
+                    const existingImages = imageUrls.map((url) => {
                         const filename = url.substring(url.lastIndexOf('/') + 1).split('?')[0];
-                        const file = await urlToImageFile(url, filename);
-                        return { file, preview: url }; // 미리보기는 기존 URL을 그대로 사용
+                        return {
+                            file: null,   // 아직 File 없음
+                            preview: url,
+                            name: filename
+                        };
                     });
 
-                    Promise.all(imagePromises).then(newImages => {
-                        setImages(newImages);
-                    });
-
+                    setImages(existingImages);
                 } catch (e) {
-                    console.error("이미지 URL 파싱 또는 변환 실패:", e);
+                    console.error("이미지 URL 파싱 실패:", e);
                 }
             }
         }
@@ -118,7 +133,7 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange, journalToEdit}
         const date = new Date(dateToFormat);
         // toLocaleDateString은 브라우저/시스템의 로케일을 따르므로 일관된 결과를 위해 옵션 지정
         return date.toLocaleDateString('ko-KR', {month: 'long', day: 'numeric'});
-    }, [selectedDate, isEditMode, journalToEdit]);
+    }, [isEditMode, journalToEdit, selectedDate]);
 
     const handleContentChange = (e) => {
         const text = e.target.value;
@@ -178,9 +193,27 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange, journalToEdit}
         setImages(prevImages => prevImages.filter((_, index) => index !== indexToRemove));
     };
 
-    // ✅ 이미지 미리보기를 클릭하면 편집 모드로 전환하는 핸들러
-    const handleImagePreviewClick = (image, index) => {
-        setEditingImageInfo({image, index});
+    const handleImagePreviewClick = async (image, index) => {
+        try {
+            let file = image.file; // 기존 File이 있으면 그대로 사용
+
+            // 기존 File이 없고 preview가 URL이면 서버 프록시로 fetch
+            if (!file && image.preview && image.preview.startsWith('http')) {
+                const response = await fetch(`http://localhost:8090/api/proxy/image?url=${encodeURIComponent(image.preview)}`);
+                // if (!response.ok) throw new Error('이미지 로드 실패');
+                const blob = await response.blob();
+                console.log(blob);
+                const filename = image.name || `image_${Date.now()}.png`;
+                console.log(filename);
+                file = new File([blob], filename, {type: blob.type});
+                console.log(file)
+            }
+            const blobUrl = URL.createObjectURL(file); // Canvas용 URL 생성
+            setEditingImageInfo({image: {...image, file, preview: blobUrl}, index});
+        } catch (err) {
+            console.error("이미지 편집 준비 실패:", err);
+            alert("이미지를 편집할 수 없습니다. 다시 시도해주세요.");
+        }
     };
 
     const handleImageButtonClick = () => {
@@ -289,7 +322,6 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange, journalToEdit}
             images,
             content,
             isPrivate,
-            user, // user 정보도 넘겨주어 Context에서 userId를 사용할 수 있게 합니다.
         };
 
         try {
@@ -299,8 +331,8 @@ const JournalWrite = ({onClose, selectedDate, onFabricModeChange, journalToEdit}
                 alert('일기가 성공적으로 수정되었습니다!');
             } else {
                 // ✅ 생성 모드일 경우
-                // 페이로드에 생성에만 필요한 selectedDate 추가
-                const createPayload = { ...journalPayload, selectedDate };
+                // 페이로드에 생성에 필요한 selectedDate와 userId를 명시적으로 추가합니다.
+                const createPayload = {...journalPayload, selectedDate};
                 await createJournalEntry(createPayload);
                 alert('일기가 성공적으로 저장되었습니다!');
             }

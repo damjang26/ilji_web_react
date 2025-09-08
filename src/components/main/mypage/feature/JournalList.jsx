@@ -1,7 +1,7 @@
 import React, {useState, useEffect, useMemo, useRef, useCallback} from 'react';
 import {useJournal} from "../../../../contexts/JournalContext.jsx";
 import {useAuth} from "../../../../AuthContext.jsx"; // ❗ 사용자 정보(프로필 사진 등)를 가져오기 위해 추가
-import {useNavigate} from "react-router-dom"; // ✅ 페이지 이동을 위해 추가
+import {useNavigate, useLocation} from "react-router-dom"; // ✅ 페이지 이동을 위해 추가
 import {
     FeedContainer,
     PostActions,
@@ -28,6 +28,7 @@ const JournalList = () => {
     // 2. 사용자 정보를 가져옵니다 (프로필 사진, 이름 등).
     const {user} = useAuth();
     const navigate = useNavigate(); // ✅ navigate 함수 가져오기
+    const location = useLocation(); // ✅ 모달 네비게이션의 배경 위치를 위해 추가합니다.
 
     // 3. 화면에 보여줄 일기 목록(페이지네이션)과 관련된 상태를 관리합니다.
     const [page, setPage] = useState(1);
@@ -87,6 +88,18 @@ const JournalList = () => {
         }
     }, [deleteJournal]); // deleteJournal 함수가 변경될 때만 이 함수를 재생성합니다.
 
+    // ✅ [추가] 수정 버튼 클릭 핸들러
+    const handleEdit = useCallback((journalToEdit) => {
+        // ✅ [수정] 확인 창 없이 바로 수정 모드로 진입하도록 변경
+        console.log("✏️ 수정할 일기 객체:", journalToEdit);
+        navigate('/journal/write', {
+            state: {
+                journalToEdit: journalToEdit, // 수정할 일기 데이터를 전달합니다.
+                backgroundLocation: location, // 모달 뒤에 현재 페이지를 배경으로 유지합니다.
+            }
+        });
+    }, [navigate, location]); // navigate와 location이 변경될 때만 함수를 재생성합니다.
+
     // 초기 로딩 중이거나, 작성된 일기가 없을 때의 UI 처리
     if (journalLoading && sortedJournals.length === 0) {
         return <div>일기를 불러오는 중...</div>;
@@ -139,8 +152,8 @@ const JournalList = () => {
                                 </UserInfo>
                                 {/* ✅ [신규] 수정 및 삭제 아이콘을 담는 컨테이너 */}
                                 <PostHeaderActions>
-                                    {/* TODO: 수정 버튼 클릭 시 JournalWrite 모달을 수정 모드로 열기 */}
-                                    <button data-tooltip="수정" onClick={() => alert('수정 모달 열기 기능 구현 예정')}>
+                                    {/* ✅ [수정] onClick 핸들러에 handleEdit 함수를 연결합니다. */}
+                                    <button data-tooltip="수정" onClick={() => handleEdit(journal)}>
                                         <HiPencilAlt/>
                                     </button>
                                     <button data-tooltip="삭제"

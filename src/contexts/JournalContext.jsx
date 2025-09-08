@@ -58,7 +58,7 @@ export const JournalProvider = ({children}) => {
      */
         // ✅ [수정] 백엔드에서 이미지와 데이터를 한번에 처리하도록 로직 변경
     const createJournalEntry = useCallback(async (journalPayload) => {
-            const {images, content, selectedDate, isPrivate, user} = journalPayload;
+            const {images, content, selectedDate, isPrivate} = journalPayload;
 
             // --- 1단계: 서버에 보낼 FormData 객체 생성 ---
             const formData = new FormData();
@@ -107,7 +107,7 @@ export const JournalProvider = ({children}) => {
      * @param {object} journalPayload - { images, content, isPrivate, user }
      */
     const updateJournalEntry = useCallback(async (logId, journalPayload) => {
-        const { images, content, isPrivate, user } = journalPayload;
+        const {images, content, isPrivate} = journalPayload;
 
         const formData = new FormData();
 
@@ -115,26 +115,26 @@ export const JournalProvider = ({children}) => {
         const existingImageUrls = [];
         if (images && images.length > 0) {
             images.forEach(image => {
-                if (image.file) { // 새로운 파일이 있으면 'images' 파트에 추가
-                    formData.append("images", image.file);
-                } else if (image.preview.startsWith('http')) { // 기존 URL이면 'existingImageUrls'에 추가
+                // ✅ [수정] 최우선으로 기존 이미지인지(http URL) 확인합니다.
+                if (image.preview.startsWith('http')) { // 기존 URL이면 'existingImageUrls'에 추가
                     existingImageUrls.push(image.preview);
+                } else if (image.file) { // 새로운 파일(blob URL)이면 'images' 파트에 추가
+                    formData.append("images", image.file);
                 }
             });
         }
 
         const requestData = {
-            userId: user.id,
             content: content,
             visibility: isPrivate ? 2 : 0,
             existingImageUrls: existingImageUrls, // ✅ 백엔드에 유지할 이미지 URL 목록 전달
         };
 
-        formData.append("request", new Blob([JSON.stringify(requestData)], { type: "application/json" }));
+        formData.append("request", new Blob([JSON.stringify(requestData)], {type: "application/json"}));
 
         // ✅ [수정 로직] POST 대신 PUT 메서드를 사용하고, URL에 logId를 포함합니다.
         const response = await api.put(`/api/i-log/${logId}`, formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
+            headers: {'Content-Type': 'multipart/form-data'},
         });
         const updatedJournalEntry = response.data;
 
@@ -169,8 +169,17 @@ export const JournalProvider = ({children}) => {
     const hasJournal = useCallback((date) => journals.has(date), [journals]);
     // ✅ 특정 날짜의 일기 데이터를 가져오는 함수 추가
     const getJournal = useCallback((date) => journals.get(date), [journals]);
-    
-    const value = {journals, loading, error, createJournalEntry, updateJournalEntry, deleteJournal, hasJournal, getJournal};
+
+    const value = {
+        journals,
+        loading,
+        error,
+        createJournalEntry,
+        updateJournalEntry,
+        deleteJournal,
+        hasJournal,
+        getJournal
+    };
 
     return (
         <JournalContext.Provider value={value}>
