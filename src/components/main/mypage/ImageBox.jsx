@@ -47,25 +47,22 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
     const handleConfirm = async () => {
         if (!profile) return;
 
+        // updateProfile 함수에 전달할 옵션 객체
+        const updateOptions = {
+            profileImageFile: imageType === 'profileImage' ? imageFile : null,
+            bannerImageFile: imageType === 'bannerImage' ? imageFile : null,
+            revertToDefault: {},
+        };
+
         try {
-            if (imageFile) {
-                // 새 이미지 업로드
-                await updateProfile(
-                    profile,
-                    imageType === 'profileImage' ? imageFile : null,
-                    imageType === 'bannerImage' ? imageFile : null
-                );
-            } else if (revertMode) {
-                // 기본 이미지로 복원
-                const defaultUrl = DEFAULT_PROFILE_URL || '';
-                await updateProfile(
-                    profile,
-                    null,
-                    null,
-                    imageType === 'profileImage' ? defaultUrl : null,
-                    imageType === 'bannerImage' ? defaultUrl : null
-                );
+            if (revertMode) {
+                // 기본 이미지 복원 모드일 때
+                updateOptions.revertToDefault[imageType] = true;
             }
+
+            // Context의 updateProfile 함수 호출
+            await updateProfile(profile, updateOptions);
+
             alert('이미지가 성공적으로 업데이트되었습니다.');
             onClose();
         } catch (err) {

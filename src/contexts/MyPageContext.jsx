@@ -20,18 +20,6 @@ export const MyPageProvider = ({ children }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [error, setError] = useState(null);
 
-  // // 외부에서 사용할 상태 업데이트 함수. 콜백을 지원합니다.
-  // const setProfile = (newProfile, callback) => {
-  //   _setProfile(newProfile);
-  //   // callback이 함수 형태일 경우에만 실행합니다.
-  //   if (callback && typeof callback === "function") {
-  //     // React의 상태 업데이트는 비동기일 수 있으므로,
-  //     // useEffect나 setTimeout을 사용해 다음 렌더링 사이클에 실행하는 것이 더 안정적일 수 있으나,
-  //     // 현재 시나리오에서는 즉시 호출해도 무방합니다.
-  //     callback();
-  //   }
-  // };
-
   const fetchProfile = useCallback(async () => {
     if (!user?.id) {
       setLoading(false);
@@ -41,7 +29,7 @@ export const MyPageProvider = ({ children }) => {
     }
     try {
       setLoading(true);
-      const response = await api.get(`/api/profiles/user/${user.id}`);
+      const response = await api.get(`/api/user/profile`);
       setProfile(response.data);
       setError(null);
     } catch (err) {
@@ -61,53 +49,58 @@ export const MyPageProvider = ({ children }) => {
 
 
 
-    // 프로필 정보 업데이트 함수 (기존 코드 유지, 기본 이미지 복원만 추가)
-    const updateProfile = async (profileData, profileImageFile, bannerImageFile, profileImageUrl = null, bannerImageUrl = null) => {
+    // 프로필 정보 및 이미지 업데이트 함수
+    // 💥 파라미터를 구조 분해 할당으로 변경하여 파일과 복원 옵션을 받습니다.
+    const updateProfile = async (profileData, { profileImageFile, bannerImageFile, revertToDefault = {} }) => {
         if (!user?.id) {
-            throw new Error('사용자 정보가 없어 업데이트할 수 없습니다.');
+            const err = new Error('사용자 인증 정보가 없어 프로필을 업데이트할 수 없습니다.');
+            setError(err.message);
+            throw err;
         }
-        console.log(`[CONTEXT] updateProfile 시작`, { profileData, profileImageFile, bannerImageFile, profileImageUrl, bannerImageUrl });
-
-        const formData = new FormData();
-
-        // 1. 프로필 데이터(JSON)를 'request' 파트에 추가
-        formData.append('request', new Blob([JSON.stringify(profileData)], { type: 'application/json' }));
-
-        // 2. 이미지 파일들을 각 파트에 추가 (파일이 있을 경우에만)
-        if (profileImageFile) {
-            formData.append('profileImage', profileImageFile);
-        } else if (profileImageUrl) {
-            // File 없고 URL만 있을 경우 서버에 profileImageUrl로 전달
-            formData.append('profileImageUrl', profileImageUrl);
-        }
-
-        if (bannerImageFile) {
-            formData.append('bannerImage', bannerImageFile);
-        } else if (bannerImageUrl) {
-            formData.append('bannerImageUrl', bannerImageUrl);
-        }
-
-        // FormData 상태 확인
-        console.log(`[CONTEXT] FormData 상태 - 'request':`, formData.has('request'));
-        console.log(`[CONTEXT] FormData 상태 - 'profileImage':`, formData.has('profileImage'));
-        console.log(`[CONTEXT] FormData 상태 - 'profileImageUrl':`, formData.has('profileImageUrl'));
-        console.log(`[CONTEXT] FormData 상태 - 'bannerImage':`, formData.has('bannerImage'));
-        console.log(`[CONTEXT] FormData 상태 - 'bannerImageUrl':`, formData.has('bannerImageUrl'));
 
         try {
-            // 3. 서버에 PUT 요청
-            console.log(`[CONTEXT] 3. API 요청 전송 시작. URL: /api/profiles/user/${user.id}`);
-            await api.put(`/api/profiles/user/${user.id}`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+            const formData = new FormData();
+
+            // 1. 프로필 데이터(JSON) 추가
+            formData.append('request', new Blob([JSON.stringify(profileData)], { type: 'application/json' }));
+
+            // 2. 새 이미지 파일 추가 (파일이 있을 경우)
+            if (profileImageFile) {
+                formData.append('profileImage', profileImageFile);
+            }
+            if (bannerImageFile) {
+                formData.append('bannerImage', bannerImageFile);
+            }
+
+            // 3. 기본 이미지 복원 요청 추가 (백엔드와 약속된 필드명 사용)
+            if (revertToDefault.profileImage) {
+                // 'revertProfileImage' 필드에 'true' 값을 담아 백엔드에 전달
+                formData.append('revertProfileImage', 'true');
+            }
+            if (revertToDefault.bannerImage) {
+                // 'revertBannerImage' 필드에 'true' 값을 담아 백엔드에 전달
+                formData.append('revertBannerImage', 'true');
+            }
+
+
+            // 4. 서버에 PUT 요청 (multipart/form-data)
+            // FormData를 전송할 때는 브라우저가 Content-Type(multipart/form-data)을 자동으로 설정하도록 헤더를 명시하지 않습니다.
+            const response = await api.put(`/api/user/profile`, formData, {
+                headers: {
+                    // 'Content-Type': 'multipart/form-data' 라고 명시하지 않아도,
+                    // axios가 formData를 보고 자동으로 설정해줍니다.
+                },
             });
 
-            // 4. 성공 시, 최신 프로필 정보를 다시 불러오기
-            await fetchProfile();
-
-            console.log(`[CONTEXT] 프로필 업데이트 및 리프레시 성공`);
-            return true;
+            // 5. 성공 시, 서버가 반환한 최신 프로필 데이터로 Context 상태를 업데이트
+            setProfile(response.data);
+            setError(null); // 이전 에러 상태 초기화
+            console.log("프로필 업데이트 성공:", response.data);
+            return response.data;
         } catch (err) {
             console.error("[CONTEXT] updateProfile 함수에서 오류 발생", err);
+            const message = err.response?.data?.message || "프로필 업데이트 중 오류가 발생했습니다.";
+            setError(message);
             throw err;
         }
     };

@@ -60,6 +60,7 @@ const MyPage = () => {
         imageType === 'bannerImage' ? imageFile : null
       );
       alert('이미지가 성공적으로 업데이트되었습니다.');
+      setIsModalOpen(false); // 성공 시 모달 닫기
     } catch (err) {
       console.error('이미지 업데이트 실패:', err);
       alert('이미지 업데이트 중 오류가 발생했습니다.');
@@ -140,7 +141,9 @@ const MyPage = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         // profile이 로드되기 전에 모달이 열리는 경우를 대비
-        currentImageUrl={profile ? profile[editingImageType] : ""}
+        currentImageUrl={
+          profile && editingImageType ? profile[editingImageType] : ""
+        }
         onConfirm={handleImageConfirm}
         imageType={editingImageType}
       />
