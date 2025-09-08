@@ -112,7 +112,9 @@ const JournalList = () => {
                 <EmptyFeedText>
                     오늘의 첫 일기를 작성해보세요!
                 </EmptyFeedText>
-                <WriteJournalButton onClick={() => navigate('/journal/write')}>
+                <WriteJournalButton onClick={() => navigate('/journal/write', {
+                    state: {backgroundLocation: location}
+                })}>
                     ✏️ 일기 작성하기
                 </WriteJournalButton>
             </EmptyFeedContainer>

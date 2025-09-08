@@ -61,8 +61,12 @@ const JournalWrite = ({
     const location = useLocation();
 
     // 1. location.state를 우선으로 사용하고, 없으면 props에서 데이터를 가져옵니다.
-    const journalToEdit = location.state?.journalToEdit || journalToEditFromProp;
-    const selectedDate = location.state?.selectedDate || selectedDateFromProp;
+    const journalToEdit = location.state?.journalToEdit || journalToEditFromProp;    
+    // ✅ [수정] useState의 '초기화 함수'를 사용해 맨 처음 렌더링 시에만 날짜를 결정합니다.
+    // 이렇게 하면 컴포넌트가 리렌더링될 때마다 new Date()가 실행되는 것을 방지할 수 있습니다.
+    const [selectedDate] = useState(() => 
+        location.state?.selectedDate || selectedDateFromProp || new Date()
+    );
 
     const isEditMode = !!journalToEdit; // journalToEdit 데이터가 있으면 수정 모드!
 
