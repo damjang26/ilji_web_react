@@ -1,5 +1,5 @@
-import React, {useMemo} from 'react';
-import {useParams, useNavigate} from 'react-router-dom';
+import React, {useCallback, useMemo} from 'react';
+import {useParams, useNavigate, useLocation} from 'react-router-dom';
 import {useJournal} from '../../../contexts/JournalContext';
 import {useAuth} from '../../../AuthContext';
 import {
@@ -21,6 +21,7 @@ const JournalView = () => {
     const {date} = useParams(); // URL에서 날짜 파라미터를 가져옵니다.
     const {getJournal, deleteJournal} = useJournal();
     const navigate = useNavigate(); // ✅ 페이지 이동을 위해 useNavigate 훅을 사용합니다.
+    const location = useLocation(); // ✅ 모달 네비게이션의 배경 위치를 위해 추가합니다.
     const {user} = useAuth(); // 작성자 정보를 위해 user를 가져옵니다.
 
     const journal = useMemo(() => getJournal(date), [getJournal, date]);
@@ -67,6 +68,18 @@ const JournalView = () => {
         }
     };
 
+    // ✅ [추가] 수정 버튼 클릭 핸들러
+    const handleEdit = useCallback((journalToEdit) => {
+        // ✅ [수정] 확인 창 없이 바로 수정 모드로 진입하도록 변경
+        console.log("✏️ 수정할 일기 객체:", journalToEdit);
+        navigate('/journal/write', {
+            state: {
+                journalToEdit: journalToEdit, // 수정할 일기 데이터를 전달합니다.
+                backgroundLocation: location, // 모달 뒤에 현재 페이지를 배경으로 유지합니다.
+            }
+        });
+    }, [navigate, location]); // navigate와 location이 변경될 때만 함수를 재생성합니다.
+
     return (
         <ViewContainer>
             <ProfileSection>
@@ -79,8 +92,8 @@ const JournalView = () => {
                     <DateDisplay>{formattedDate}</DateDisplay>
                 </AuthorInfo>
                 <PostHeaderActions>
-                    {/* TODO: 수정 버튼 클릭 시 JournalWrite 모달을 수정 모드로 열기 */}
-                    <button data-tooltip="수정" onClick={() => alert('수정 모달 열기 기능 구현 예정')}>
+                    {/* ✅ [수정] onClick 핸들러에 handleEdit 함수를 연결합니다. */}
+                    <button data-tooltip="수정" onClick={() => handleEdit(journal)}>
                         <HiPencilAlt/>
                     </button>
                     <button data-tooltip="삭제" onClick={() => handleDelete(journal.id, date)}>
