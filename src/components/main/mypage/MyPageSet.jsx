@@ -97,7 +97,7 @@ const MyPageSet = () => {
         <MyPageContainer>
             <MypageImg
                 style={{ backgroundImage: `url(${localProfile.bannerImage || ''})` }}
-                // onClick={() => handleImageClick('bannerImage')}
+                onClick={() => handleImageClick('bannerImage')}
             />
 
             {/* MyPage.jsx와 동일한 흰색 콘텐츠 박스 */}

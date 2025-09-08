@@ -60,8 +60,16 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
                 updateOptions.revertToDefault[imageType] = true;
             }
 
-            // Context의 updateProfile 함수 호출
-            await updateProfile(profile, updateOptions);
+            // [수정] 첫 번째 인자로 profile 객체 전체가 아닌, 순수한 텍스트 정보만 전달합니다.
+            // 이렇게 해야 백엔드가 이전 이미지 URL(타임스탬프 포함)로 DB를 덮어쓰는 것을 방지할 수 있습니다.
+            const textProfileData = {
+                nickname: profile.nickname,
+                bio: profile.bio,
+                // 다른 텍스트 필드가 있다면 여기에 추가합니다.
+            };
+
+            // Context의 updateProfile 함수 호출 (수정된 데이터로)
+            await updateProfile(textProfileData, updateOptions);
 
             alert('이미지가 성공적으로 업데이트되었습니다.');
             onClose();

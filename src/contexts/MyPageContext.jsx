@@ -93,7 +93,19 @@ export const MyPageProvider = ({ children }) => {
             });
 
             // 5. 성공 시, 서버가 반환한 최신 프로필 데이터로 Context 상태를 업데이트
-            setProfile(response.data);
+            const updatedProfile = response.data;
+            const timestamp = `?_=${Date.now()}`;
+
+            // "Cache Busting": 이미지 URL이 존재하면, URL 뒤에 타임스탬프를 추가하여
+            // 브라우저가 항상 새로운 이미지 파일을 서버에서 가져오도록 강제합니다.
+            if (updatedProfile.profileImage) {
+                updatedProfile.profileImage += timestamp;
+            }
+            if (updatedProfile.bannerImage) {
+                updatedProfile.bannerImage += timestamp;
+            }
+
+            setProfile(updatedProfile);
             setError(null); // 이전 에러 상태 초기화
             console.log("프로필 업데이트 성공:", response.data);
             return response.data;

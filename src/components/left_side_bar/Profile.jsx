@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../AuthContext";
+import { useMyPage } from "../../contexts/MyPageContext";
 import SocialLogin from "../account/GoogleLogin";
 import { FaSearch } from "react-icons/fa";
 import {
@@ -20,7 +21,13 @@ import {
 } from "../../styled_components/left_side_bar/ProfileStyled.jsx";
 
 const Profile = () => {
-  const { user, loading, logout } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
+  const { profile, loading: profileLoading } = useMyPage();
+
+  // MyPage에서 수정한 프로필 정보(profile)를 우선으로 사용하고, 없으면 소셜 로그인 정보(user)를 사용합니다.
+  const displayImage = profile?.profileImage || user?.picture;
+  const displayName = profile?.nickname || user?.name;
+
   const [isModalSearch, setIsModalSearch] = useState(false);
   const modalRef = useRef(null);// 모달 DOM을 참조하기 위한 ref
   const searchRef = useRef(null);// 검색 아이콘을 참조하기 위한 ref
@@ -44,7 +51,7 @@ const Profile = () => {
 
 
 
-  if (loading) {
+  if (authLoading || profileLoading) {
     return (
       <ProfileContainer>
         <div>로딩 중...</div>
@@ -76,14 +83,14 @@ const Profile = () => {
           <ProfileImageArea>
             <ImageWrapper to="/mypage">
               <img
-                src={user.picture || "/default-profile.png"}
-                alt={`${user.nickname || user.name} 프로필`}
+                src={displayImage || "/default-profile.png"}
+                alt={`${displayName} 프로필`}
                 referrerPolicy="no-referrer"
               />
             </ImageWrapper>
           </ProfileImageArea>
           <InfoWrapper>
-            <Nickname>{user.nickname || user.name}</Nickname>
+            <Nickname>{displayName}</Nickname>
             <Email>{user.email}</Email>
             <ButtonContainer>
               <LogoutButton onClick={logout}>로그아웃</LogoutButton>

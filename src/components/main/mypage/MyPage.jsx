@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ImageBox from "./ImageBox.jsx";
+import BannerImageEditor from "./BannerImageEditor.jsx"; // 새로 만든 Editor를 import
 
 import {
   ContentBox,
@@ -34,38 +35,59 @@ const MyPage = () => {
 
   const [activeTab, setActiveTab] = useState("feature1");
 
-  // 모달 상태 관리를 위한 state 추가
+  // 기존 프로필 이미지 모달 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingImageType, setEditingImageType] = useState(null); // 'profileImage' 또는 'bannerImage'
 
+  // 배너 이미지 편집기 모달 상태
+  const [isBannerEditorOpen, setIsBannerEditorOpen] = useState(false);
+
   // 이미지 클릭 시 모달을 여는 함수
   const handleImageClick = (imageType) => {
-    setEditingImageType(imageType);
-    setIsModalOpen(true);
+    if (imageType === 'bannerImage') {
+      // 배너를 클릭하면 BannerImageEditor를 엽니다.
+      setIsBannerEditorOpen(true);
+    } else {
+      // 프로필 이미지는 기존 ImageBox를 엽니다.
+      setEditingImageType(imageType);
+      setIsModalOpen(true);
+    }
+  };
+
+  // BannerImageEditor가 편집을 완료했을 때 호출될 콜백 함수
+  const handleBannerCropComplete = async (croppedFile) => {
+    await updateProfile({ nickname: profile.nickname, bio: profile.bio }, { bannerImageFile: croppedFile });
+    setIsBannerEditorOpen(false); // 모달 닫기
   };
 
   // 모달에서 '확인'을 눌렀을 때 호출될 함수
-  const handleImageConfirm = async (imageType, imageFile) => {
-    if (!profile || !imageFile) return;
-
-    console.log(`[MyPage] 1. 이미지 확인됨. 타입: ${imageType}, 파일:`, imageFile);
-
-    try {
-      // Context의 updateProfile 함수를 호출합니다.
-      // 첫 번째 인자: 기존 프로필 데이터 (텍스트 정보)
-      // 두/세 번째 인자: 변경할 이미지 파일
-      await updateProfile(
-        profile,
-        imageType === 'profileImage' ? imageFile : null,
-        imageType === 'bannerImage' ? imageFile : null
-      );
-      alert('이미지가 성공적으로 업데이트되었습니다.');
-      setIsModalOpen(false); // 성공 시 모달 닫기
-    } catch (err) {
-      console.error('이미지 업데이트 실패:', err);
-      alert('이미지 업데이트 중 오류가 발생했습니다.');
-    }
-  };
+  // const handleImageConfirm = async (imageType, imageFile) => {
+  //   if (!profile || !imageFile) return;
+  //
+  //   console.log(`[MyPage] 1. 이미지 확인됨. 타입: ${imageType}, 파일:`, imageFile);
+  //
+  //   try {
+  //     // [수정] 첫 번째 인자로 profile 객체 전체가 아닌, 순수한 텍스트 정보만 전달합니다.
+  //     // 이렇게 해야 백엔드가 이전 이미지 URL(타임스탬프 포함)로 DB를 덮어쓰는 것을 방지할 수 있습니다.
+  //     const textProfileData = {
+  //       nickname: profile.nickname,
+  //       bio: profile.bio,
+  //     };
+  //
+  //     await updateProfile(
+  //       textProfileData,
+  //       {
+  //         profileImageFile: imageType === 'profileImage' ? imageFile : null,
+  //         bannerImageFile: imageType === 'bannerImage' ? imageFile : null
+  //       }
+  //     );
+  //     alert('이미지가 성공적으로 업데이트되었습니다.');
+  //     setIsModalOpen(false); // 성공 시 모달 닫기
+  //   } catch (err) {
+  //     console.error('이미지 업데이트 실패:', err);
+  //     alert('이미지 업데이트 중 오류가 발생했습니다.');
+  //   }
+  // };
 
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div style={{ color: "red" }}>{error}</div>;
@@ -140,12 +162,20 @@ const MyPage = () => {
       <ImageBox
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        // profile이 로드되기 전에 모달이 열리는 경우를 대비
-        currentImageUrl={
-          profile && editingImageType ? profile[editingImageType] : ""
-        }
-        onConfirm={handleImageConfirm}
+        // [수정] ImageBox에는 캐시 버스팅용 타임스탬프를 제거한 순수한 URL을 전달합니다.
+        // 이렇게 해야 ImageBox 내부에서 URL을 다룰 때 발생할 수 있는 오류를 방지할 수 있습니다.
+        currentImageUrl={(
+          profile && editingImageType && profile[editingImageType]
+        ) ? profile[editingImageType].split('?')[0] : ""}
+        // onConfirm={handleImageConfirm}
         imageType={editingImageType}
+      />
+
+      {/* 새로운 배너 이미지 편집 모달 */}
+      <BannerImageEditor
+        isOpen={isBannerEditorOpen}
+        onClose={() => setIsBannerEditorOpen(false)}
+        onCropComplete={handleBannerCropComplete}
       />
     </MyPageContainer>
   );
