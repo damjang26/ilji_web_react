@@ -12,12 +12,19 @@ import {
     SidebarPanelWrapper,
 } from "../styled_components/RightSideBarStyled.jsx";
 import { useSchedule } from "../contexts/ScheduleContext.jsx";
-import ChatRoom from "./right_side_bar/ChatRoom.jsx";
+import ChatRoomList from "./right_side_bar/ChatRoomList.jsx";
+import Chat from "./right_side_bar/Chat.jsx";
 
 // 사이드바 패널의 전체 내용을 담는 컴포넌트
 const SidebarPanel = ({ onClose }) => {
-    // 1. 사이드바 내부에서 보여줄 화면을 관리하는 상태 ('default' 또는 'chatRoom')
     const [activeView, setActiveView] = useState('default');
+    const [selectedRoomId, setSelectedRoomId] = useState(null);
+
+    const chatRoom = (roomId) => {
+        console.log("선택한 채팅방:", roomId);
+        setSelectedRoomId(roomId);
+        setActiveView("chatRoom");
+    };
 
     return (
         <>
@@ -29,15 +36,17 @@ const SidebarPanel = ({ onClose }) => {
                 </Tooltip>
             </PanelHeader>
             <PanelBody>
-                {/* 2. activeView 상태에 따라 조건부로 컴포넌트를 렌더링합니다. */}
                 {activeView === 'default' && (
                     <>
-                        {/* MessageTab에게 채팅방을 보여달라는 함수를 props로 전달 */}
-                        <MessageTab onShowChatRoom={() => setActiveView('chatRoom')} />
-                        {/*<ScheduleTab />*/}
+                        <MessageTab onShowChatRoom={() => setActiveView('chatRoomList')} />
                     </>
                 )}
-                {activeView === 'chatRoom' && <ChatRoom onBack={() => setActiveView('default')} />}
+                {activeView === 'chatRoomList' && (
+                    <ChatRoomList chatRoom={chatRoom} onBack={() => setActiveView('default')} />
+                )}
+                {activeView === 'chatRoom' && (
+                    <Chat roomId={selectedRoomId} onBack={() => setActiveView('chatRoomList')} />
+                )}
             </PanelBody>
         </>
     );

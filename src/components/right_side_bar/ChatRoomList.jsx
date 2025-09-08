@@ -3,7 +3,7 @@ import axios from "axios";
 import {api} from "../../api.js";
 import {useAuth} from "../../AuthContext.jsx";
 
-const ChatRoom = ({ onBack }) => {
+const ChatRoomList = ({ onBack, chatRoom }) => {
      const {user} = useAuth();
 
 
@@ -29,9 +29,9 @@ return (
     <div>
         <button onClick={onBack}>뒤로가기</button>
         <hr/>
-        room list ({user.email})
+        ({user.email}'s) room list
         {roomList.map((room) => (
-            <li key={room.roomId}>
+            <li key={room.roomId} onClick={()=> chatRoom(room.roomId)}>
                 {room.roomId} - {user.email == room.user1Id ? room.user2Id : room.user1Id}님과의 채팅방
             </li>
         ))}
@@ -42,4 +42,4 @@ return (
 
 }
 
-export default ChatRoom;
+export default ChatRoomList;
