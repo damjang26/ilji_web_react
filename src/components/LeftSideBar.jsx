@@ -9,11 +9,13 @@ import {
     SidebarContainer,
     NotiSidebarWrapper,
     Overlay,
+    HoverTriggerArea,
 } from "../styled_components/LeftSideBarStyled.jsx";
 
 
 const LeftSideBar = () => {
     const [isNotiOpen, setNotiOpen] = useState(false);
+    const [isTagAreaHovered, setIsTagAreaHovered] = useState(false);
     const notiSidebarRef = useRef(null);
     const toggleButtonRef = useRef(null);
 
@@ -35,14 +37,21 @@ const LeftSideBar = () => {
 
     return (
         <>
-            {/* ✅ [수정] mousedown 이벤트의 전파를 막아, 다른 팝업(일정 팝업 등)이 닫히는 현상을 방지합니다. */}
             <SidebarContainer onMouseDown={(e) => e.stopPropagation()}>
                 <MenuItemsContainer>
-                    <MenuItemWrapper><Profile/></MenuItemWrapper>
-                    <MenuItemWrapper>
+                    <MenuItemWrapper style={{ flexShrink: 0 }}><Profile/></MenuItemWrapper>
+                    
+                    <MenuItemWrapper style={{ flexShrink: 0 }} $isCollapsed={isTagAreaHovered}>
                         <TabMenu toggleButtonRef={toggleButtonRef} onToggle={() => setNotiOpen(!isNotiOpen)}/>
                     </MenuItemWrapper>
-                    <MenuItemWrapper><CalendarMenu/></MenuItemWrapper>
+                    
+                    <MenuItemWrapper 
+                        style={{ flexGrow: 1, overflow: 'hidden' }}
+                        onMouseEnter={() => setIsTagAreaHovered(true)}
+                        onMouseLeave={() => setIsTagAreaHovered(false)}
+                    >
+                        <CalendarMenu />
+                    </MenuItemWrapper>
                 </MenuItemsContainer>
             </SidebarContainer>
 
