@@ -1,15 +1,30 @@
 import styled from 'styled-components';
 
 export const MenuContainer = styled.div`
-  width: 100%; /* 너비를 100%로 설정하여 좌우 움직임 방지 */
-  margin-top: auto; /* 상단 여백을 자동으로 채워 하단에 고정 */
-  min-height: 320px; /* 컴포넌트의 최소 높이를 지정하여 레이아웃 쉬프트 방지 */
+  width: 100%;
+  height: 100%; // 부모 요소의 전체 높이를 차지하도록 설정
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto; // 이제 이 컨테이너가 전체 스크롤을 담당
 `;
 
 // Collapse 컴포넌트 내부에 있는 태그 목록을 감싸는 컨테이너
 export const TagListContainer = styled.div`
-  max-height: 200px;
+  flex-grow: 1; // 남는 공간을 모두 차지
+  // overflow-y: auto; // 스크롤 기능 제거
+`;
+
+// 스크롤이 적용될 태그 목록을 한번 더 감싸는 래퍼
+export const TagScrollWrapper = styled.div`
+  max-height: 140px; // 4개 항목의 높이에 맞춰 최대 높이 제한
   overflow-y: auto;
+  padding-right: 4px; // 스크롤바 공간 확보
+`;
+
+export const FriendSelectContainer = styled.div`
+  padding: 8px 16px; // 좌우 여백 추가
+  /* border-top: 1px solid #f0f0f0; // 구분선 제거 */
+  flex-shrink: 0; // 축소되지 않도록 설정
 `;
 
 export const TagItem = styled.label`
