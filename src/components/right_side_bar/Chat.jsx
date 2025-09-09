@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
-import axios from "axios";
-import {useAuth} from "../../AuthContext.jsx";
+import axios from 'axios';
+import { useAuth } from "../../AuthContext.jsx";
 
 const Chat = ({ roomId, onBack }) => {
     const [username, setUsername] = useState('');
@@ -13,18 +13,25 @@ const Chat = ({ roomId, onBack }) => {
 
     useEffect(() => {
         setUsername(user.name);
-        console.log(roomId)
 
-        // 소켓 연결
+        // ✅ 1. 기존 메시지 불러오기
+        axios.get(`/api/chat/messages/${roomId}`)
+            .then(res => {
+                setMessages(res.data);
+            })
+            .catch(err => console.error("기존 메시지 로드 실패:", err));
+
+        // ✅ 2. 소켓 연결
         socketRef.current = io('http://localhost:9095', { withCredentials: false });
 
         socketRef.current.on('connect', () => {
             console.log('Socket connected:', socketRef.current.id);
-            socketRef.current.emit('joinRoom', roomId); // ✅ 선택된 방에 join
+            socketRef.current.emit('joinRoom', roomId); // 선택된 방에 join
         });
 
+        // ✅ 3. 실시간 메시지 수신
         socketRef.current.on('chatMessage', (msg) => {
-            setMessages((prevMessages) => [...prevMessages, msg]);
+            setMessages((prev) => [...prev, msg]);
         });
 
         return () => {
@@ -32,10 +39,15 @@ const Chat = ({ roomId, onBack }) => {
         };
     }, [roomId]);
 
+    useEffect(() => {
+        // ✅ 4. 메시지 추가 시 자동 스크롤
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
     const handleMessageSubmit = (e) => {
         e.preventDefault();
         if (message.trim() && username.trim()) {
-            const chatMessage = { roomId, sender: username, receiver : user.name, message };
+            const chatMessage = { roomId, sender: username, receiver: user.name, message };
             socketRef.current.emit('chatMessage', chatMessage);
             setMessage('');
         }
@@ -53,11 +65,14 @@ const Chat = ({ roomId, onBack }) => {
                 <div ref={messagesEndRef} />
             </div>
             <form onSubmit={handleMessageSubmit}>
-                <input value={message} onChange={(e) => setMessage(e.target.value)} />
+                <input
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                />
                 <button type="submit">전송</button>
             </form>
         </div>
     );
 };
 
-export default Chat
+export default Chat;
