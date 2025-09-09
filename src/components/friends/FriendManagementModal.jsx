@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Modal, Tabs, List, Avatar, Button, message, Input } from 'antd';
 import { getFollowingList, getFollowersList, followUser, unfollowUser, searchUsers } from '../../api';
 import { useDebounce } from '../../hooks/useDebounce';
@@ -6,6 +7,7 @@ import { useDebounce } from '../../hooks/useDebounce';
 const { Search } = Input;
 
 const FriendManagementModal = ({ open, onClose }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('following');
   const [following, setFollowing] = useState([]);
   const [followers, setFollowers] = useState([]);
@@ -83,6 +85,11 @@ const FriendManagementModal = ({ open, onClose }) => {
     }
   };
 
+  const handleProfileClick = (userId) => {
+    onClose(); // 모달을 닫습니다.
+    navigate(`/mypage/${userId}`); // 해당 유저의 마이페이지로 이동합니다.
+  };
+
   const renderUserList = (users, type) => (
     <List
       loading={loading || (type === 'search' && isSearching)}
@@ -102,8 +109,11 @@ const FriendManagementModal = ({ open, onClose }) => {
             ]}
           >
             <List.Item.Meta
-              avatar={<Avatar src={user.picture} />}
-              title={user.name}
+              // 프로필 영역을 클릭 가능하게 만듭니다.
+              style={{ cursor: 'pointer' }}
+              onClick={() => handleProfileClick(user.userId)}
+              avatar={<Avatar src={user.picture} />} // antd Avatar 컴포넌트 사용
+              title={user.name} // antd List.Item.Meta의 title prop 사용
             />
           </List.Item>
         );

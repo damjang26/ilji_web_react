@@ -1,10 +1,10 @@
-import { Link, useNavigate } from "react-router-dom";
-import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import React, { useState, useCallback, useMemo } from "react";
+import { useAuth } from "../../../AuthContext.jsx";
 import ImageBox from "./ImageBox.jsx";
-import BannerImageEditor from "./BannerImageEditor.jsx"; // 새로 만든 Editor를 import
+import BannerImageEditor from "./BannerImageEditor.jsx"; // [추가] 새로운 Editor import
 
 import {
-  ContentBox,
   FeatureBox,
   FeatureContent,
   HeaderContent,
@@ -17,53 +17,73 @@ import {
   Tab,
   TabMenuContainer,
   UserActions,
+  ContentBox,
   UserInfo,
 } from "../../../styled_components/main/mypage/MyPageStyled.jsx";
-import { useMyPage } from "../../../contexts/MyPageContext.jsx";
+import { MyPageProvider, useMyPage } from "../../../contexts/MyPageContext.jsx";
 import JournalList from "./feature/JournalList.jsx";
 
-const MyPage = () => {
-  // 기존의 로컬 상태와 함수들을 모두 Context에서 가져옵니다.
+/**
+ * MyPageContent - UI 렌더링만 담당
+ */
+const MyPageContent = () => {
+  // 1. 필요한 재료들을 준비합니다. (이 주석은 제거해도 좋습니다)
+  const { user: loggedInUser } = useAuth();
+
   const {
     profile,
     loading,
     error,
-    updateProfile, // 통합된 업데이트 함수를 가져옵니다.
-    handleEdit, // Context에서 수정 모드 전환 함수를 가져옵니다.
+    updateProfile,
+    handleEdit, // '정보수정' 버튼에 필요
+    userId, // [수정] context에서 가져오는 최종 userId
   } = useMyPage();
 
+  // [수정] isOwner 계산: 로그인 유저와 현재 context userId 비교
+  const isOwner = useMemo(() => {
+    // userId가 null/undefined일 수 있으므로 명시적 비교
+    return loggedInUser?.id === userId;
+  }, [userId, loggedInUser]);
+
+  // ImageBox에서 확인 버튼 눌렀을 때
+  const handleImageConfirm = useCallback(async (imageFile) => {
+    if (!imageFile) return;
+    // [수정] updateProfile 호출 시 loggedInUser.id를 전달하지 않습니다.
+    // Context가 이미 로그인 상태를 알고 있으므로, 파일 정보만 전달합니다.
+    await updateProfile({}, { profileImageFile: imageFile });
+  }, [updateProfile]);
 
   const [activeTab, setActiveTab] = useState("feature1");
 
-  // 기존 프로필 이미지 모달 상태
+  // [수정] 기존 모달 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingImageType, setEditingImageType] = useState(null); // 'profileImage' 또는 'bannerImage'
+  const [editingImageType, setEditingImageType] = useState(null);
 
-  // 배너 이미지 편집기 모달 상태
-  const [isBannerEditorOpen, setIsBannerEditorOpen] = useState(false);
+  const [isBannerEditorOpen, setIsBannerEditorOpen] = useState(false); // [추가] 배너 편집기 모달
 
   // 이미지 클릭 시 모달을 여는 함수
   const handleImageClick = (imageType) => {
+    // [수정] 친구 페이지일 경우 클릭 무시
+    if (!isOwner) return;
+
     if (imageType === 'bannerImage') {
-      // 배너를 클릭하면 BannerImageEditor를 엽니다.
-      setIsBannerEditorOpen(true);
+      setIsBannerEditorOpen(true); // [추가] 배너 편집기 오픈
     } else {
-      // 프로필 이미지는 기존 ImageBox를 엽니다.
       setEditingImageType(imageType);
       setIsModalOpen(true);
     }
   };
 
-  // BannerImageEditor가 편집을 완료했을 때 호출될 콜백 함수
-  const handleBannerCropComplete = async (croppedFile) => {
-    await updateProfile({ nickname: profile.nickname, bio: profile.bio }, { bannerImageFile: croppedFile });
-    setIsBannerEditorOpen(false); // 모달 닫기
-  };
+  // [추가] BannerImageEditor에서 편집 완료 후
+  const handleBannerCropComplete = useCallback(async (croppedFile) => {
+    // [수정] updateProfile 호출 시 loggedInUser.id를 전달하지 않습니다.
+    await updateProfile({}, { bannerImageFile: croppedFile });
+    setIsBannerEditorOpen(false);
+  }, [updateProfile]);
 
+  // 로딩/에러 처리
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div style={{ color: "red" }}>{error}</div>;
-  // [수정] 로딩이 끝났는데도 profile이 없으면, 그때 프로필 정보가 없다고 표시합니다.
-  // 이렇게 하면 로딩 중일 때 profile이 null인 상태에서 아래 코드가 실행되는 것을 막을 수 있습니다.
   if (!loading && !profile) return <div>프로필 정보가 없습니다.</div>;
 
   return (
@@ -88,16 +108,16 @@ const MyPage = () => {
           <HeaderContent>
             <UserInfo>
               <div className="nickname">{profile.nickname || "Guest"}</div>
-              <div className="email">
-                {profile.email || "guest@example.com"}
-              </div>
+              {/* [수정] isOwner만 이메일 표시 */}
+              {isOwner && <div className="email">{profile.email || "guest@example.com"}</div>}
               <div>{profile.bio || ""}</div>
             </UserInfo>
             <UserActions>
               <div>post</div>
               <div>follow</div>
               <div>follower</div>
-              <button onClick={handleEdit}>정보수정</button>
+              {/* [수정] 친구 페이지일 경우 정보수정 버튼 숨김 */}
+              {isOwner && <button onClick={handleEdit}>정보수정</button>}
             </UserActions>
           </HeaderContent>
         </MyPageHeader>
@@ -132,25 +152,54 @@ const MyPage = () => {
       </ContentBox>
 
       {/* 이미지 수정 모달 */}
+      {/* [수정] ImageBox 모달 - isEditable에 isOwner 전달 */}
       <ImageBox
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        // [수정] ImageBox에는 캐시 버스팅용 타임스탬프를 제거한 순수한 URL을 전달합니다.
-        // 이렇게 해야 ImageBox 내부에서 URL을 다룰 때 발생할 수 있는 오류를 방지할 수 있습니다.
-        currentImageUrl={(
-          profile && editingImageType && profile[editingImageType]
-        ) ? profile[editingImageType].split('?')[0] : ""}
-        // onConfirm={handleImageConfirm}
+        currentImageUrl={(profile && editingImageType && profile[editingImageType])
+          ? profile[editingImageType].split('?')[0]
+          : ""}
+        onConfirm={handleImageConfirm}
         imageType={editingImageType}
+        isEditable={isOwner}
       />
 
-      {/* 새로운 배너 이미지 편집 모달 */}
+      {/* [추가] BannerImageEditor 모달 */}
       <BannerImageEditor
         isOpen={isBannerEditorOpen}
         onClose={() => setIsBannerEditorOpen(false)}
         onCropComplete={handleBannerCropComplete}
+        isEditable={isOwner}
       />
     </MyPageContainer>
   );
 };
+
+/**
+ * MyPage - Manager
+ * paramUserId가 있으면 친구 페이지, 없으면 로그인 사용자 페이지
+ */
+const MyPage = () => {
+  const { user: loggedInUser } = useAuth();
+  const { userId: paramUserId } = useParams();
+
+  // [수정] targetUserId 결정
+  const targetUserId = useMemo(() => {
+    if (paramUserId) {
+      const parsedId = parseInt(paramUserId, 10);
+      return isNaN(parsedId) ? null : parsedId;
+    }
+    return loggedInUser?.id || null;
+  }, [paramUserId, loggedInUser?.id]);
+
+  // [추가] 유효하지 않은 userId 처리
+  if (!targetUserId) return <div>유효한 사용자 정보를 가져올 수 없습니다.</div>;
+
+  return (
+    <MyPageProvider userId={targetUserId}>
+      <MyPageContent />
+    </MyPageProvider>
+  );
+};
+
 export default MyPage;

@@ -75,10 +75,10 @@ export default function AuthProvider({ children }) {
     const refreshUser = async () => {
         try {
             const meResponse = await api.get("/api/auth/me");
-            const user = meResponse.data.user;
+            const user = meResponse.data.user; // [수정] 다른 로직과 일관되게 .user에서 객체를 가져옵니다.
             // React가 상태 변경을 확실히 감지하도록 항상 새로운 객체 참조를 생성,
             // 이전 user 객체와 내용이 완전히 같더라도, {...user}는 새로운 메모리 주소를 가진 객체를 생성하므로, 이 상태를 구독하는 useEffect가 반드시 실행
-            setUser({ ...user }); 
+            setUser({ ...user });
             console.log("[AuthContext] User state has been refreshed.");
             return user; // [CRITICAL] Return the newly fetched user object.
         } catch (e) {

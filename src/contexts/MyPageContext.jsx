@@ -12,60 +12,48 @@ import { api } from "../api";
 const MyPageContext = createContext(null);
 
 // 2. Provider 컴포넌트 생성
-export const MyPageProvider = ({ children }) => {
-  // [MODIFY] Import the refreshUser function from AuthContext.
-  const { user, refreshUser } = useAuth();
+export const MyPageProvider = ({ children, userId }) => { // userId를 prop으로 받습니다.
+  const { refreshUser } = useAuth();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
-    // 수정 모드를 관리하는 상태를 Context로 이동합
-    const [isEditing, setIsEditing] = useState(false);
     const [error, setError] = useState(null);
 
-
-    // [디버깅용] 프로필 업데이트를 감지하기 위한 '트리거' 상태
-    const [updateTrigger, setUpdateTrigger] = useState(0);
-
-  // [MODIFY] fetchProfile이 더 이상 외부 user 상태에 의존하지 않도록 userId를 인자로 받습니다.
-  const fetchProfile = useCallback(async (userId) => {
+  const loadProfile = useCallback(async () => {
     if (!userId) {
       setLoading(false);
-      // 초기 로딩 시 user가 없을 수 있으므로 에러 메시지는 주석 처리
-      // setError("사용자 정보를 불러올 수 없습니다.");
+      setProfile(null);
       return;
     }
+    setLoading(true);
+    setError(null);
+    // [중요] 새로운 프로필을 불러오기 전에 기존 프로필 데이터를 초기화합니다.
+    setProfile(null);
     try {
-      setLoading(true);
-        console.log(`[MyPageContext] 🟡 5. fetchProfile 실행: 서버에 상세 프로필을 요청합니다. (userId: ${userId})`);
-      const response = await api.get(`/api/user/profile`);
+        console.log(`[MyPageContext] userId=${userId} API 호출:`, `/api/members/${userId}`);
+      console.log(`[MyPageContext] 🟡 5. fetchProfile 실행: 서버에 상세 프로필을 요청합니다. (userId: ${userId})`);
+      // [수정] 404 에러 해결을 위해, 서버에 실제 존재하는 프로필 조회 API 주소로 변경합니다.
+      const response = await api.get(`/api/members/${userId}`);
       const newProfileData = response.data;
 
-      // [FIX] 함수형 업데이트와 객체 병합을 사용하여 상태를 '덮어쓰지' 않고 안전하게 '병합'
-      // 비동기 작업 중 발생할 수 있는 상태 유실을 방지, 기존 상태를 보존하면서 서버에서 받은 데이터로 갱신 가능
-      setProfile(prevProfile => ({ ...prevProfile, ...newProfileData }));
-
+      // 새 프로필을 불러올 때는 이전 상태와 병합할 필요 없이 완전히 새로 설정합니다.
+      setProfile(newProfileData);
       setError(null);
     } catch (err) {
       console.error("프로필 정보 로딩 실패:", err);
       setError("프로필 정보를 불러오는 데 실패했습니다.");
+      setProfile(null);
     } finally {
       setLoading(false);
     }
-  }, []); // 의존성 배열에서 user.id 제거
+  }, [userId]);
 
   useEffect(() => {
-    // user.id가 있을 때만 프로필을 불러옵니다.
-    if (user?.id) {
-        console.log("[MyPageContext] 🔵 4. useEffect 실행: 'user' 또는 'updateTrigger' 변경을 감지했습니다.");
-      fetchProfile(user.id); // 호출 시 user.id를 인자로 전달
-    }
-  }, [user?.id, fetchProfile, updateTrigger]); // useEffect의 의존성은 유지
+    console.log(`[MyPageContext] 🟡 Provider의 useEffect 실행: userId가 변경되어 loadProfile을 호출합니다. (userId: ${userId})`);
+    loadProfile();
+  }, [loadProfile]);
 
-
-
-    // 프로필 정보 및 이미지 업데이트 함수
-    // 💥 파라미터를 구조 분해 할당으로 변경하여 파일과 복원 옵션을 받기
-    const updateProfile = async (profileData, { profileImageFile, bannerImageFile, revertToDefault = {} }) => {
-        if (!user?.id) {
+    const updateProfile = async (loggedInUserId, profileData, { profileImageFile, bannerImageFile, revertToDefault = {} }) => {
+        if (!loggedInUserId) {
             const err = new Error('사용자 인증 정보가 없어 프로필을 업데이트할 수 없습니다.');
             setError(err.message);
             throw err;
@@ -87,25 +75,22 @@ export const MyPageProvider = ({ children }) => {
 
             // 3. 기본 이미지 복원 요청 추가 (백엔드와 약속된 필드명 사용)
             if (revertToDefault.profileImage) {
-                // 'revertProfileImage' 필드에 'true' 값을 담아 백엔드에 전달
                 formData.append('revertProfileImage', 'true');
             }
             if (revertToDefault.bannerImage) {
-                // 'revertBannerImage' 필드에 'true' 값을 담아 백엔드에 전달
                 formData.append('revertBannerImage', 'true');
             }
-
 
             // 4. 서버에 PUT 요청 (multipart/form-data)
             console.log("[MyPageContext] 🟢 1. updateProfile 실행: 서버에 프로필 변경을 요청합니다.");
             await api.put(`/api/user/profile`, formData);
 
-            // 5. 성공 시, 서버가 반환한 최신 프로필 데이터로 Context 상태를 업데이트
+            // 5. 성공 시, 전역 상태와 지역 상태를 모두 최신화합니다.
             console.log("[MyPageContext] 🟢 2. updateProfile: AuthContext의 refreshUser를 호출합니다.");
-            await refreshUser();
+            await refreshUser(); // 사이드바 등 다른 곳을 위한 전역 user 상태 업데이트
 
-            console.log("[MyPageContext] 🟢 3. updateProfile: useEffect를 트리거하기 위해 내부 상태를 변경합니다.");
-            setUpdateTrigger(prev => prev + 1);
+            console.log("[MyPageContext] 🟢 3. updateProfile: 현재 페이지의 프로필을 다시 불러옵니다.");
+            await loadProfile(); // 현재 보고 있는 마이페이지의 profile 상태 업데이트
 
         } catch (err) {
             console.error("[CONTEXT] updateProfile 함수에서 오류 발생", err);
@@ -115,19 +100,10 @@ export const MyPageProvider = ({ children }) => {
         }
     };
 
-    // 수정 모드로 전환하는 함수
-    const handleEdit = useCallback(() => {
-        setIsEditing(true);
-    }, []);
-
-    // 보기 모드로 돌아가는 함수
-    const handleCancel = useCallback(() => {
-        setIsEditing(false);
-    }, []);
-
     const value = {
-        profile, loading, error, fetchProfile, updateProfile,
-        isEditing, handleEdit, handleCancel // Context 값으로 제공합니다.
+        profile, loading, error,
+        userId, // MyPageContent에서 paramUserId 대신 사용할 수 있도록 전달합니다.
+        updateProfile,
     };
 
     return <MyPageContext.Provider value={value}>{children}</MyPageContext.Provider>;

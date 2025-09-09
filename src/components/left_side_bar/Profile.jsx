@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../AuthContext";
-import { useMyPage } from "../../contexts/MyPageContext";
 import SocialLogin from "../account/GoogleLogin";
 import { FaSearch } from "react-icons/fa";
 import {
@@ -24,15 +23,12 @@ import {
 import FriendManagementModal from '../friends/FriendManagementModal';
 
 const Profile = () => {
-  const { user, loading: authLoading, logout } = useAuth();
-  const { profile, loading: profileLoading } = useMyPage();
+  // [수정] MyPageContext 의존성 제거, AuthContext만 사용합니다.
+  const { user, loading, logout } = useAuth();
 
-  // [디버깅용] 컴포넌트가 렌더링될 때마다 현재 데이터를 로그로 남깁니다.
-  console.log("🎨 [LeftSideBar Profile] 렌더링 실행. 현재 데이터:", { user, profile });
-
-  // MyPage에서 수정한 프로필 정보(profile)를 우선으로 사용하고, 없으면 소셜 로그인 정보(user)를 사용합니다.
-  const displayImage = profile?.profileImage || user?.picture;
-  const displayName = profile?.nickname || user?.name;
+  // [수정] AuthContext의 user 객체에서 직접 이미지와 닉네임을 가져옵니다.
+  const displayImage = user?.picture;
+  const displayName = user?.name;
 
   const [isModalSearch, setIsModalSearch] = useState(false);
   const [isFriendModalOpen, setIsFriendModalOpen] = useState(false); // 친구 관리 모달 상태
@@ -56,7 +52,7 @@ const Profile = () => {
     };
   }, [isModalSearch]); //상태가 변경될 때마다 이 효과를 다시 실행
 
-  if (authLoading || profileLoading) {
+  if (loading) {
     return (
       <ProfileContainer>
         <div>로딩 중...</div>
