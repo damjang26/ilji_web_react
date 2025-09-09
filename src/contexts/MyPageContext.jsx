@@ -17,7 +17,7 @@ export const MyPageProvider = ({ children }) => {
   const { user, refreshUser } = useAuth();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
-    // 수정 모드를 관리하는 상태를 Context로 이동합니다.
+    // 수정 모드를 관리하는 상태를 Context로 이동합
     const [isEditing, setIsEditing] = useState(false);
     const [error, setError] = useState(null);
 
@@ -39,9 +39,8 @@ export const MyPageProvider = ({ children }) => {
       const response = await api.get(`/api/user/profile`);
       const newProfileData = response.data;
 
-      // [FIX] 함수형 업데이트와 객체 병합을 사용하여 상태를 '덮어쓰지' 않고 안전하게 '병합'합니다.
-      // 이렇게 하면 비동기 작업 중 발생할 수 있는 상태 유실을 방지하고,
-      // 기존 상태를 보존하면서 서버에서 받은 데이터로 갱신할 수 있습니다.
+      // [FIX] 함수형 업데이트와 객체 병합을 사용하여 상태를 '덮어쓰지' 않고 안전하게 '병합'
+      // 비동기 작업 중 발생할 수 있는 상태 유실을 방지, 기존 상태를 보존하면서 서버에서 받은 데이터로 갱신 가능
       setProfile(prevProfile => ({ ...prevProfile, ...newProfileData }));
 
       setError(null);
@@ -64,7 +63,7 @@ export const MyPageProvider = ({ children }) => {
 
 
     // 프로필 정보 및 이미지 업데이트 함수
-    // 💥 파라미터를 구조 분해 할당으로 변경하여 파일과 복원 옵션을 받습니다.
+    // 💥 파라미터를 구조 분해 할당으로 변경하여 파일과 복원 옵션을 받기
     const updateProfile = async (profileData, { profileImageFile, bannerImageFile, revertToDefault = {} }) => {
         if (!user?.id) {
             const err = new Error('사용자 인증 정보가 없어 프로필을 업데이트할 수 없습니다.');
@@ -98,35 +97,10 @@ export const MyPageProvider = ({ children }) => {
 
 
             // 4. 서버에 PUT 요청 (multipart/form-data)
-
-            // FormData를 전송할 때는 브라우저가 Content-Type(multipart/form-data)을 자동으로 설정하도록 헤더를 명시하지 않습니다.
-            // const response = await api.put(`/api/user/profile`, formData, {
-            //     headers: {
-            //         // 'Content-Type': 'multipart/form-data' 라고 명시하지 않아도,
-            //         // axios가 formData를 보고 자동으로 설정해줍니다.
-            //     },
-            // });
             console.log("[MyPageContext] 🟢 1. updateProfile 실행: 서버에 프로필 변경을 요청합니다.");
             await api.put(`/api/user/profile`, formData);
 
             // 5. 성공 시, 서버가 반환한 최신 프로필 데이터로 Context 상태를 업데이트
-            // const updatedProfile = response.data;
-            // const timestamp = `?_=${Date.now()}`;
-            //
-            // // "Cache Busting": 이미지 URL이 존재하면, URL 뒤에 타임스탬프를 추가하여
-            // // 브라우저가 항상 새로운 이미지 파일을 서버에서 가져오도록 강제합니다.
-            // if (updatedProfile.profileImage) {
-            //     updatedProfile.profileImage += timestamp;
-            // }
-            // if (updatedProfile.bannerImage) {
-            //     updatedProfile.bannerImage += timestamp;
-            // }
-            //
-            // setProfile(updatedProfile);
-            // setError(null); // 이전 에러 상태 초기화
-            // console.log("프로필 업데이트 성공:", response.data);
-            // return response.data;
-
             console.log("[MyPageContext] 🟢 2. updateProfile: AuthContext의 refreshUser를 호출합니다.");
             await refreshUser();
 

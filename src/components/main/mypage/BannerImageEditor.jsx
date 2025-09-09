@@ -12,7 +12,7 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
     const cropperRef = useRef(null);
     const fileInputRef = useRef(null);
 
-    // 1. 모달이 열릴 때 파일 선택창을 자동으로 엽니다.
+    // 1. 모달이 열릴 때 파일 선택창을 자동 열기
     useEffect(() => {
         if (isOpen) {
             // 이전 상태 초기화 후 파일 선택
@@ -21,13 +21,13 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
         }
     }, [isOpen]);
 
-    // 2. 사용자가 파일을 선택했을 때 처리합니다.
+    // 2. 사용자가 파일을 선택했을 때 처리
     const handleFileChange = (e) => {
         const file = e.target.files?.[0];
         if (!file) {
-            // [수정] 사용자가 파일 선택을 취소하면 모달을 닫습니다.
+            // 사용자가 파일 선택을 취소하면 모달닫기
             onClose();
-            return; // 여기서 함수를 종료합니다.
+            return; // 여기서 함수를 종료
         }
 
         const reader = new FileReader();
@@ -37,10 +37,10 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
         reader.readAsDataURL(file);
     };
 
-    // '이미지 선택' 버튼을 누르면 숨겨진 파일 입력을 다시 트리거합니다.
+    // '이미지 선택' 버튼을 누르면 숨겨진 파일 입력을 다시 트리거
     const handleUploadButtonClick = () => fileInputRef.current?.click();
 
-    // 3. '적용' 버튼을 눌렀을 때 이미지를 잘라 부모에게 전달합니다.
+    // 3. '적용' 버튼을 눌렀을 때 이미지를 잘라 부모에게 전달
     const handleCrop = () => {
         const cropper = cropperRef.current?.cropper;
         if (typeof cropper === 'undefined') {
@@ -49,7 +49,7 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
 
         cropper.getCroppedCanvas().toBlob((blob) => {
             if (blob) {
-                // 잘린 이미지를 'banner.jpg'라는 이름의 File 객체로 만듭니다.
+                // 잘린 이미지를 'banner.jpg'라는 이름의 File 객체로 제작
                 const croppedFile = new File([blob], "banner.jpg", { type: "image/jpeg" });
                 onCropComplete(croppedFile); // 부모에게 최종 File 객체 전달
             } else {
@@ -86,13 +86,13 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
                             autoCropArea={1}
                         />
                     ) : (
-                        // 이미지가 선택되지 않았을 때 안내 메시지를 보여줍니다.
+                        // 이미지가 선택되지 않았을 때 안내 메시지를 표시
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#888' }}>
                             배너로 사용할 이미지를 선택해주세요.
                         </div>
                     )}
                 </CropArea>
-                {/* 이미지가 없을 때만 '이미지 선택' 버튼을 보여줍니다. */}
+                {/* 이미지가 없을 때만 '이미지 선택' 버튼을 표시 */}
                 {!imageSrc && (
                     <ActionButtonGroup><SubmitButton onClick={handleUploadButtonClick}>이미지 선택</SubmitButton></ActionButtonGroup>
                 )}
