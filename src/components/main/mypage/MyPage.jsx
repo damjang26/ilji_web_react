@@ -56,34 +56,15 @@ const MyPage = () => {
 
   // BannerImageEditor가 편집을 완료했을 때 호출될 콜백 함수
   const handleBannerCropComplete = async (croppedFile) => {
-    try {
-      // [개선] 이미지 업데이트 시에는 텍스트 데이터를 보내지 않습니다. (첫 번째 인자를 빈 객체로 전달)
-      await updateProfile({}, { bannerImageFile: croppedFile });
-      alert('배너 이미지가 성공적으로 업데이트되었습니다.');
-    } catch (err) {
-      console.error('배너 이미지 업데이트 실패:', err);
-    }
+    await updateProfile({ nickname: profile.nickname, bio: profile.bio }, { bannerImageFile: croppedFile });
     setIsBannerEditorOpen(false); // 모달 닫기
-  };
-
-  // 모달에서 '확인'을 눌렀을 때 호출될 함수
-  const handleImageConfirm = async (imageType, imageFile) => {
-    if (!profile || !imageFile) return;
-
-    try {
-      // [개선] 이미지 업데이트 시에는 텍스트 데이터를 보내지 않습니다.
-      await updateProfile({}, { profileImageFile: imageFile });
-      alert('프로필 이미지가 성공적으로 업데이트되었습니다.');
-      setIsModalOpen(false); // 성공 시 모달 닫기
-    } catch (err) {
-      // Context에서 에러를 throw하면 alert가 자동으로 뜨므로 콘솔 로그만 남깁니다.
-      console.error('프로필 이미지 업데이트 실패:', err);
-    }
   };
 
   if (loading) return <div>로딩 중...</div>;
   if (error) return <div style={{ color: "red" }}>{error}</div>;
-  if (!profile) return <div>프로필 정보가 없습니다.</div>;
+  // [수정] 로딩이 끝났는데도 profile이 없으면, 그때 프로필 정보가 없다고 표시합니다.
+  // 이렇게 하면 로딩 중일 때 profile이 null인 상태에서 아래 코드가 실행되는 것을 막을 수 있습니다.
+  if (!loading && !profile) return <div>프로필 정보가 없습니다.</div>;
 
   return (
     <MyPageContainer>
@@ -159,7 +140,7 @@ const MyPage = () => {
         currentImageUrl={(
           profile && editingImageType && profile[editingImageType]
         ) ? profile[editingImageType].split('?')[0] : ""}
-        onConfirm={handleImageConfirm}
+        // onConfirm={handleImageConfirm}
         imageType={editingImageType}
       />
 
