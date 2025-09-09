@@ -38,7 +38,8 @@ export const JournalProvider = ({children}) => {
                 const userJournals = response.data; // [{...}, {...}] 형태의 배열
 
                 // 배열을 Map으로 변환하여 상태를 업데이트합니다. key는 날짜, value는 일기 객체입니다.
-                const journalsMap = new Map(userJournals.map(j => [j.ilogDate.split('T')[0], j]));
+                // ✅ [수정] 백엔드 응답 필드명 변경에 따라 'ilogDate'를 'logDate'로 수정합니다.
+                const journalsMap = new Map(userJournals.map(j => [j.logDate.split('T')[0], j]));
                 setJournals(journalsMap);
                 setError(null);
             } catch (err) {
@@ -58,7 +59,7 @@ export const JournalProvider = ({children}) => {
      */
         // ✅ [수정] 백엔드에서 이미지와 데이터를 한번에 처리하도록 로직 변경
     const createJournalEntry = useCallback(async (journalPayload) => {
-            const {images, content, selectedDate, isPrivate} = journalPayload;
+            const {images, content, logDate, isPrivate} = journalPayload;
 
             // --- 1단계: 서버에 보낼 FormData 객체 생성 ---
             const formData = new FormData();
@@ -74,8 +75,8 @@ export const JournalProvider = ({children}) => {
             // 일기 데이터(JSON)를 formData에 추가합니다.
             // 백엔드의 ILogCreateRequest DTO와 필드를 맞춥니다.
             const requestData = {
-                userId: user.id,
-                ilogDate: new Date(selectedDate).toISOString().split('T')[0], // DTO 필드명 'ilogDate'에 맞춤
+                writerId: user.id,
+                logDate: new Date(logDate).toISOString().split('T')[0], // ✅ [수정] DTO 필드명 'logDate'에 맞춤
                 content: content,
                 visibility: isPrivate ? 2 : 0,
             };
@@ -94,7 +95,9 @@ export const JournalProvider = ({children}) => {
             setJournals(prev => {
                 const newJournals = new Map(prev);
                 // 서버 응답에 있는 날짜(newJournalEntry.ilogDate)를 사용하는 것이 더 안전합니다.
-                newJournals.set(newJournalEntry.ilogDate, newJournalEntry);
+                // ✅ [개선] Map의 key는 'YYYY-MM-DD' 형식이므로, 응답 데이터의 날짜도 형식을 통일해줍니다.
+                const dateKey = newJournalEntry.logDate.split('T')[0];
+                newJournals.set(dateKey, newJournalEntry);
                 return newJournals;
             });
 
@@ -141,7 +144,9 @@ export const JournalProvider = ({children}) => {
         // ✅ [수정 로직] 로컬 상태(Map)를 업데이트합니다.
         setJournals(prev => {
             const newJournals = new Map(prev);
-            newJournals.set(updatedJournalEntry.ilogDate.split('T')[0], updatedJournalEntry);
+            // ✅ [수정] 백엔드 응답 필드명 변경에 따라 'ilogDate'를 'logDate'로 수정합니다.
+            const dateKey = updatedJournalEntry.logDate.split('T')[0];
+            newJournals.set(dateKey, updatedJournalEntry);
             return newJournals;
         });
 
