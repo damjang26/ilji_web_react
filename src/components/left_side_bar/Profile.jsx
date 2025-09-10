@@ -26,9 +26,10 @@ const Profile = () => {
   // [수정] MyPageContext 의존성 제거, AuthContext만 사용합니다.
   const { user, loading, logout } = useAuth();
 
-  // [수정] AuthContext의 user 객체에서 직접 이미지와 닉네임을 가져옵니다.
-  const displayImage = user?.picture;
-  const displayName = user?.name;
+  // [개선] 우리 서비스의 정보(nickname, profileImage)를 우선 사용하되,
+  // 값이 없으면 구글 초기 정보(name, picture)를 대신 보여줍니다. (Fallback)
+  const displayName = user?.nickname || user?.name;
+  const displayImage = user?.profileImage || user?.picture;
 
   const [isModalSearch, setIsModalSearch] = useState(false);
   const [isFriendModalOpen, setIsFriendModalOpen] = useState(false); // 친구 관리 모달 상태

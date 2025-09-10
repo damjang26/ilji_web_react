@@ -87,7 +87,7 @@ const FriendManagementModal = ({ open, onClose }) => {
 
   const handleProfileClick = (userId) => {
     onClose(); // 모달을 닫습니다.
-    navigate(`/mypage/${userId}`); // 해당 유저의 마이페이지로 이동합니다.
+    // navigate(`/mypage/${userId}`); // 해당 유저의 마이페이지로 이동합니다.
   };
 
   const renderUserList = (users, type) => (
@@ -111,7 +111,7 @@ const FriendManagementModal = ({ open, onClose }) => {
             <List.Item.Meta
               // 프로필 영역을 클릭 가능하게 만듭니다.
               style={{ cursor: 'pointer' }}
-              onClick={() => handleProfileClick(user.userId)}
+              // onClick={() => handleProfileClick(user.userId)}
               avatar={<Avatar src={user.picture} />} // antd Avatar 컴포넌트 사용
               title={user.name} // antd List.Item.Meta의 title prop 사용
             />

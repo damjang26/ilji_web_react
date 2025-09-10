@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // [추가] 페이지 이동을 위해 useNavigate import
 import { useMyPage } from '../../../contexts/MyPageContext';
 import ImageBox from './ImageBox';
 
@@ -21,8 +22,9 @@ import {
 } from '../../../styled_components/main/mypage/MyPageSetStyled';
 
 const MyPageSet = () => {
+    const navigate = useNavigate(); // [추가] navigate 함수 생성
     // 1. Context에서 필요한 상태와 함수들을 가져옴
-    const { profile: globalProfile, loading, error, updateProfile, handleCancel } = useMyPage();
+    const { profile: globalProfile, loading, error, updateProfile } = useMyPage();
 
     // 2. 이 컴포넌트의 폼 입력을 위한 '로컬 상태'를 만들기
     const [localProfile, setLocalProfile] = useState(null);
@@ -96,7 +98,7 @@ const MyPageSet = () => {
             await updateProfile(profileDataForServer, {});
 
             alert('프로필이 성공적으로 업데이트되었습니다.');
-            handleCancel(); // 성공 후 보기 모드로 돌아갑니다.
+            navigate('/mypage'); // [수정] 저장 성공 후 마이페이지로 이동
         } catch (err) {
             console.error("프로필 저장 실패:", err);
         }
@@ -173,7 +175,8 @@ const MyPageSet = () => {
                             </CheckboxGroup>
 
                             <ButtonGroup>
-                                <CancelButton type="button" onClick={handleCancel}>
+                                {/* [수정] 취소 버튼 클릭 시 마이페이지로 이동 */}
+                                <CancelButton type="button" onClick={() => navigate('/mypage')}>
                                     취소
                                 </CancelButton>
                                 <SubmitButton type="submit">저장</SubmitButton>

@@ -1,5 +1,5 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
-import React, { useState, useCallback, useMemo } from "react";
+import { Link } from "react-router-dom";
+import React, { useState, useCallback } from "react";
 import { useAuth } from "../../../AuthContext.jsx";
 import ImageBox from "./ImageBox.jsx";
 import BannerImageEditor from "./BannerImageEditor.jsx"; // [추가] 새로운 Editor import
@@ -26,7 +26,8 @@ import JournalList from "./feature/JournalList.jsx";
 /**
  * MyPageContent - UI 렌더링만 담당
  */
-const MyPageContent = () => {
+// [되돌리기] MyPageContent의 이름을 MyPage로 변경하고, MyPageWrapper가 이 컴포넌트를 렌더링하도록 구조를 변경합니다.
+const MyPage = () => {
   // 1. 필요한 재료들을 준비합니다. (이 주석은 제거해도 좋습니다)
   const { user: loggedInUser } = useAuth();
 
@@ -35,15 +36,11 @@ const MyPageContent = () => {
     loading,
     error,
     updateProfile,
-    handleEdit, // '정보수정' 버튼에 필요
-    userId, // [수정] context에서 가져오는 최종 userId
+    handleEdit,
   } = useMyPage();
 
-  // [수정] isOwner 계산: 로그인 유저와 현재 context userId 비교
-  const isOwner = useMemo(() => {
-    // userId가 null/undefined일 수 있으므로 명시적 비교
-    return loggedInUser?.id === userId;
-  }, [userId, loggedInUser]);
+  // [되돌리기] isOwner를 항상 true로 설정합니다. 이제 '나의 마이페이지'만 존재하기 때문입니다.
+  const isOwner = true;
 
   // ImageBox에서 확인 버튼 눌렀을 때
   const handleImageConfirm = useCallback(async (imageFile) => {
@@ -63,8 +60,8 @@ const MyPageContent = () => {
 
   // 이미지 클릭 시 모달을 여는 함수
   const handleImageClick = (imageType) => {
-    // [수정] 친구 페이지일 경우 클릭 무시
-    if (!isOwner) return;
+    // [되돌리기] isOwner 체크가 더 이상 필요 없습니다.
+    // if (!isOwner) return;
 
     if (imageType === 'bannerImage') {
       setIsBannerEditorOpen(true); // [추가] 배너 편집기 오픈
@@ -117,7 +114,9 @@ const MyPageContent = () => {
               <div>follow</div>
               <div>follower</div>
               {/* [수정] 친구 페이지일 경우 정보수정 버튼 숨김 */}
-              {isOwner && <button onClick={handleEdit}>정보수정</button>}
+              {isOwner && (
+                <Link to="/mypageset"><button>정보수정</button></Link>
+              )}
             </UserActions>
           </HeaderContent>
         </MyPageHeader>
@@ -178,28 +177,14 @@ const MyPageContent = () => {
 /**
  * MyPage - Manager
  * paramUserId가 있으면 친구 페이지, 없으면 로그인 사용자 페이지
+ * [되돌리기] 이 컴포넌트는 이제 Provider를 감싸는 Wrapper 역할만 담당합니다.
  */
-const MyPage = () => {
-  const { user: loggedInUser } = useAuth();
-  const { userId: paramUserId } = useParams();
-
-  // [수정] targetUserId 결정
-  const targetUserId = useMemo(() => {
-    if (paramUserId) {
-      const parsedId = parseInt(paramUserId, 10);
-      return isNaN(parsedId) ? null : parsedId;
-    }
-    return loggedInUser?.id || null;
-  }, [paramUserId, loggedInUser?.id]);
-
-  // [추가] 유효하지 않은 userId 처리
-  if (!targetUserId) return <div>유효한 사용자 정보를 가져올 수 없습니다.</div>;
-
+const MyPageWrapper = () => {
   return (
-    <MyPageProvider userId={targetUserId}>
-      <MyPageContent />
+    <MyPageProvider>
+      <MyPage />
     </MyPageProvider>
   );
 };
 
-export default MyPage;
+export default MyPageWrapper;

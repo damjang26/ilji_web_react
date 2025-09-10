@@ -1,8 +1,9 @@
 import FullCalendarExample from "./main/calendar/FullCalendar.jsx";
 import {Route, Routes} from "react-router-dom";
 import styled from "styled-components";
-import Post from "./main/post/Post.jsx";
-import MyPage from "./main/mypage/MyPage.jsx"; // MyPage를 직접 import
+import Post from "./main/post/Post.jsx"; 
+import MyPageSet from "./main/mypage/MyPageSet.jsx"; // [추가]
+import MyPageWrapper from "./main/mypage/MyPage.jsx"; // [수정] MyPageWrapper를 import합니다.
 
 
 const MainContent = styled.main`
@@ -20,11 +21,11 @@ const Main = () => {
             <Routes>
                 <Route path="/" element={<FullCalendarExample/>}/>
 
-                {/* 자기 자신의 마이페이지 */}
-                <Route path="/mypage" element={<MyPage />} />
+                {/* [되돌리기] /mypage 경로만 남기고, MyPageWrapper를 렌더링합니다. */}
+                <Route path="/mypage" element={<MyPageWrapper />} />
 
-                {/* 친구 마이페이지 등 다른 사용자의 마이페이지 */}
-                <Route path="/mypage/:userId" element={<MyPage />} />
+                {/* [추가] 정보 수정 페이지 경로를 추가합니다. */}
+                <Route path="/mypageset" element={<MyPageSet />} />
 
                 <Route path="/post/*" element={<Post/>}/>
             </Routes>
