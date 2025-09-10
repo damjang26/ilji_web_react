@@ -34,7 +34,7 @@ export const ContentBox = styled.div`
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 내부 컨텐츠(헤더, 메인) 배치 */
     display: flex;
-    flex-direction: column;
+    flex-direction: column;ㄴ
     flex-grow: 1; /* 남은 세로 공간을 모두 차지 */
 `;
 
