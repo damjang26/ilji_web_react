@@ -26,25 +26,20 @@ const JournalView = () => {
 
     const journal = useMemo(() => getJournal(date), [getJournal, date]);
 
+    console.log('👀 보여줄 일기 데이터:', journal);
+
     const formattedDate = useMemo(() => {
         if (!date) return '';
         const d = new Date(date);
         return d.toLocaleDateString('ko-KR', {year: 'numeric', month: 'long', day: 'numeric'});
     }, [date]);
 
-    // ✅ [추가] DB에 저장된 imgUrl(JSON 문자열)을 실제 이미지 URL 배열로 파싱합니다.
+    // ✅ [수정] 백엔드 응답 및 Context에 저장된 데이터는 이미 'imageUrls'라는 이름의 배열입니다.
+    // 따라서 더 이상 JSON.parse를 할 필요 없이, 해당 배열을 직접 사용합니다.
+    // ✅ [디버깅 수정] 콘솔 로그 확인 결과, 이미지 배열의 키는 'images'였습니다. 'imageUrls'를 'images'로 변경합니다.
     const imageUrls = useMemo(() => {
-        if (journal && journal.imgUrl) {
-            try {
-                const parsedUrls = JSON.parse(journal.imgUrl);
-                // 파싱된 결과가 배열인지 확인합니다.
-                if (Array.isArray(parsedUrls)) {
-                    return parsedUrls;
-                }
-            } catch (error) {
-                console.error("일기 이미지 URL을 파싱하는 데 실패했습니다:", error);
-                return [];
-            }
+        if (journal && Array.isArray(journal.images)) {
+            return journal.images;
         }
         return [];
     }, [journal]);
@@ -83,12 +78,13 @@ const JournalView = () => {
     return (
         <ViewContainer>
             <ProfileSection>
+                {/* ✅ [개선] 백엔드에서 보내주는 작성자 정보(authorProfileImage, authorNickname)를 사용하도록 변경합니다. */}
                 <ProfilePicture
-                    src={user?.picture || 'https://via.placeholder.com/48'}
-                    alt={`${user?.name || 'user'} profile`}
+                    src={journal?.writerProfileImage || 'https://via.placeholder.com/48'}
+                    alt={`${journal?.writerNickname || 'user'} profile`}
                     referrerPolicy="no-referrer"/>
                 <AuthorInfo>
-                    <AuthorName>{user?.name || '사용자'}</AuthorName>
+                    <AuthorName>{journal?.writerNickname || '사용자'}</AuthorName>
                     <DateDisplay>{formattedDate}</DateDisplay>
                 </AuthorInfo>
                 <PostHeaderActions>

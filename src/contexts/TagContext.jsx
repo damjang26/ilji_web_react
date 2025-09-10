@@ -1,5 +1,5 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import { message } from 'antd'; // message 컴포넌트 import
+import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import { message } from 'antd';
 import { api } from '../api';
 import { useAuth } from '../AuthContext';
 
@@ -12,41 +12,45 @@ export const useTags = () => {
 export const TagProvider = ({ children }) => {
   const { user } = useAuth();
   const [tags, setTags] = useState([]);
-  const [loading, setLoading] = useState(false); // 초기 로딩 상태를 false로 변경
+  const [loading, setLoading] = useState(false);
 
-  const fetchTags = async () => {
-    if (!user) return; // 사용자가 없으면 요청하지 않음
+  // 내 태그만 불러오는 함수
+  const fetchMyTags = useCallback(async () => {
+    if (!user) return;
     setLoading(true);
     try {
       const response = await api.get('/api/tags');
-      setTags(response.data);
+      // 내 태그에는 owner 정보 추가
+      const myTagsWithOwner = response.data.map(tag => ({ ...tag, owner: { userId: user.id, name: user.name } }));
+      // 친구 태그는 유지하고 내 태그만 업데이트
+      setTags(prevTags => [
+        ...prevTags.filter(tag => tag.owner.userId !== user.id),
+        ...myTagsWithOwner,
+      ]);
     } catch (error) {
-      console.error("Failed to fetch tags:", error);
-      message.error('태그 목록을 불러오는데 실패했습니다.');
+      console.error("Failed to fetch my tags:", error);
+      message.error('내 태그 목록을 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     if (user) {
-      fetchTags();
+      fetchMyTags();
     } else {
-      // 로그아웃 시 태그 목록 초기화
       setTags([]);
     }
-  }, [user]);
+  }, [user, fetchMyTags]);
 
   const addTag = async (newTagPayload) => {
     try {
-      console.log('Sending to backend:', newTagPayload); // 데이터 확인용 로그
       await api.post('/api/tags', newTagPayload);
-      fetchTags();
-      message.success('새로운 태그가 추가되었습니다.'); // 성공 메시지 추가
+      fetchMyTags(); // 내 태그 다시 불러오기
+      message.success('새로운 태그가 추가되었습니다.');
     } catch (error) {
       console.error("Failed to create tag:", error);
-      // 서버에서 보낸 에러 메시지가 있다면 그것을 사용하고, 없다면 일반적인 메시지를 띄웁니다.
-      const errorMessage = error.response?.data?.message || '이미 존재하는 태그이거나, 잘못된 요청입니다.';
+      const errorMessage = error.response?.data?.message || '태그 생성에 실패했습니다.';
       message.error(errorMessage);
       throw error;
     }
@@ -55,20 +59,55 @@ export const TagProvider = ({ children }) => {
   const deleteTag = async (tagIdToDelete) => {
     try {
       await api.delete(`/api/tags/${tagIdToDelete}`);
-      fetchTags();
-      message.success('태그가 삭제되었습니다.'); // 성공 메시지 추가
+      fetchMyTags(); // 내 태그 다시 불러오기
+      message.success('태그가 삭제되었습니다.');
     } catch (error) {
       console.error("Failed to delete tag:", error);
       message.error('태그 삭제에 실패했습니다.');
     }
   };
 
+  const updateTag = async (tagId, payload) => {
+    try {
+      await api.put(`/api/tags/${tagId}`, payload);
+      fetchMyTags(); // 내 태그 다시 불러오기
+      message.success('태그가 성공적으로 수정되었습니다.');
+    } catch (error) {
+      console.error("Failed to update tag:", error);
+      const errorMessage = error.response?.data?.message || '태그 수정에 실패했습니다.';
+      message.error(errorMessage);
+      throw error;
+    }
+  };
+
+  // 친구 태그 추가 함수
+  const addFriendTags = async (friend) => {
+    console.log('[DEBUG] Fetching tags for friend:', friend); // 디버깅 로그 추가
+    try {
+      const response = await api.get(`/api/tags?userId=${friend.userId}`);
+      console.log('[DEBUG] Received friend tags:', response.data); // 디버깅 로그 추가
+      const friendTagsWithOwner = response.data.map(tag => ({ ...tag, owner: { userId: friend.userId, name: friend.name } }));
+      setTags(prevTags => [...prevTags, ...friendTagsWithOwner]);
+    } catch (error) {
+      console.error(`Failed to fetch tags for ${friend.name}:`, error);
+      message.error(`${friend.name}님의 태그를 불러오는데 실패했습니다.`);
+    }
+  };
+
+  // 친구 태그 제거 함수
+  const removeFriendTags = (friendId) => {
+    setTags(prevTags => prevTags.filter(tag => tag.owner.userId !== friendId));
+  };
+
   const value = {
     tags,
     loading,
-    fetchTags,
+    fetchTags: fetchMyTags, // 기존 fetchTags는 이제 내 태그만 불러옴
     addTag,
     deleteTag,
+    updateTag, // 추가
+    addFriendTags,
+    removeFriendTags,
   };
 
   return <TagContext.Provider value={value}>{children}</TagContext.Provider>;
