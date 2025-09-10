@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom'; // 페이지 이동을 위해 추가
-import { useAuth } from '../../../AuthContext'; // AuthContext에서 사용자 정보를 가져오기 위함
-import { api } from '../../../api'; // 설정해두신 axios 인스턴스를 직접 가져옵니다.
-import ImageBox from './ImageBox'; // 새로 만든 ImageBox 컴포넌트를 가져옵니다.
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // [추가] 페이지 이동을 위해 useNavigate import
+import { useMyPage } from '../../../contexts/MyPageContext';
+import ImageBox from './ImageBox';
 
-// MyPage.jsx와 레이아웃을 공유하기 위해 기존 스타일 컴포넌트 가져오기
+// MyPage.jsx와 레이아웃을 공유하기 위해 기존 스타일 컴포넌트
 import { MyPageContainer, MypageImg, ContentBox, MyPageMain, FeatureContent, ImgWrapper } from '../../../styled_components/main/mypage/MyPageStyled';
 
-// MyPageSet.jsx 전용 폼 스타일 컴포넌트 가져오기
+// MyPageSet.jsx 전용 폼 스타일 컴포넌트
 import {
     SettingsForm,
     FormGroup,
@@ -17,153 +16,136 @@ import {
     FormSelect,
     CheckboxGroup,
     FormCheckbox,
-    SubmitButton,
+    SettingsTitle, SubmitButton,
     ButtonGroup,
     CancelButton
 } from '../../../styled_components/main/mypage/MyPageSetStyled';
 
 const MyPageSet = () => {
-    const { user } = useAuth(); // 로그인한 사용자 정보 (예: { id: 1, email: '...' })
-    const navigate = useNavigate(); // useNavigate 훅 사용
-    const [profile, setProfile] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    // 1. Context에서 필요한 상태와 함수들을 가져옴
+    const { profile: globalProfile, loading, error, updateProfile, handleCancel } = useMyPage();
+
+    // 2. 이 컴포넌트의 폼 입력을 위한 '로컬 상태'를 만들기
+    const [localProfile, setLocalProfile] = useState(null);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingImageType, setEditingImageType] = useState(null); // 'profileImage' 또는 'bannerImage'
 
-    // 프로필 정보를 서버에서 가져오는 함수
-    const fetchProfile = useCallback(async () => {
-        if (!user || !user.id) {
-            setLoading(false);
-            setError('로그인 정보가 없습니다.');
-            return;
-        }
-
-        try {
-            setLoading(true);
-            // [API 호출] api 객체를 사용해 직접 프로필 정보를 요청합니다.
-            const response = await api.get(`/api/profiles/user/${user.id}`);
-            const data = response.data;
-            const formattedBirthdate = data.birthdate ? data.birthdate.split('T')[0] : '';
-            setProfile({ ...data, birthdate: formattedBirthdate });
-        } catch (err) {
-            console.error("프로필 조회 실패:", err);
-            setError('프로필 정보를 불러오는 데 실패했습니다.');
-        } finally {
-            setLoading(false);
-        }
-    }, [user]);
-
-    // 컴포넌트가 처음 화면에 나타날 때, 프로필 정보를 가져옵니다.
+    // 3. 전역 상태(globalProfile)가 로드되면, 그 데이터를 기반으로 로컬 상태(localProfile)를 초기화
     useEffect(() => {
-        fetchProfile();
-    }, [fetchProfile]);
+        if (globalProfile) {
+            // 날짜 형식을 'YYYY-MM-DD'
+            const formattedBirthdate = globalProfile.birthdate ? globalProfile.birthdate.split('T')[0] : '';
+            setLocalProfile({ ...globalProfile, birthdate: formattedBirthdate });
+        }
+    }, [globalProfile]);
 
-    // 입력 폼의 내용이 바뀔 때마다 profile 상태를 업데이트합니다.
+    // 4. 입력 폼의 내용이 바뀔 때마다 '로컬 상태'만 업데이트 (전역 상태는 건드리지 않음)
     const handleInputChange = (e) => {
         const { name, value, type, checked } = e.target;
-        setProfile(prevProfile => ({
+        setLocalProfile(prevProfile => ({
             ...prevProfile,
-            // 입력 필드 타입이 'checkbox'이면 checked 상태(true/false)를, 아니면 기존처럼 value를 저장합니다.
             [name]: type === 'checkbox' ? checked : value,
         }));
     };
 
-    // 이미지 클릭 시 모달 열기
     const handleImageClick = (imageType) => {
         setEditingImageType(imageType);
         setIsModalOpen(true);
     };
 
-    // 모달에서 '확인' 눌렀을 때 프로필 상태 업데이트
-    const handleImageUpdate = async (imageType, newUrl) => {
-        if (!profile) return;
-
-        // 먼저 화면에 즉시 반영되도록 로컬 상태를 업데이트
-        const updatedProfile = { ...profile, [imageType]: newUrl };
-        setProfile(updatedProfile);
+    // ImageBox에서 '확인'을 눌렀을 때 호출될 함수 (File 객체를 받음)
+    const handleImageUpdate = async (imageType, imageFile) => {
+        if (!imageFile) return;
 
         try {
-            // 서버에 변경된 전체 프로필 정보를 전송하여 저장
-            await api.put(`/api/profiles/user/${user.id}`, updatedProfile);
+            // [개선] Context의 updateProfile을 사용하여 이미지 업데이트를 위임
+            // 이미지 업데이트 시에는 텍스트 데이터를 보내지 않으므로 첫 번째 인자는 빈 객체({})
+            const imageOptions = imageType === 'bannerImage'
+                ? { bannerImageFile: imageFile }
+                : { profileImageFile: imageFile };
+
+            await updateProfile({}, imageOptions);
+            handleCancel(); // [추가] 이미지 업데이트 성공 후, MyPage로 돌아가기 위해 상태 변경
             alert('이미지가 성공적으로 업데이트되었습니다.');
+            setIsModalOpen(false); // 성공 시 모달 닫기
         } catch (err) {
             console.error("이미지 업데이트 실패:", err);
-            alert('이미지 업데이트 중 오류가 발생했습니다.');
-            // 실패 시 원래 데이터로 복구하기 위해 다시 fetch
-            fetchProfile();
+            // Context에서 alert를 이미 띄워주므로 여기서는 추가 작업이 필요 없음
         }
     };
 
-    // '저장하기' 버튼을 눌렀을 때 실행되는 함수
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!user || !user.id) {
+        if (!localProfile) {
             alert('사용자 정보가 없어 저장할 수 없습니다.');
             return;
         }
         try {
-            // [API 호출] api 객체를 사용해 수정된 프로필 정보를 서버에 전송합니다.
-            await api.put(`/api/profiles/user/${user.id}`, profile);
+            // [개선] 서버가 요구하는 수정 가능한 필드만 추출하여 전달
+            const profileDataForServer = {
+                nickname: localProfile.nickname,
+                birthdate: localProfile.birthdate,
+                phoneNumber: localProfile.phoneNumber,
+                gender: localProfile.gender,
+                region: localProfile.region,
+                bio: localProfile.bio,
+                interests: localProfile.interests,
+                isPrivate: localProfile.isPrivate,
+            };
+            // 텍스트 정보만 업데이트하므로 두 번째 인자는 빈 객체({})
+            await updateProfile(profileDataForServer, {});
+
             alert('프로필이 성공적으로 업데이트되었습니다.');
-            navigate('/mypage'); // 성공 시 마이페이지로 이동
+            // 저장 성공 시 updateProfile 함수가 내부적으로 isEditing을 false로 바꾸므로 추가 작업 불필요
         } catch (err) {
-            console.error("프로필 업데이트 실패:", err);
-            alert('프로필 업데이트 중 오류가 발생했습니다.');
+            console.error("프로필 저장 실패:", err);
         }
     };
 
-    if (loading) return <div>로딩 중...</div>;
+    if (loading && !localProfile) return <div>로딩 중...</div>;
     if (error) return <div style={{ color: 'red' }}>{error}</div>;
-    if (!profile) return <div>프로필 정보가 없습니다.</div>;
+    if (!localProfile) return <div>프로필 정보를 불러오는 중입니다...</div>;
 
     return (
         <MyPageContainer>
-            {/* MyPage.jsx와 동일한 배경 배너 */}
             <MypageImg
-                style={{
-                    backgroundImage: `url(${profile.bannerImage || ''})`,
-                    cursor: 'pointer',
-                    position: 'relative'
-                }}
-                onClick={() => handleImageClick('bannerImage')}
-            >
-            </MypageImg>
+                style={{ backgroundImage: `url(${localProfile.bannerImage || ''})` }}
+                // onClick={() => handleImageClick('bannerImage')}
+            />
 
             {/* MyPage.jsx와 동일한 흰색 콘텐츠 박스 */}
             <ContentBox>
-                <ImgWrapper style={{ marginTop: '-20px', marginBottom: '20px' }}>
-                </ImgWrapper>
+                {/* 배너와 폼 사이의 간격을 위한 빈 공간 */}
+                <ImgWrapper />
                 <MyPageMain>
-                    {/* 콘텐츠를 중앙에 배치하기 위한 래퍼 */}
                     <FeatureContent>
                         <SettingsForm onSubmit={handleSubmit}>
-                            <h2 style={{ marginBottom: '16px' }}>프로필 수정</h2>
+                            <SettingsTitle>프로필 수정</SettingsTitle>
 
                             <FormGroup>
                                 <FormLabel htmlFor="email">이메일</FormLabel>
-                                <FormInput id="email" type="email" value={profile.email || ''} disabled />
+                                <FormInput id="email" type="email" value={localProfile.email || ''} disabled />
                             </FormGroup>
 
                             <FormGroup>
                                 <FormLabel htmlFor="nickname">닉네임</FormLabel>
-                                <FormInput id="nickname" type="text" name="nickname" value={profile.nickname || ''} onChange={handleInputChange} />
+                                <FormInput id="nickname" type="text" name="nickname" value={localProfile.nickname || ''} onChange={handleInputChange} />
                             </FormGroup>
 
                             <FormGroup>
                                 <FormLabel htmlFor="birthdate">생년월일</FormLabel>
-                                <FormInput id="birthdate" type="date" name="birthdate" value={profile.birthdate || ''} onChange={handleInputChange} />
+                                <FormInput id="birthdate" type="date" name="birthdate" value={localProfile.birthdate || ''} onChange={handleInputChange} />
                             </FormGroup>
 
                             <FormGroup>
                                 <FormLabel htmlFor="phoneNumber">연락처</FormLabel>
-                                <FormInput id="phoneNumber" type="tel" name="phoneNumber" value={profile.phoneNumber || ''} onChange={handleInputChange} placeholder="010-1234-5678" />
+                                <FormInput id="phoneNumber" type="tel" name="phoneNumber" value={localProfile.phoneNumber || ''} onChange={handleInputChange} placeholder="010-1234-5678" />
                             </FormGroup>
 
                             <FormGroup>
                                 <FormLabel htmlFor="gender">성별</FormLabel>
-                                <FormSelect id="gender" name="gender" value={profile.gender || ''} onChange={handleInputChange}>
+                                <FormSelect id="gender" name="gender" value={localProfile.gender || ''} onChange={handleInputChange}>
                                     <option value="">선택안함</option>
                                     <option value="M">남성</option>
                                     <option value="F">여성</option>
@@ -173,26 +155,27 @@ const MyPageSet = () => {
 
                             <FormGroup>
                                 <FormLabel htmlFor="region">지역</FormLabel>
-                                <FormInput id="region" type="text" name="region" value={profile.region || ''} onChange={handleInputChange} />
+                                <FormInput id="region" type="text" name="region" value={localProfile.region || ''} onChange={handleInputChange} />
                             </FormGroup>
 
                             <FormGroup>
                                 <FormLabel htmlFor="bio">자기소개</FormLabel>
-                                <FormTextarea id="bio" name="bio" value={profile.bio || ''} onChange={handleInputChange} />
+                                <FormTextarea id="bio" name="bio" value={localProfile.bio || ''} onChange={handleInputChange} />
                             </FormGroup>
 
                             <FormGroup>
                                 <FormLabel htmlFor="interests">관심사</FormLabel>
-                                <FormInput id="interests" type="text" name="interests" value={profile.interests || ''} onChange={handleInputChange} placeholder="쉼표(,)로 구분하여 입력" />
+                                <FormInput id="interests" type="text" name="interests" value={localProfile.interests || ''} onChange={handleInputChange} placeholder="쉼표(,)로 구분하여 입력" />
                             </FormGroup>
 
                             <CheckboxGroup>
-                                <FormCheckbox id="isPrivate" type="checkbox" name="isPrivate" checked={profile.isPrivate || false} onChange={handleInputChange} />
+                                <FormCheckbox id="isPrivate" type="checkbox" name="isPrivate" checked={localProfile.isPrivate || false} onChange={handleInputChange} />
                                 <FormLabel htmlFor="isPrivate">계정 비공개</FormLabel>
                             </CheckboxGroup>
 
                             <ButtonGroup>
-                                <CancelButton type="button" onClick={() => navigate('/mypage')}>
+                                {/* [수정] 취소 버튼 클릭 시 handleCancel을 호출하여 MyPage로 돌아갑니다. */}
+                                <CancelButton type="button" onClick={handleCancel}>
                                     취소
                                 </CancelButton>
                                 <SubmitButton type="submit">저장</SubmitButton>
@@ -205,7 +188,7 @@ const MyPageSet = () => {
             <ImageBox
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                currentImageUrl={profile[editingImageType]}
+                currentImageUrl={localProfile ? localProfile[editingImageType] : ''}
                 onConfirm={handleImageUpdate}
                 imageType={editingImageType}
             />

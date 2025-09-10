@@ -34,7 +34,7 @@ export const ContentBox = styled.div`
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 내부 컨텐츠(헤더, 메인) 배치 */
     display: flex;
-    flex-direction: column;
+    flex-direction: column;ㄴ
     flex-grow: 1; /* 남은 세로 공간을 모두 차지 */
 `;
 
@@ -110,7 +110,7 @@ export const TabMenuContainer = styled.div`
 
 // 개별 탭 버튼
 export const Tab = styled.button`
-    padding: 12px 20px;
+    padding: 15px 20px;
     font-size: 1rem;
     font-weight: ${props => (props.$active ? '600' : '500')}; /* active prop에 따라 글자 굵기 변경 (활성/비활성) */
     color: ${props => (props.$active ? '#343a40' : '#868e96')}; /* active prop에 따라 글자 색상 변경 */
@@ -138,10 +138,25 @@ export const MyPageMain = styled.main`
 // 프로필 이미지를 감싸서 위치(마진 등)를 조정하기 위한 래퍼
 export const ImgWrapper = styled.div`
     position: relative;
+    margin-top: 10px;
+    margin-bottom: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
 `;
+
+// 사용자의 프로필 이미지를 스타일링하는 컴포넌트 (원형, 그림자 효과 등)
+export const ProfileImage = styled.img`
+   width: 120px;
+   height: 120px;
+   border-radius: 50%;
+   object-fit: cover;
+   border: 4px solid #fff;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+   cursor: pointer;
+   background-color: #f0f0f0; /* 이미지가 없을 때를 위한 배경색 */
+ `;
+
 
 //  탭에 따라 선택된 기능이 표시될 영역
 export const FeatureContent = styled.main`
@@ -157,3 +172,8 @@ export const FeatureBox = styled.div`
     border-radius: 8px;
     font-size: 1.2rem;
 `;
+
+export const Contents = styled.div`
+     padding: 20px;
+     /* 추가적인 스타일링 (예: 게시물 목록) */
+ `;

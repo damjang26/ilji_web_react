@@ -1,5 +1,11 @@
 import styled, { css } from 'styled-components';
 
+// 설정 페이지의 제목 스타일 (예: "프로필 수정")
+export const SettingsTitle = styled.h2`
+   margin-bottom: 16px;
+ `;
+
+
 // 프로필 수정 폼 전체를 감싸는 메인 컨테이너
 export const SettingsForm = styled.form`
   display: flex;
@@ -86,6 +92,35 @@ export const FormCheckbox = styled.input`
   cursor: pointer;
 `;
 
+export const UserName = styled.h1`
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+`;
+
+export const UserIntroduction = styled.p`
+    font-size: 1rem;
+    color: #6c757d;
+    margin: 4px 0 0 0;
+`;
+
+export const EditButton = styled.button`
+     padding: 8px 16px;
+     font-size: 0.9rem;
+     font-weight: 600;
+     color: #495057;
+     background-color: #f1f3f5;
+     border: 1px solid #dee2e6;
+     border-radius: 6px;
+     cursor: pointer;
+     transition: background-color 0.2s;
+ 
+     &:hover {
+         background-color: #e9ecef;
+     }
+ `;
+
+
 // '저장', '취소' 등 여러 버튼을 묶어서 정렬하는 컨테이너
 export const ButtonGroup = styled.div`
    display: flex;
@@ -108,6 +143,7 @@ export const SubmitButton = styled.button`
   /* margin-top: 16px; */ /* 다른 필드와 간격을 둠 - 현재는 ButtonGroup에서 관리 */
   transition: background-color 0.2s ease-in-out;
 
+  flex: 1; /* 버튼 그룹 내에서 유연하게 공간을 차지하도록 설정 */
   &:hover {
     background-color: #0b5ed7;
   }
