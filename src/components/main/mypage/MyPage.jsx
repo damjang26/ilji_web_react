@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import React, { useState, useCallback } from "react";
+import { Link, useParams } from "react-router-dom"; // [추가] useParams import
+import React, { useState, useCallback, useEffect } from "react";
 import ImageBox from "./ImageBox";
 import BannerImageEditor from "./BannerImageEditor.jsx";
 
@@ -29,10 +29,18 @@ import MyPageSet from "./MyPageSet.jsx"; // Import the component to switch to
  */
 // [되돌리기] MyPageContent의 이름을 MyPage로 변경하고, MyPageWrapper가 이 컴포넌트를 렌더링하도록 구조를 변경합니다.
 const MyPage = () => {
-  const { profile, loading, error, updateProfile, handleEdit } = useMyPage();
+  const {
+    profile,
+    loading,
+    error,
+    updateProfile,
+    handleEdit,
+    isOwner,
+  } = useMyPage();
 
   // [되돌리기] isOwner를 항상 true로 설정합니다. 이제 '나의 마이페이지'만 존재하기 때문입니다.
-  const isOwner = true;
+  // [수정] isOwner는 이제 Context에서 받아옵니다.
+  // const isOwner = true;
   // 모달 상태 관리를 위한 state 추가
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [editingImageType, setEditingImageType] = useState(null);
@@ -58,6 +66,9 @@ const MyPage = () => {
 
   // 이미지 클릭 시 모달을 여는 함수
   const handleImageClick = (imageType) => {
+    // [수정] isOwner가 false이면(친구 페이지) 아무 작업도 하지 않고 함수를 종료합니다.
+    if (!isOwner) return;
+
     if (imageType === "bannerImage") {
       setIsBannerEditorOpen(true); // 배너 클릭 시 배너 편집기 열기
     } else {
@@ -91,7 +102,9 @@ const MyPage = () => {
         style={{
           backgroundImage: `url(${profile.bannerImage || ""})`,
         }}
-        onClick={() => handleImageClick("bannerImage")}
+        // [수정] isOwner일 때만 커서 포인터를 적용합니다.
+        onClick={isOwner ? () => handleImageClick("bannerImage") : undefined}
+        $isOwner={isOwner}
       />
       <ContentBox>
         <MyPageHeader>
@@ -100,7 +113,9 @@ const MyPage = () => {
             <ProfileImage
               src={profile.profileImage || "/default-profile.png"}
               alt="Profile"
-              onClick={() => handleImageClick("profileImage")}
+              // [수정] isOwner일 때만 커서 포인터를 적용합니다.
+              onClick={isOwner ? () => handleImageClick("profileImage") : undefined}
+              $isOwner={isOwner}
             />
           </ImgWrapper>
           <HeaderContent>
@@ -199,13 +214,19 @@ const MyPage = () => {
  * [되돌리기] 이 컴포넌트는 이제 Provider를 감싸는 Wrapper 역할만 담당합니다.
  */
 const MyPageWrapper = () => {
+  // URL에서 userId 파라미터를 가져옵니다. (예: /mypage/123 -> userId는 "123")
+  // URL이 /mypage이면 userId는 undefined가 됩니다.
+  const { userId } = useParams();
+
   // The Wrapper's job is to provide the context and render the switcher.
   return (
-    <MyPageProvider>
+    // [수정] MyPageProvider에 userId를 전달합니다.
+    <MyPageProvider userId={userId}>
       <PageSwitcher />
     </MyPageProvider>
   );
 };
+
 const PageSwitcher = () => {
   const { isEditing } = useMyPage();
   return isEditing ? <MyPageSet /> : <MyPage />;

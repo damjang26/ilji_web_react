@@ -14,6 +14,7 @@ const { TabPane } = Tabs;
 const { Search } = Input;
 
 const FriendManagementModal = ({ open, onClose, initialTab = "following" }) => {
+  const navigate = useNavigate(); // [추가] 페이지 이동을 위한 navigate 함수를 선언합니다.
   const [activeTab, setActiveTab] = useState(initialTab);
   const [following, setFollowing] = useState([]);
   const [followers, setFollowers] = useState([]);
