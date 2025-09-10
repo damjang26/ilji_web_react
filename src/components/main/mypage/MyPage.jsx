@@ -36,6 +36,8 @@ const MyPage = () => {
     updateProfile,
     handleEdit,
     isOwner,
+    isFollowing, // [추가] 팔로우 여부 상태를 가져옵니다.
+    handleFollowToggle, // [추가] 팔로우/언팔로우 실행 함수를 가져옵니다.
   } = useMyPage();
 
   // [되돌리기] isOwner를 항상 true로 설정합니다. 이제 '나의 마이페이지'만 존재하기 때문입니다.
@@ -143,8 +145,16 @@ const MyPage = () => {
               >
                 follower
               </div>
-              {/* [수정] 친구 페이지일 경우 정보수정 버튼 숨김 */}
-              {isOwner && <button onClick={handleEdit}>정보수정</button>}
+              {/* [수정] isOwner 값에 따라 다른 버튼을 렌더링합니다. */}
+              {isOwner ? (
+                // 내 페이지일 경우 '정보수정' 버튼을 보여줍니다.
+                <button onClick={handleEdit}>정보수정</button>
+              ) : (
+                // 친구 페이지일 경우 '팔로우/언팔로우' 버튼을 보여줍니다.
+                <button onClick={handleFollowToggle}>
+                  {isFollowing ? '언팔로우' : '팔로우'}
+                </button>
+              )}
             </UserActions>
           </HeaderContent>
         </MyPageHeader>
