@@ -1,6 +1,5 @@
 import React, {useState, useEffect, useMemo, useRef, useCallback} from 'react';
 import {useJournal} from "../../../../contexts/JournalContext.jsx";
-import {useAuth} from "../../../../AuthContext.jsx"; // ❗ 사용자 정보(프로필 사진 등)를 가져오기 위해 추가
 import {useNavigate, useLocation} from "react-router-dom"; // ✅ 페이지 이동을 위해 추가
 import {
     FeedContainer,
@@ -8,16 +7,17 @@ import {
     PostContainer, PostHeaderActions,
     PostContent,
     PostHeader,
-    PostImage,
     ProfileImage,
     UserInfo,
     EmptyFeedContainer,
     EmptyFeedText,
     WriteJournalButton,
+    ImageGrid, ImageWrapper, ActionItem, // ✅ [추가] 이미지 그리드 컴포넌트
 } from "../../../../styled_components/main/post/PostListStyled.jsx";
 import {FaRegComment, FaRegHeart, FaRegShareSquare} from "react-icons/fa";
 import {HiPencilAlt} from "react-icons/hi";
 import {MdDeleteForever} from "react-icons/md";
+import {RiQuillPenAiLine} from "react-icons/ri";
 
 // 한 번에 불러올 일기 개수
 const JOURNALS_PER_PAGE = 10;
@@ -25,8 +25,6 @@ const JOURNALS_PER_PAGE = 10;
 const JournalList = () => {
     // 1. Context에서 전체 일기 목록(Map)과 로딩 상태를 가져옵니다.
     const {journals, loading: journalLoading, deleteJournal} = useJournal();
-    // 2. 사용자 정보를 가져옵니다 (프로필 사진, 이름 등).
-    const {user} = useAuth();
     const navigate = useNavigate(); // ✅ navigate 함수 가져오기
     const location = useLocation(); // ✅ 모달 네비게이션의 배경 위치를 위해 추가합니다.
 
@@ -91,7 +89,6 @@ const JournalList = () => {
 
     // ✅ [추가] 수정 버튼 클릭 핸들러
     const handleEdit = useCallback((journalToEdit) => {
-        // ✅ [수정] 확인 창 없이 바로 수정 모드로 진입하도록 변경
         console.log("✏️ 수정할 일기 객체:", journalToEdit);
         navigate('/journal/write', {
             state: {
@@ -101,6 +98,19 @@ const JournalList = () => {
         });
     }, [navigate, location]); // navigate와 location이 변경될 때만 함수를 재생성합니다.
 
+    // ✅ [추가] 일기 클릭 핸들러 (상세보기로 이동)
+    const handleJournalClick = useCallback((e, journal) => {
+        // 이벤트 버블링 방지: 수정/삭제 버튼 클릭 시에는 이 함수가 실행되지 않도록 함
+        if (e.target.closest('button')) return;
+
+        navigate(`/journals/${journal.id}`, {
+            state: {
+                backgroundLocation: location,
+                journalData: journal
+            },
+        });
+    }, [navigate, location]);
+
     // 초기 로딩 중이거나, 작성된 일기가 없을 때의 UI 처리
     if (journalLoading && sortedJournals.length === 0) {
         return <div>일기를 불러오는 중...</div>;
@@ -108,7 +118,7 @@ const JournalList = () => {
     if (!journalLoading && sortedJournals.length === 0) {
         return (
             <EmptyFeedContainer>
-                <FaRegComment size={64}/>
+                <RiQuillPenAiLine size={64}/>
                 <h2>아직 작성된 일기가 없습니다</h2>
                 <EmptyFeedText>
                     오늘의 첫 일기를 작성해보세요!
@@ -116,7 +126,7 @@ const JournalList = () => {
                 <WriteJournalButton onClick={() => navigate('/journal/write', {
                     state: {backgroundLocation: location}
                 })}>
-                    ✏️ 일기 작성하기
+                    작성하기
                 </WriteJournalButton>
             </EmptyFeedContainer>
         );
@@ -129,44 +139,65 @@ const JournalList = () => {
                     // 현재 렌더링하는 요소가 마지막 요소인지 확인
                     const isLastElement = displayedJournals.length === index + 1;
 
-                    // ✅ [수정] 'journal.images' 배열의 첫 번째 요소를 대표 이미지로 사용합니다.
-                    const firstImageUrl = (journal.images && journal.images.length > 0) ? journal.images[0] : null;
-
                     return (
-                        // ✅ [수정] PostListStyled 디자인에 journal 객체의 데이터를 매핑합니다.
-                        <PostContainer key={journal.id} ref={isLastElement ? lastJournalElementRef : null}>
+                        <PostContainer
+                            key={journal.id}
+                            ref={isLastElement ? lastJournalElementRef : null}
+                            onClick={(e) => handleJournalClick(e, journal)} // ✅ [추가] 상세보기 클릭 이벤트
+                        >
                             <PostHeader>
                                 {/* ✅ [수정] 각 journal에 포함된 작성자 정보를 사용합니다. */}
                                 <ProfileImage src={journal.writerProfileImage || '/path/to/default/profile.png'}
                                               alt={`${journal.writerNickname} profile`}/>
                                 <UserInfo>
                                     <span className="username">{journal.writerNickname || '사용자'}</span>
-                                    {/* ✅ [수정] 'ilogDate'를 'logDate'로 변경합니다. */}
                                     <span className="date">{new Date(journal.logDate).toLocaleDateString()}</span>
                                 </UserInfo>
-                                {/* ✅ [신규] 수정 및 삭제 아이콘을 담는 컨테이너 */}
                                 <PostHeaderActions>
-                                    {/* ✅ [수정] onClick 핸들러에 handleEdit 함수를 연결합니다. */}
                                     <button data-tooltip="수정" onClick={() => handleEdit(journal)}>
                                         <HiPencilAlt/>
                                     </button>
-                                    {/* ✅ [수정] 'ilogDate'를 'logDate'로 변경합니다. */}
                                     <button data-tooltip="삭제"
                                             onClick={() => handleDelete(journal.id, journal.logDate.split('T')[0])}>
                                         <MdDeleteForever/>
                                     </button>
                                 </PostHeaderActions>
                             </PostHeader>
+                            {/* ✅ [수정] 내용이 길면 잘라서 보여주는 로직 추가 */}
+                            <PostContent>
+                                {journal.content.length > 150 ? (
+                                    <>
+                                        {`${journal.content.substring(0, 150)}... `}
+                                        <span className="more-text">더보기</span>
+                                    </>
+                                ) : (
+                                    journal.content
+                                )}
+                            </PostContent>
 
-                            <div>
-                                {firstImageUrl && <PostImage src={firstImageUrl} alt="Journal image"/>}
-                            </div>
-                            <PostContent>{journal.content}</PostContent>
+                            {/* ✅ [수정] 이미지 그리드 렌더링 로직 */}
+                            {journal.images && journal.images.length > 0 && (
+                                <ImageGrid count={journal.images.length}>
+                                    {journal.images.slice(0, 4).map((imgSrc, imgIndex) => (
+                                        <ImageWrapper key={imgIndex} count={journal.images.length}>
+                                            <img src={imgSrc} alt={`journal image ${imgIndex + 1}`}/>
+                                        </ImageWrapper>
+                                    ))}
+                                </ImageGrid>
+                            )}
 
                             <PostActions>
-                                <button><FaRegHeart/></button>
-                                <button><FaRegComment/></button>
-                                <button><FaRegShareSquare/></button>
+                                <ActionItem>
+                                    <button><FaRegHeart/></button>
+                                    {journal.likeCount > 0 && <span>{journal.likeCount}</span>}
+                                </ActionItem>
+                                <ActionItem>
+                                    <button><FaRegComment/></button>
+                                    {journal.commentCount > 0 && <span>{journal.commentCount}</span>}
+                                </ActionItem>
+                                <ActionItem>
+                                    <button><FaRegShareSquare/></button>
+                                </ActionItem>
                             </PostActions>
                         </PostContainer>
                     );

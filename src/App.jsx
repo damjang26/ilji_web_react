@@ -66,7 +66,8 @@ const AppContent = () => {
                 {background && (
                     <Routes>
                         <Route path="/journal/write" element={<JournalWriteModal/>}/>
-                        <Route path="/journal/view/:date" element={<JournalViewModal/>}/>
+                        <Route path="/journals/:journalId" element={<JournalViewModal/>}/>
+                        <Route path="/posts/:journalId" element={<JournalViewModal/>}/>
                     </Routes>
                 )}
             </ContentWrapper>

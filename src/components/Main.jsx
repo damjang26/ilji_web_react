@@ -23,7 +23,7 @@ const Main = () => {
                 <Route path="/" element={<FullCalendarExample/>}/>
                 <Route path="/mypage" element={<MyPage/>}/>
                 <Route path="/mypageset" element={<MyPageSet/>}/>
-                <Route path="/post/*" element={<Post/>}/>
+                <Route path="/posts/*" element={<Post/>}/>
             </Routes>
         </MainContent>
     );

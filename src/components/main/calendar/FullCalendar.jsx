@@ -326,11 +326,16 @@ export default function FullCalendarExample() {
                         <>
                             <DiaryPopoverButton
                                 onClick={() => {
-                                    navigate(`/journal/view/${diaryPopover.date}`, {
-                                        state: {
-                                            backgroundLocation: location,
-                                        },
-                                    });
+                                    // ✅ [수정] getJournal로 일기 데이터를 가져와 state에 담아 전달합니다.
+                                    const journal = getJournal(diaryPopover.date);
+                                    if (journal) {
+                                        navigate(`/journals/${journal.id}`, {
+                                            state: {
+                                                backgroundLocation: location,
+                                                journalData: journal,
+                                            },
+                                        });
+                                    }
                                 }}
                             >
                                 <FaBookOpen/> 일기 보기
