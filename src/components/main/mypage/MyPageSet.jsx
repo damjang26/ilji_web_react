@@ -22,9 +22,8 @@ import {
 } from '../../../styled_components/main/mypage/MyPageSetStyled';
 
 const MyPageSet = () => {
-    const navigate = useNavigate(); // [추가] navigate 함수 생성
     // 1. Context에서 필요한 상태와 함수들을 가져옴
-    const { profile: globalProfile, loading, error, updateProfile } = useMyPage();
+    const { profile: globalProfile, loading, error, updateProfile, handleCancel } = useMyPage();
 
     // 2. 이 컴포넌트의 폼 입력을 위한 '로컬 상태'를 만들기
     const [localProfile, setLocalProfile] = useState(null);
@@ -58,7 +57,7 @@ const MyPageSet = () => {
     // ImageBox에서 '확인'을 눌렀을 때 호출될 함수 (File 객체를 받음)
     const handleImageUpdate = async (imageType, imageFile) => {
         if (!imageFile) return;
-        
+
         try {
             // [개선] Context의 updateProfile을 사용하여 이미지 업데이트를 위임
             // 이미지 업데이트 시에는 텍스트 데이터를 보내지 않으므로 첫 번째 인자는 빈 객체({})
@@ -67,7 +66,7 @@ const MyPageSet = () => {
                 : { profileImageFile: imageFile };
 
             await updateProfile({}, imageOptions);
-
+            handleCancel(); // [추가] 이미지 업데이트 성공 후, MyPage로 돌아가기 위해 상태 변경
             alert('이미지가 성공적으로 업데이트되었습니다.');
             setIsModalOpen(false); // 성공 시 모달 닫기
         } catch (err) {
@@ -98,7 +97,7 @@ const MyPageSet = () => {
             await updateProfile(profileDataForServer, {});
 
             alert('프로필이 성공적으로 업데이트되었습니다.');
-            navigate('/mypage'); // [수정] 저장 성공 후 마이페이지로 이동
+            // 저장 성공 시 updateProfile 함수가 내부적으로 isEditing을 false로 바꾸므로 추가 작업 불필요
         } catch (err) {
             console.error("프로필 저장 실패:", err);
         }
@@ -175,8 +174,8 @@ const MyPageSet = () => {
                             </CheckboxGroup>
 
                             <ButtonGroup>
-                                {/* [수정] 취소 버튼 클릭 시 마이페이지로 이동 */}
-                                <CancelButton type="button" onClick={() => navigate('/mypage')}>
+                                {/* [수정] 취소 버튼 클릭 시 handleCancel을 호출하여 MyPage로 돌아갑니다. */}
+                                <CancelButton type="button" onClick={handleCancel}>
                                     취소
                                 </CancelButton>
                                 <SubmitButton type="submit">저장</SubmitButton>

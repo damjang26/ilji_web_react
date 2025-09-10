@@ -24,7 +24,8 @@ import {
 
 const Profile = () => {
   // [수정] MyPageContext 의존성 제거, AuthContext만 사용합니다.
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, requestMyPageView } = useAuth();
+  const navigate = useNavigate();
 
   // [개선] 우리 서비스의 정보(nickname, profileImage)를 우선 사용하되,
   // 값이 없으면 구글 초기 정보(name, picture)를 대신 보여줍니다. (Fallback)
@@ -56,6 +57,11 @@ const Profile = () => {
     if (key === "logout") {
       logout();
     }
+  };
+
+  const handleMyPageClick = () => {
+    requestMyPageView(); // [추가] 마이페이지 보기 요청 신호를 보냄
+    navigate('/mypage'); // URL은 그대로 변경
   };
 
   const menuItems = [
@@ -100,7 +106,7 @@ const Profile = () => {
             </SearchModal>
           )}
           <ProfileImageArea>
-            <ImageWrapper to="/mypage">
+            <ImageWrapper as="div" onClick={handleMyPageClick} style={{ cursor: 'pointer' }}>
               <img
                 src={displayImage || "/default-profile.png"}
                 alt={`${displayName} 프로필`}

@@ -10,6 +10,7 @@ export default function AuthProvider({ children }) {
     const [user, setUser] = useState(null);     // 사용자 정보
     const [token, setToken] = useState(null);   // 우리 서비스 전용 토큰(appToken)
     const [loading, setLoading] = useState(true);
+    const [myPageViewRequest, setMyPageViewRequest] = useState(0); // [추가] 마이페이지 뷰 요청 신호
     const [error, setError]   = useState(null);
 
     // 앱 시작 시 localStorage에서 토큰 복구 → 사용자 정보 조회
@@ -87,11 +88,18 @@ export default function AuthProvider({ children }) {
         }
     };
 
+    // [추가] 사이드바 등 다른 컴포넌트가 마이페이지 뷰로 돌아가고 싶을 때 호출하는 함수
+    const requestMyPageView = () => {
+        setMyPageViewRequest(prev => prev + 1); // 상태를 변경하여 useEffect를 트리거
+    };
+
     const value = useMemo(() => ({
         user, token, loading, error,
         loginWithGoogle, logout, refreshUser,
-        isAuthenticated: !!user
-    }), [user, token, loading, error, refreshUser]);
+        isAuthenticated: !!user,
+        myPageViewRequest, // 신호 상태
+        requestMyPageView, // 신호 보내기 함수
+    }), [user, token, loading, error, refreshUser, myPageViewRequest]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

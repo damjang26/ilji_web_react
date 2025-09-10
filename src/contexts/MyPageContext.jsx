@@ -8,12 +8,13 @@ import React, {
 import { useAuth } from "../AuthContext";
 import { api } from "../api"; // api import 추가
 
+
 // 1. Context 객체 생성
 const MyPageContext = createContext(null);
 
 // 2. Provider 컴포넌트 생성
 export const MyPageProvider = ({ children }) => {
-  const { user: loggedInUser, refreshUser } = useAuth();
+  const { user: loggedInUser, refreshUser, myPageViewRequest } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,6 +45,14 @@ export const MyPageProvider = ({ children }) => {
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
+
+  // [추가] AuthContext의 신호를 감지하여 isEditing 상태를 false로 되돌리는 useEffect
+  useEffect(() => {
+    // myPageViewRequest가 0이 아닐 때만 (초기 렌더링 방지) 실행
+    if (myPageViewRequest > 0) {
+      handleCancel();
+    }
+  }, [myPageViewRequest]); // myPageViewRequest 값이 바뀔 때마다 실행
 
   const updateProfile = async (profileData, { profileImageFile, bannerImageFile, revertToDefault = {} }) => {
     if (!loggedInUser) {
@@ -93,8 +102,9 @@ export const MyPageProvider = ({ children }) => {
     handleEdit,
     handleCancel,
   };
-
   return <MyPageContext.Provider value={value}>{children}</MyPageContext.Provider>;
+
+
 };
 
 // 3. Custom Hook 생성
