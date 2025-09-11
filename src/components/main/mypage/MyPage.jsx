@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom"; // [추가] useParams import
 import React, { useState, useCallback, useEffect } from "react";
 import ImageBox from "./ImageBox";
 import BannerImageEditor from "./BannerImageEditor.jsx";
+import { followUser, unfollowUser } from "../../../api"; // [추가]
 
 import {
   FeatureBox,
@@ -20,6 +21,7 @@ import {
   UserInfo,
 } from "../../../styled_components/main/mypage/MyPageStyled.jsx";
 import { MyPageProvider, useMyPage } from "../../../contexts/MyPageContext.jsx";
+import { useAuth } from "../../../AuthContext.jsx"; // [추가]
 import { JournalProvider } from "../../../contexts/JournalContext.jsx"; // [추가]
 import JournalList from "./feature/JournalList.jsx";
 import FriendManagementModal from "../../friends/FriendManagementModal.jsx";
@@ -31,21 +33,40 @@ import MyPageSet from "./MyPageSet.jsx"; // Import the component to switch to
 // [되돌리기] MyPageContent의 이름을 MyPage로 변경하고, MyPageWrapper가 이 컴포넌트를 렌더링하도록 구조를 변경합니다.
 const MyPage = () => {
   const { userId } = useParams(); // [추가] URL에서 userId를 가져옵니다.
+  // [수정] AuthContext에서 전역 상태를 가져옵니다.
+  const { user: loggedInUser, following: myFollowing, fetchMyFollowing } = useAuth();
   const {
     profile,
     loading,
     error,
     updateProfile,
     handleEdit,
-    isOwner,
-    isFollowing, // [추가] 팔로우 여부 상태를 가져옵니다.
-    handleFollowToggle, // [추가] 팔로우/언팔로우 실행 함수를 가져옵니다.
   } = useMyPage();
 
-  // [되돌리기] isOwner를 항상 true로 설정합니다. 이제 '나의 마이페이지'만 존재하기 때문입니다.
-  // [수정] isOwner는 이제 Context에서 받아옵니다.
-  // const isOwner = true;
-  // 모달 상태 관리를 위한 state 추가
+  // [수정] isOwner와 isFollowing을 AuthContext와 useParams를 기반으로 계산합니다.
+  const isOwner = !userId || (loggedInUser && loggedInUser.id.toString() === userId);
+  const isFollowing = (myFollowing && Array.isArray(myFollowing))
+      ? myFollowing.some(f => f?.userId?.toString() === userId)
+      : false;
+  // [추가] 팔로우/언팔로우 토글 핸들러
+  const handleFollowToggle = useCallback(async () => {
+    if (!loggedInUser || isOwner) return;
+
+    try {
+      if (isFollowing) {
+        await unfollowUser(userId);
+      } else {
+        await followUser(userId);
+      }
+      // [핵심] API 호출 성공 후, AuthContext의 전역 팔로잉 목록을 새로고침합니다.
+      await fetchMyFollowing();
+    } catch (err) {
+      console.error('팔로우 상태 변경에 실패했습니다.', err);
+      // 필요하다면 사용자에게 에러 메시지를 보여줄 수 있습니다.
+    }
+  }, [isFollowing, userId, loggedInUser, isOwner, fetchMyFollowing]);
+
+    // 모달 상태 관리를 위한 state 추가
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [editingImageType, setEditingImageType] = useState(null);
   const [isFriendModalOpen, setIsFriendModalOpen] = useState(false);
@@ -220,7 +241,7 @@ const MyPage = () => {
         open={isFriendModalOpen}
         onClose={() => setIsFriendModalOpen(false)}
         initialTab={friendModalInitialTab}
-        targetUserId={userId} // [추가] 현재 페이지의 userId를 모달에 전달합니다.
+        // targetUserId는 이제 모달 내부에서 관리되므로 제거합니다.
       />
     </MyPageContainer>
   );
