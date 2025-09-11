@@ -175,7 +175,7 @@ const MyPage = () => {
               ) : (
                 // 친구 페이지일 경우 '팔로우/언팔로우' 버튼을 보여줍니다.
                 <button onClick={handleFollowToggle}>
-                  {isFollowing ? '언팔로우' : '팔로우'}
+                  {isFollowing ? 'following' : 'follow'}
                 </button>
               )}
             </UserActions>

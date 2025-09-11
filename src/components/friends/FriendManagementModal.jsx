@@ -129,9 +129,9 @@ export default function FriendManagementModal({ open, onClose, initialTab }) {
                     <List.Item
                         actions={[
                             isFollowing ? (
-                                <Button onClick={() => handleUnfollow(item.userId)}>언팔로우</Button>
+                                <Button onClick={() => handleUnfollow(item.userId)}>following</Button>
                             ) : (
-                                <Button type="primary" onClick={() => handleFollow(item.userId)}>팔로우</Button>
+                                <Button type="primary" onClick={() => handleFollow(item.userId)}>follow</Button>
                             ),
                         ]}
                     >
