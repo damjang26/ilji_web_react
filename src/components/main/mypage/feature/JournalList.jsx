@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useMemo, useRef, useCallback} from 'react';
 import {useJournal} from "../../../../contexts/JournalContext.jsx";
-import {useAuth} from "../../../../AuthContext.jsx"; // ❗ 사용자 정보(프로필 사진 등)를 가져오기 위해 추가
+import {useMyPage} from "../../../../contexts/MyPageContext.jsx"; // [수정] isOwner 상태를 가져오기 위해 추가
 import {useNavigate, useLocation} from "react-router-dom"; // ✅ 페이지 이동을 위해 추가
 import {
     FeedContainer,
@@ -25,8 +25,8 @@ const JOURNALS_PER_PAGE = 10;
 const JournalList = () => {
     // 1. Context에서 전체 일기 목록(Map)과 로딩 상태를 가져옵니다.
     const {journals, loading: journalLoading, deleteJournal} = useJournal();
-    // 2. 사용자 정보를 가져옵니다 (프로필 사진, 이름 등).
-    const {user} = useAuth();
+    // 2. [수정] MyPageContext에서 현재 페이지의 소유자 여부를 가져옵니다.
+    const {isOwner} = useMyPage();
     const navigate = useNavigate(); // ✅ navigate 함수 가져오기
     const location = useLocation(); // ✅ 모달 네비게이션의 배경 위치를 위해 추가합니다.
 
@@ -144,18 +144,20 @@ const JournalList = () => {
                                     {/* ✅ [수정] 'ilogDate'를 'logDate'로 변경합니다. */}
                                     <span className="date">{new Date(journal.logDate).toLocaleDateString()}</span>
                                 </UserInfo>
-                                {/* ✅ [신규] 수정 및 삭제 아이콘을 담는 컨테이너 */}
-                                <PostHeaderActions>
-                                    {/* ✅ [수정] onClick 핸들러에 handleEdit 함수를 연결합니다. */}
-                                    <button data-tooltip="수정" onClick={() => handleEdit(journal)}>
-                                        <HiPencilAlt/>
-                                    </button>
-                                    {/* ✅ [수정] 'ilogDate'를 'logDate'로 변경합니다. */}
-                                    <button data-tooltip="삭제"
-                                            onClick={() => handleDelete(journal.id, journal.logDate.split('T')[0])}>
-                                        <MdDeleteForever/>
-                                    </button>
-                                </PostHeaderActions>
+                                {/* [수정] isOwner가 true일 때만 수정/삭제 버튼을 보여줍니다. */}
+                                {isOwner && (
+                                    <PostHeaderActions>
+                                        {/* ✅ [수정] onClick 핸들러에 handleEdit 함수를 연결합니다. */}
+                                        <button data-tooltip="수정" onClick={() => handleEdit(journal)}>
+                                            <HiPencilAlt/>
+                                        </button>
+                                        {/* ✅ [수정] 'ilogDate'를 'logDate'로 변경합니다. */}
+                                        <button data-tooltip="삭제"
+                                                onClick={() => handleDelete(journal.id, journal.logDate.split('T')[0])}>
+                                            <MdDeleteForever/>
+                                        </button>
+                                    </PostHeaderActions>
+                                )}
                             </PostHeader>
 
                             <div>

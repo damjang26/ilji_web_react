@@ -20,6 +20,7 @@ import {
   UserInfo,
 } from "../../../styled_components/main/mypage/MyPageStyled.jsx";
 import { MyPageProvider, useMyPage } from "../../../contexts/MyPageContext.jsx";
+import { JournalProvider } from "../../../contexts/JournalContext.jsx"; // [추가]
 import JournalList from "./feature/JournalList.jsx";
 import FriendManagementModal from "../../friends/FriendManagementModal.jsx";
 import MyPageSet from "./MyPageSet.jsx"; // Import the component to switch to
@@ -29,6 +30,7 @@ import MyPageSet from "./MyPageSet.jsx"; // Import the component to switch to
  */
 // [되돌리기] MyPageContent의 이름을 MyPage로 변경하고, MyPageWrapper가 이 컴포넌트를 렌더링하도록 구조를 변경합니다.
 const MyPage = () => {
+  const { userId } = useParams(); // [추가] URL에서 userId를 가져옵니다.
   const {
     profile,
     loading,
@@ -180,7 +182,12 @@ const MyPage = () => {
             </Tab>
           </TabMenuContainer>
           <FeatureContent>
-            {activeTab === "feature1" && <JournalList />}
+            {/* [수정] JournalList를 JournalProvider로 감싸고 userId를 전달합니다. */}
+            {activeTab === "feature1" && (
+              <JournalProvider userId={userId}>
+                <JournalList />
+              </JournalProvider>
+            )}
             {activeTab === "feature2" && <FeatureBox>기능2</FeatureBox>}
             {activeTab === "feature3" && <FeatureBox>기능3</FeatureBox>}
             {activeTab === "feature4" && <FeatureBox>기능4</FeatureBox>}
@@ -213,6 +220,7 @@ const MyPage = () => {
         open={isFriendModalOpen}
         onClose={() => setIsFriendModalOpen(false)}
         initialTab={friendModalInitialTab}
+        targetUserId={userId} // [추가] 현재 페이지의 userId를 모달에 전달합니다.
       />
     </MyPageContainer>
   );

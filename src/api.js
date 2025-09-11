@@ -67,3 +67,10 @@ export const getFriendStatus = (userId) => api.get(`/api/friends/${userId}/statu
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export const searchUsers = (query) => api.get(`/api/users/search?q=${query}`);
+
+/**
+ * [추가] 특정 사용자의 모든 일기(i-log)를 조회합니다.
+ * @param {number} userId - 조회할 사용자의 ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const getUserJournals = (userId) => api.get(`/api/i-log/user/${userId}`);
