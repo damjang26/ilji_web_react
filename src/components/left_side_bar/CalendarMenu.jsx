@@ -44,14 +44,23 @@ const CalendarMenu = () => {
   }, [user]);
 
   const myTags = useMemo(() => tags.filter(tag => tag.owner.userId === user?.id), [tags, user?.id]);
+  const prevLoading = useRef(loading);
 
   useEffect(() => {
-    if (myTags.length > 0 && isInitialTagLoad) {
-      const allMyTagIds = myTags.map((tag) => tag.id);
-      setSelectedTagIds(allMyTagIds);
-      setIsInitialTagLoad(false);
+    const wasLoading = prevLoading.current;
+    // 데이터 로딩이 완료되고(true -> false), 초기 설정이 아직 실행되지 않았을 때 한 번만 실행
+    if (isInitialTagLoad && wasLoading && !loading) {
+      const allMyTagIds = tags
+        .filter(tag => tag.owner.userId === user?.id)
+        .map((tag) => tag.id);
+
+      if (allMyTagIds.length > 0) {
+        setSelectedTagIds(allMyTagIds);
+        setIsInitialTagLoad(false);
+      }
     }
-  }, [myTags, isInitialTagLoad]);
+    prevLoading.current = loading;
+  }, [loading, tags, user, isInitialTagLoad]);
 
   useEffect(() => {
     if (!isInitialTagLoad) {

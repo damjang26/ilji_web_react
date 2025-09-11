@@ -287,6 +287,7 @@ export function ScheduleProvider({children}) {
                     setError(null);
                 } else {
                     setEvents([]);
+                    setCachedEvents([]);
                     setError(null);
                 }
             } catch (err) {
@@ -299,34 +300,13 @@ export function ScheduleProvider({children}) {
         [user]
     ); // user가 바뀔 때마다 이 함수를 재생성합니다.
 
-    // 사용자 정보가 변경될 때, 필터링 없이 전체 일정을 로드합니다.
     useEffect(() => {
-        const fetchSchedules = async () => {
-            // 로그인한 사용자가 없으면, 스케줄 요청을 보내지 않고 기존 데이터를 비웁니다.
-            if (!user) {
-                setEvents([]);
-                setLoading(false);
-                return;
-            }
-
-            setLoading(true);
-            try {
-                // 백엔드가 토큰에서 사용자 정보를 얻으므로 URL에 ID를 포함할 필요가 없습니다.
-                const response = await api.get(`/api/schedules`);
-                const formattedEvents = response.data.map(formatEventForCalendar);
-                setEvents(formattedEvents);
-                setCachedEvents(formattedEvents); // 캐시 업데이트
-                setError(null);
-            } catch (err) {
-                console.error("일정 로딩 실패:", err);
-                setError(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchSchedules();
-    }, [user]); // user 객체가 변경될 때마다 이 useEffect 훅을 다시 실행합니다.
+        if (!user) {
+            setEvents([]);
+            setCachedEvents([]);
+            setLoading(false);
+        }
+    }, [user]);
 
     const addEvent = useCallback(
         async (eventData) => {
