@@ -49,6 +49,7 @@ const PostList = ({posts, loading, hasMore, lastPostElementRef}) => {
     useEffect(() => {
         // 부모로부터 받은 posts 데이터가 변경될 때마다 localPosts를 업데이트합니다.
         setLocalPosts(posts);
+        console.log(posts)
     }, [posts]);
 
     // ✅ [수정] 좋아요 버튼 클릭 핸들러 (API 연동)
@@ -57,9 +58,9 @@ const PostList = ({posts, loading, hasMore, lastPostElementRef}) => {
         setLocalPosts(currentPosts =>
             currentPosts.map(p => {
                 if (p.id === postId) {
-                    const newIsLiked = !p.isLiked;
+                    const newIsLiked = !p.liked;
                     const newLikeCount = newIsLiked ? p.likeCount + 1 : p.likeCount - 1;
-                    return {...p, isLiked: newIsLiked, likeCount: newLikeCount};
+                    return {...p, liked: newIsLiked, likeCount: newLikeCount};
                 }
                 return p;
             })
@@ -67,7 +68,7 @@ const PostList = ({posts, loading, hasMore, lastPostElementRef}) => {
 
         try {
             // 2. 서버에 API 요청을 보냅니다.
-            await toggleLike(postId);
+            await toggleLike(postId, user?.id);
             // 성공 시: 이미 UI가 변경되었으므로 아무것도 하지 않습니다.
         } catch (error) {
             console.error("좋아요 처리 중 오류 발생:", error);
@@ -77,9 +78,9 @@ const PostList = ({posts, loading, hasMore, lastPostElementRef}) => {
                 currentPosts.map(p => {
                     if (p.id === postId) {
                         // isLiked 상태와 likeCount를 원래대로 되돌립니다.
-                        const originalIsLiked = !p.isLiked;
+                        const originalIsLiked = !p.liked;
                         const originalLikeCount = originalIsLiked ? p.likeCount + 1 : p.likeCount - 1;
-                        return {...p, isLiked: originalIsLiked, likeCount: originalLikeCount};
+                        return {...p, liked: originalIsLiked, likeCount: originalLikeCount};
                     }
                     return p;
                 })
@@ -113,7 +114,7 @@ const PostList = ({posts, loading, hasMore, lastPostElementRef}) => {
 
                     return (
                         <PostContainer
-                            key={post.id}
+                            key={`${post.id}-${index}`}
                             ref={isLastElement ? lastPostElementRef : null}
                             onClick={(e) => handlePostClick(e, post)}
                         >
@@ -154,9 +155,10 @@ const PostList = ({posts, loading, hasMore, lastPostElementRef}) => {
                                             handleLikeClick(post.id);
                                         }}
                                         disabled={post.writerId === user?.id}
-                                        aria-label={post.isLiked ? 'Unlike' : 'Like'}
+                                        aria-label={post.liked ? 'Unlike' : 'Like'}
                                     >
-                                        {post.isLiked ? <FaHeart color="red"/> : <FaRegHeart/>}
+                                        {post.liked + ""}
+                                        {post.liked ? <FaHeart color="red"/> : <FaRegHeart/>}
                                     </button>
                                     {post.likeCount > 0 && <span>{post.likeCount}</span>}
                                 </ActionItem>

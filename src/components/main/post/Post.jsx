@@ -26,7 +26,7 @@ const Post = () => {
             const data = response.data;
             console.log("데이터 : ", data);
 
-            setPosts(prevPosts => [...prevPosts, ...data.content]);
+            setPosts(data.content);
             setPage(prevPage => prevPage + 1);
             setHasMore(!data.last);
         } catch (error) {

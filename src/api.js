@@ -77,7 +77,7 @@ export const searchUsers = (query) => api.get(`/api/users/search?q=${query}`);
  * @param {number} ilogId - 좋아요를 토글할 일기의 ID
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
-export const toggleLike = (ilogId) => api.post(`/api/ilogs/${ilogId}/like`);
+export const toggleLike = (ilogId, userId) => api.post(`/api/ilogs/${ilogId}/like`, {userId});
 
 /**
  * 특정 일기에 '좋아요'를 누른 사용자 목록을 조회합니다.
