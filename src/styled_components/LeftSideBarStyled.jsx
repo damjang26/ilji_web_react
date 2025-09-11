@@ -46,15 +46,7 @@ export const MenuItemWrapper = styled.div`
     }
 `;
 
-// 호버 이벤트를 감지할 투명한 영역
-export const HoverTriggerArea = styled.div`
-    position: absolute;
-    top: 180px; // Profile(약 130px) + TabMenu(약 50px) 높이를 고려한 근사치
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 10;
-`;
+
 
 // 알림 눌렀을 때 나오는 사이드바
 export const NotiSidebarWrapper = styled.div`

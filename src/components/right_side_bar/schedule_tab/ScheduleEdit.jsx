@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useTags } from "../../../contexts/TagContext.jsx";
 import { useSchedule } from "../../../contexts/ScheduleContext.jsx";
+import { useAuth } from "../../../AuthContext.jsx";
 import { Select } from "antd";
 import RRuleSummary from "./RRuleSummary.jsx";
 import {
@@ -19,8 +20,14 @@ import {
 const ScheduleEdit = ({item, onSave, tags: tagsFromProp}) => {
     const formRef = useRef(null); // ref 생성
     const { tags: tagsFromContext } = useTags(); // TagContext에서 태그 목록 가져오기
+    const { user } = useAuth();
     const { formData: form, setFormData: setForm, goBackInSidebar, openSidebarForRRule } = useSchedule(); // ✅ Context에서 상태 가져오기
     const tags = tagsFromProp || tagsFromContext; // prop으로 받은 tags가 있으면 사용, 없으면 context의 것 사용
+
+    const myTags = useMemo(() => {
+        if (!user) return [];
+        return tags.filter(tag => tag.owner.userId === user.id);
+    }, [tags, user]);
 
     const set = (k) => (e) => {
         // AntD Select는 event 객체가 아닌 value를 직접 전달하므로, e가 바로 value가 됩니다.
@@ -73,10 +80,10 @@ const ScheduleEdit = ({item, onSave, tags: tagsFromProp}) => {
             }
         };
         onSave(updatedEvent);
-    };
- 
+    }; 
+
     // 태그 선택 옵션을 생성
-    const tagOptions = tags.map(tag => ({
+    const tagOptions = myTags.map(tag => ({
         value: tag.id,
         label: tag.label
     }));
