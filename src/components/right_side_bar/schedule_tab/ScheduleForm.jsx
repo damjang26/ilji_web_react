@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react"; // useState 제거
+import { useEffect, useRef, useMemo } from "react"; // useState 제거
 import { useTags } from "../../../contexts/TagContext.jsx";
 import { useSchedule } from "../../../contexts/ScheduleContext.jsx"; // ✅ useSchedule 훅 import
+import { useAuth } from "../../../AuthContext.jsx";
 import { Select } from "antd"; // AntD Select import
 import RRuleGenerator from "./RRuleGenerator.jsx";
 import RRuleSummary from "./RRuleSummary.jsx";
@@ -22,7 +23,13 @@ const ScheduleForm = ({ tags: tagsFromProp }) => {
     // ✅ [수정] selectedInfo를 추가로 가져와 뷰를 전환하는 데 사용합니다.
     const { formData: form, setFormData: setForm, goBackInSidebar, addEvent, updateEvent, openSidebarForRRule, selectedInfo } = useSchedule();
     const { tags: tagsFromContext } = useTags();
+    const { user } = useAuth();
     const tags = tagsFromProp || tagsFromContext; // prop으로 받은 tags가 있으면 사용, 없으면 context의 것 사용
+
+    const myTags = useMemo(() => {
+        if (!user) return [];
+        return tags.filter(tag => tag.owner.userId === user.id);
+    }, [tags, user]);
 
     // ✅ 2. 내부 상태(useState)와 초기화 로직(useEffect)을 제거합니다.
     //    이제 모든 상태는 ScheduleContext에서 관리합니다.
@@ -67,7 +74,7 @@ const ScheduleForm = ({ tags: tagsFromProp }) => {
             start: finalStart,
             end: finalEnd,
             allDay,
-            // ✅ [버그 수정] rrule이 빈 문자열("")일 경우, FullCalendar가 오류를 발생시키므로 null로 변환합니다.
+            // ✅ [버그 수정] rrule이 빈 문자열("\\")일 경우, FullCalendar가 오류를 발생시키므로 null로 변환합니다.
             rrule: rrule || null,
             extendedProps: {
                 description,
@@ -84,7 +91,7 @@ const ScheduleForm = ({ tags: tagsFromProp }) => {
     };
 
     // 태그 선택 옵션을 생성
-    const tagOptions = tags.map(tag => ({
+    const tagOptions = myTags.map(tag => ({
         value: tag.id,
         label: tag.label
     }));
@@ -173,3 +180,4 @@ const ScheduleForm = ({ tags: tagsFromProp }) => {
 }
 
 export default ScheduleForm;
+

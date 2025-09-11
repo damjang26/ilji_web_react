@@ -11,7 +11,7 @@ import {
   Divider,
 } from "antd";
 import { PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { useTags } from "../../contexts/TagContext.jsx";
+import { useTags, NO_TAG_ID } from "../../contexts/TagContext.jsx";
 import { useSchedule } from "../../contexts/ScheduleContext.jsx";
 import * as S from "../../styled_components/left_side_bar/CalendarMenuStyled.jsx";
 import { getFollowingList } from "../../api.js";
@@ -146,23 +146,26 @@ const CalendarMenu = () => {
       }
     };
 
-    const menuItems = (tag) => [
-      {
-        key: "edit",
-        label: "수정",
-        icon: <EditOutlined />,
-        onClick: () => showEditModal(tag),
-      },
-      {
-        key: "delete",
-        label: "삭제",
-        icon: <DeleteOutlined />,
-        onClick: () => deleteTag(tag.id),
-      },
-    ];
+    const menuItems = (tag) => {
+      if (!isMyTags) return [];
+      return [
+        {
+          key: "edit",
+          label: "수정",
+          icon: <EditOutlined />,
+          onClick: () => showEditModal(tag),
+        },
+        {
+          key: "delete",
+          label: "삭제",
+          icon: <DeleteOutlined />,
+          onClick: () => deleteTag(tag.id),
+        },
+      ];
+    }
 
     return (
-      <S.TagScrollWrapper>
+      <>
         {isMyTags && (
           <S.TagItem>
             <input type="checkbox" checked={areAllSelectedInGroup} onChange={handleSelectAll} style={{ marginRight: '8px' }} />
@@ -172,7 +175,7 @@ const CalendarMenu = () => {
           </S.TagItem>
         )}
         {group.tags.map((tag) => (
-          <Dropdown key={tag.id} menu={{ items: menuItems(tag) }} trigger={["contextMenu"]}>
+          <Dropdown key={tag.id} menu={{ items: menuItems(tag) }} trigger={["contextMenu"]} disabled={!isMyTags || tag.id === NO_TAG_ID}>
             <S.TagItem>
               <input type="checkbox" checked={selectedTagIds.includes(tag.id)} onChange={() => handleTagClick(tag.id)} style={{ marginRight: '8px' }} />
               <S.ColorSquare color={tag.color} />
@@ -180,7 +183,7 @@ const CalendarMenu = () => {
             </S.TagItem>
           </Dropdown>
         ))}
-      </S.TagScrollWrapper>
+      </>
     );
   };
 

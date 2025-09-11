@@ -14,12 +14,7 @@ export const TagListContainer = styled.div`
   // overflow-y: auto; // 스크롤 기능 제거
 `;
 
-// 스크롤이 적용될 태그 목록을 한번 더 감싸는 래퍼
-export const TagScrollWrapper = styled.div`
-  max-height: 140px; // 4개 항목의 높이에 맞춰 최대 높이 제한
-  overflow-y: auto;
-  padding-right: 4px; // 스크롤바 공간 확보
-`;
+
 
 export const FriendSelectContainer = styled.div`
   padding: 8px 16px; // 좌우 여백 추가

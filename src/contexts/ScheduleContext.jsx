@@ -15,6 +15,7 @@ import styled from "styled-components";
 import {api} from "../api"; // axios 대신 우리가 만든 api 인스턴스를 가져옵니다.
 import ConfirmModal from "../components/common/ConfirmModal.jsx";
 import {useAuth} from "../AuthContext.jsx";
+import {NO_TAG_ID} from "./TagContext.jsx";
 
 const ModalWrapper = styled.div`
     /*
@@ -38,7 +39,7 @@ export const useSchedule = () => {
 /**
  * 새 일정을 위한 초기 데이터를 폼 상태로 변환합니다.
  */
-const transformInitialDataToFormState = (initialData) => {
+const transformInitialDataToFormState = (initialData, user) => {
     if (!initialData) return null;
     const startDateStr = (initialData.startStr || new Date().toISOString()).split(
         "T"
@@ -64,8 +65,7 @@ const transformInitialDataToFormState = (initialData) => {
         startTime: "09:00",
         endDate: endDateStr,
         endTime: "10:00",
-        calendarId: 1,
-        rrule: "", // ✅ 반복 규칙 필드 초기화
+        calendarId: user ? user.id : 1, // ✅ 반복 규칙 필드 초기화
     };
 };
 
@@ -175,7 +175,7 @@ export function ScheduleProvider({children}) {
             extendedProps: {
                 description: event.description,
                 location: event.location,
-                tagId: event.tagId, // `tags`가 아닌 `tagId`를 매핑합니다.
+                tagId: event.tagId || NO_TAG_ID, // `tags`가 아닌 `tagId`를 매핑합니다.
                 calendarId: event.calendarId,
             },
         };
@@ -277,7 +277,8 @@ export function ScheduleProvider({children}) {
             try {
                 if (tagIds && tagIds.length > 0) {
                     const params = new URLSearchParams();
-                    params.append("tagIds", tagIds.join(","));
+                    const apiTagIds = tagIds.map(id => id === NO_TAG_ID ? 'null' : id);
+                    params.append("tagIds", apiTagIds.join(","));
                     const url = `/api/schedules?${params.toString()}`;
                     const response = await api.get(url);
                     const formattedEvents = response.data.map(formatEventForCalendar);
@@ -347,7 +348,7 @@ export function ScheduleProvider({children}) {
                 calendarId: eventData.extendedProps.calendarId || 1,
                 title: eventData.title,
                 location: eventData.extendedProps.location,
-                tagId: eventData.extendedProps.tagId, // tags -> tagId로 수정
+                tagId: eventData.extendedProps.tagId === NO_TAG_ID ? null : eventData.extendedProps.tagId, // tags -> tagId로 수정
                 description: eventData.extendedProps.description,
                 startTime: formatDateTimeForBackend(
                     eventData.start,
@@ -385,12 +386,18 @@ export function ScheduleProvider({children}) {
 
     const updateEvent = useCallback(
         async (eventData) => {
+            const eventToUpdate = events.find(e => String(e.id) === String(eventData.id));
+            if (eventToUpdate && eventToUpdate.extendedProps.calendarId !== user.id) {
+                message.error('자신이 생성한 일정만 수정할 수 있습니다.');
+                return;
+            }
+
             try {
                 const requestData = {
                     calendarId: eventData.extendedProps.calendarId,
                     title: eventData.title,
                     location: eventData.extendedProps.location,
-                    tagId: eventData.extendedProps.tagId,
+                    tagId: eventData.extendedProps.tagId === NO_TAG_ID ? null : eventData.extendedProps.tagId,
                     description: eventData.extendedProps.description,
                     startTime: formatDateTimeForBackend(
                         eventData.start,
@@ -413,17 +420,23 @@ export function ScheduleProvider({children}) {
                 console.error("일정 업데이트 실패:", err);
             }
         },
-        [events]
+        [events, user]
     );
 
     const deleteEvent = useCallback(async (eventId) => {
+        const eventToDelete = events.find(e => String(e.id) === String(eventId));
+        if (eventToDelete && eventToDelete.extendedProps.calendarId !== user.id) {
+            message.error('자신이 생성한 일정만 삭제할 수 있습니다.');
+            return;
+        }
+
         try {
             setEvents((prev) => prev.filter((e) => String(e.id) !== String(eventId)));
             await api.delete(`/api/schedules/${eventId}`);
         } catch (err) {
             console.error("일정 삭제 실패:", err);
         }
-    }, [events]);
+    }, [events, user]);
     // --- UI 제어 함수 ---
 
     // 사이드바 관련 함수들
@@ -436,8 +449,8 @@ export function ScheduleProvider({children}) {
     const openSidebarForNew = useCallback((dateInfo) => {
         setSelectedInfo({type: "new", data: dateInfo});
         setIsSidebarOpen(true);
-        setFormData(transformInitialDataToFormState(dateInfo)); // ✅ 새 일정 폼 데이터 설정
-    }, []);
+        setFormData(transformInitialDataToFormState(dateInfo, user)); // ✅ 새 일정 폼 데이터 설정
+    }, [user]);
 
     const openSidebarForDetail = useCallback((event) => {
         setSelectedInfo({type: "detail", data: event});

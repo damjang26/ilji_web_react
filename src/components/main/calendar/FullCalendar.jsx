@@ -15,6 +15,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import {useSchedule} from "../../../contexts/ScheduleContext.jsx";
 import {useTags} from "../../../contexts/TagContext.jsx";
 import {useJournal} from "../../../contexts/JournalContext.jsx";
+import {useAuth} from "../../../AuthContext.jsx";
 import {FaBookOpen, FaTrash, FaShareAlt} from "react-icons/fa"; // 팝오버 아이콘
 import {
     LuBookPlus,
@@ -83,17 +84,34 @@ export default function FullCalendarExample() {
         }
     };
 
+    const { user } = useAuth();
+
     const coloredEvents = useMemo(() => {
-        if (tags.length === 0) return events;
+        if (tags.length === 0) return events.map(event => ({
+            ...event,
+            editable: user && user.id === event.extendedProps.calendarId
+        }));
 
         const tagColorMap = new Map(tags.map((tag) => [tag.id, tag.color]));
+        const DEFAULT_COLOR = "#808080"; // 기본 색상 (회색)
 
         return events.map((event) => {
             const tagId = event.extendedProps?.tagId;
-            const color = tagColorMap.get(tagId) || "#cccccc";
-            return {...event, backgroundColor: color, borderColor: color};
+            
+            // 태그가 존재하지 않는 경우(tagId가 null 또는 undefined) 기본 색상 적용
+            const color = tagId ? tagColorMap.get(tagId) || DEFAULT_COLOR : DEFAULT_COLOR;
+
+            const isOwner = user && user.id === event.extendedProps.calendarId;
+            return {
+                ...event,
+                backgroundColor: color,
+                borderColor: color,
+                editable: isOwner,
+                startEditable: isOwner,
+                durationEditable: isOwner,
+            };
         });
-    }, [events, tags]);
+    }, [events, tags, user]);
 
     // 초기 로딩 시에만 전체 로딩 화면을 표시합니다.
     // (로딩 중이면서, 아직 이벤트가 하나도 없을 때)

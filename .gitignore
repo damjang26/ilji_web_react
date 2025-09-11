@@ -26,4 +26,3 @@ dist-ssr
 # Environment variables
 .env
 src/main/resources/firebase-config.json
->>>>>>> a23de52a0ef7c619af3693d5f840e6b2e43e3919

@@ -9,7 +9,6 @@ import {
     SidebarContainer,
     NotiSidebarWrapper,
     Overlay,
-    HoverTriggerArea,
 } from "../styled_components/LeftSideBarStyled.jsx";
 
 
@@ -38,17 +37,18 @@ const LeftSideBar = () => {
     return (
         <>
             <SidebarContainer onMouseDown={(e) => e.stopPropagation()}>
-                <MenuItemsContainer>
-                    <MenuItemWrapper style={{ flexShrink: 0 }}><Profile/></MenuItemWrapper>
+                <MenuItemsContainer 
+                    onMouseLeave={() => setIsTagAreaHovered(false)}
+                >
+                    <MenuItemWrapper style={{ flexShrink: 0 }} onMouseEnter={() => setIsTagAreaHovered(false)}><Profile/></MenuItemWrapper>
                     
                     <MenuItemWrapper style={{ flexShrink: 0 }} $isCollapsed={isTagAreaHovered}>
                         <TabMenu toggleButtonRef={toggleButtonRef} onToggle={() => setNotiOpen(!isNotiOpen)}/>
                     </MenuItemWrapper>
-                    
+
                     <MenuItemWrapper 
                         style={{ flexGrow: 1, overflow: 'hidden' }}
                         onMouseEnter={() => setIsTagAreaHovered(true)}
-                        onMouseLeave={() => setIsTagAreaHovered(false)}
                     >
                         <CalendarMenu />
                     </MenuItemWrapper>
