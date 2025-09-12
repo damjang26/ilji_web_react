@@ -14,7 +14,7 @@ import { useDebounce } from "../../hooks/useDebounce";
 const { TabPane } = Tabs;
 const { Search } = Input;
 
-export default function FriendManagementModal({ open, onClose, initialTab }) {
+export default function FriendManagementModal({ open, onClose, initialTab, targetUserId }) {
     const navigate = useNavigate();
     const { user: loggedInUser, following: myFollowing, fetchMyFollowing } = useAuth();
 
@@ -28,12 +28,12 @@ export default function FriendManagementModal({ open, onClose, initialTab }) {
 
     const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-    const fetchLists = useCallback(async () => {
+    const fetchLists = useCallback(async (userId) => {
         setLoading(true);
         try {
             const [followingRes, followersRes] = await Promise.all([
-                getFollowingList(),
-                getFollowersList(),
+                getFollowingList(userId),
+                getFollowersList(userId),
             ]);
             setFollowingList(followingRes.data);
             setFollowerList(followersRes.data);
@@ -43,14 +43,15 @@ export default function FriendManagementModal({ open, onClose, initialTab }) {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, []); // Dependencies are empty as the function now relies on its argument.
 
     useEffect(() => {
         if (open) {
-            fetchLists();
-            fetchMyFollowing();
+            // Fetch lists for the specific user (or the logged-in user if targetUserId is null)
+            fetchLists(targetUserId);
+            fetchMyFollowing(); // Always refresh the logged-in user's following status
         }
-    }, [open, fetchLists, fetchMyFollowing]);
+    }, [open, targetUserId, fetchLists, fetchMyFollowing]);
 
     useEffect(() => {
         setActiveTab(initialTab);
@@ -80,7 +81,8 @@ export default function FriendManagementModal({ open, onClose, initialTab }) {
         try {
             await followUser(targetUserId);
             message.success("팔로우했습니다.");
-            fetchLists();
+            // Refresh the list for the currently viewed user
+            fetchLists(targetUserId);
             fetchMyFollowing();
         } catch (error) {
             console.error("Follow failed:", error);
@@ -92,7 +94,8 @@ export default function FriendManagementModal({ open, onClose, initialTab }) {
         try {
             await unfollowUser(targetUserId);
             message.success("언팔로우했습니다.");
-            fetchLists();
+            // Refresh the list for the currently viewed user
+            fetchLists(targetUserId);
             fetchMyFollowing();
         } catch (error) {
             console.error("Unfollow failed:", error);
@@ -110,8 +113,12 @@ export default function FriendManagementModal({ open, onClose, initialTab }) {
             loading={loading || isSearching}
             itemLayout="horizontal"
             dataSource={users}
+            locale={{ emptyText: "표시할 사용자가 없습니다." }}
             renderItem={(item) => {
-                const isFollowing = myFollowing.some((f) => f.userId === item.userId);
+                // Add a safeguard to prevent runtime errors if myFollowing is not yet an array
+                const isFollowing = Array.isArray(myFollowing)
+                    ? myFollowing.some((f) => f.userId === item.userId)
+                    : false;
 
                 if (loggedInUser && item.userId === loggedInUser.id) {
                     return (
@@ -120,7 +127,7 @@ export default function FriendManagementModal({ open, onClose, initialTab }) {
                                 avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}
                                                 onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }} />
                                 }
-                                title={<a onClick={() => handleProfileClick(item.userId)}>{item.name} (나)</a>}
+                                title={<a onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }}>{item.name} (나)</a>}
                                 description={item.email}
                             />
                         </List.Item>
@@ -131,9 +138,9 @@ export default function FriendManagementModal({ open, onClose, initialTab }) {
                     <List.Item
                         actions={[
                             isFollowing ? (
-                                <Button onClick={() => handleUnfollow(item.userId)}>following</Button>
+                                <Button onClick={() => handleUnfollow(item.userId)}>언팔로우</Button>
                             ) : (
-                                <Button type="primary" onClick={() => handleFollow(item.userId)}>follow</Button>
+                                <Button type="primary" onClick={() => handleFollow(item.userId)}>팔로우</Button>
                             ),
                         ]}
                     >
@@ -141,7 +148,7 @@ export default function FriendManagementModal({ open, onClose, initialTab }) {
                             avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}
                                             onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }}/>
                             }
-                            title={<a onClick={() => handleProfileClick(item.userId)}>{item.name}</a>}
+                            title={<a onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }}>{item.name}</a>}
                             description={item.email}
                         />
                     </List.Item>
@@ -153,8 +160,8 @@ export default function FriendManagementModal({ open, onClose, initialTab }) {
     return (
         <Modal
             title="친구 목록"
-            open={open}  // open 상태에 따라 모달이 열리고 닫힙니다.
-            onCancel={onClose}  // X 버튼 클릭시 모달 닫기
+            open={open}
+            onCancel={onClose}
             footer={null}
             width={400}
         >

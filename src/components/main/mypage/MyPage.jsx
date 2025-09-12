@@ -241,7 +241,8 @@ const MyPage = () => {
         open={isFriendModalOpen}
         onClose={() => setIsFriendModalOpen(false)}
         initialTab={friendModalInitialTab}
-        // targetUserId는 이제 모달 내부에서 관리되므로 제거합니다.
+        // [수정] 현재 보고 있는 페이지의 userId를 targetUserId prop으로 전달합니다.
+        targetUserId={userId}
       />
     </MyPageContainer>
   );
