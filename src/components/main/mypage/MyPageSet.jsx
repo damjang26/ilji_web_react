@@ -38,10 +38,8 @@ const MyPageSet = () => {
 
     // 2. 이 컴포넌트의 폼 입력을 위한 '로컬 상태'를 만들기
     const [localProfile, setLocalProfile] = useState(null);
-
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingImageType, setEditingImageType] = useState(null); // 'profileImage' 또는 'bannerImage'
-
     // [추가] 닉네임 중복 확인을 위한 상태
     const [isCheckingNickname, setIsCheckingNickname] = useState(false); // '중복 확인' 버튼 로딩 상태
     const [isNicknameChecked, setIsNicknameChecked] = useState(true); // 닉네임이 변경되지 않았으면 기본적으로 '확인된' 상태로 간주
@@ -101,7 +99,6 @@ const MyPageSet = () => {
             setIsModalOpen(false); // 성공 시 모달 닫기
         } catch (err) {
             console.error("이미지 업데이트 실패:", err);
-            // Context에서 alert를 이미 띄워주므로 여기서는 추가 작업이 필요 없음
         }
     };
 
@@ -111,7 +108,6 @@ const MyPageSet = () => {
             alert('사용자 정보가 없어 저장할 수 없습니다.');
             return;
         }
-
         // [추가] 닉네임이 변경되었지만 중복 확인을 하지 않은 경우
         if (localProfile.nickname !== originalNickname && !isNicknameChecked) {
             message.warning('변경된 닉네임의 중복 확인을 해주세요.');
@@ -131,7 +127,6 @@ const MyPageSet = () => {
             };
             // 텍스트 정보만 업데이트하므로 두 번째 인자는 빈 객체({})
             await updateProfile(profileDataForServer, {});
-
             alert('프로필이 성공적으로 업데이트되었습니다.');
             // 저장 성공 시 updateProfile 함수가 내부적으로 isEditing을 false로 바꾸므로 추가 작업 불필요
         } catch (err) {
@@ -139,9 +134,7 @@ const MyPageSet = () => {
         }
     };
 
-    /**
-     * [추가] 닉네임 중복 확인 API를 호출하는 함수
-     */
+    /*** [추가] 닉네임 중복 확인 API를 호출하는 함수*/
     const handleCheckDuplicate = async () => {
         const newNickname = localProfile.nickname;
 
@@ -149,10 +142,8 @@ const MyPageSet = () => {
             message.warning('닉네임을 입력해주세요.');
             return;
         }
-
         setIsCheckingNickname(true);
         try {
-            // [수정] 이제 try-catch 구문으로 성공/실패를 판단합니다.
             await api.get(`/api/user/profile/check-nickname?nickname=${newNickname}`);
             // 성공(200 OK) 시: catch 블록을 건너뛰고 이 코드가 실행됩니다.
             message.success('사용 가능한 닉네임입니다.');
