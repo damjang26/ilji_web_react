@@ -117,7 +117,9 @@ export default function FriendManagementModal({ open, onClose, initialTab }) {
                     return (
                         <List.Item>
                             <List.Item.Meta
-                                avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`} />}
+                                avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}
+                                                onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }} />
+                                }
                                 title={<a onClick={() => handleProfileClick(item.userId)}>{item.name} (나)</a>}
                                 description={item.email}
                             />
@@ -136,7 +138,9 @@ export default function FriendManagementModal({ open, onClose, initialTab }) {
                         ]}
                     >
                         <List.Item.Meta
-                            avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`} />}
+                            avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}
+                                            onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }}/>
+                            }
                             title={<a onClick={() => handleProfileClick(item.userId)}>{item.name}</a>}
                             description={item.email}
                         />
