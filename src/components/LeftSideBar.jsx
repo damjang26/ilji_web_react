@@ -10,12 +10,24 @@ import {
     NotiSidebarWrapper,
     Overlay,
 } from "../styled_components/LeftSideBarStyled.jsx";
+import NotificationsPanel from "./left_side_bar/NotificationsPanel.jsx"; // 경로는 프로젝트 구조에 맞춰 조정
+import { useNotifications } from "../contexts/NotificationsContext.jsx"; // 경로 조정
 
 
 const LeftSideBar = () => {
     const [isNotiOpen, setNotiOpen] = useState(false);
     const notiSidebarRef = useRef(null);
     const toggleButtonRef = useRef(null);
+
+    // ✅ Context에서 알림 데이터/액션 가져오기
+    const {
+        notifications,
+        markAllRead,
+        deleteAll,
+        markRead,
+        deleteOne,
+        loading,
+    } = useNotifications();
 
     useEffect(() => {
         const handleClickOutside = (e) => {
@@ -49,9 +61,23 @@ const LeftSideBar = () => {
             {ReactDOM.createPortal(
                 <>
                     <Overlay open={isNotiOpen} onClick={() => setNotiOpen(false)}/>
-                    <NotiSidebarWrapper ref={notiSidebarRef} open={isNotiOpen} onMouseDown={(e) => e.stopPropagation()}>
-                        <h2>Notifications</h2>
-                        <p>여기에 내용 넣기</p>
+                    <NotiSidebarWrapper
+                        ref={notiSidebarRef}
+                        open={isNotiOpen}
+                        onMouseDown={(e) => e.stopPropagation()}
+                    >
+                        {/* 로딩 표시가 필요하면 간단하게 처리 */}
+                        {loading ? (
+                            <div style={{ padding: "16px" }}>불러오는 중…</div>
+                        ) : (
+                            <NotificationsPanel
+                                items={notifications}                 // 최신순 정렬은 Context에서 보장
+                                onMarkAllRead={markAllRead}
+                                onDeleteAll={deleteAll}
+                                onItemRead={markRead}
+                                onItemDelete={deleteOne}
+                            />
+                        )}
                     </NotiSidebarWrapper>
                 </>,
                 document.body

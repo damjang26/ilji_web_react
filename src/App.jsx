@@ -13,6 +13,7 @@ import {JournalProvider} from "./contexts/JournalContext.jsx";
 import JournalViewModal from "./components/main/journal/JournalViewModal.jsx";
 import { ScheduleProvider } from "./contexts/ScheduleContext.jsx";
 import { TagProvider } from "./contexts/TagContext.jsx";
+import { NotificationsProvider } from "./contexts/NotificationsContext.jsx";
 
 const AppWrapper = styled.div`
     display: flex;
@@ -84,7 +85,9 @@ export default function App() {
                 <JournalProvider>
                     <ScheduleProvider>
                         <TagProvider>
-                            <AppContent/>
+                            <NotificationsProvider>
+                                <AppContent/>
+                            </NotificationsProvider>
                         </TagProvider>
                     </ScheduleProvider>
                 </JournalProvider>
