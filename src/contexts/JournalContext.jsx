@@ -1,5 +1,5 @@
 import React, {createContext, useState, useContext, useCallback, useEffect} from 'react';
-import {api} from '../api'; // ❗ axios 대신, 인터셉터가 설정된 공용 api 인스턴스를 사용합니다.
+import {api, getUserJournals} from '../api'; // ❗ getUserJournals 함수를 import 합니다.
 import {useAuth} from "../AuthContext.jsx";
 
 const JournalContext = createContext(null);
@@ -12,7 +12,9 @@ export const useJournal = () => {
     return context;
 };
 
-export const JournalProvider = ({children}) => {
+// [수정] userId prop을 받도록 변경합니다.
+// 이 userId는 조회하려는 대상의 ID입니다. 없으면 '나'를 의미합니다.
+export const JournalProvider = ({children, userId}) => {
     // 실제 DB와 연동하므로, 초기 상태는 비어있는 Map으로 시작합니다.
     // 나중에 조회 기능을 구현하면, 이 상태는 API를 통해 불러온 데이터로 채워집니다.
     const [journals, setJournals] = useState(new Map());
@@ -21,36 +23,44 @@ export const JournalProvider = ({children}) => {
     const {user} = useAuth(); // 인증 컨텍스트에서 사용자 정보를 가져옵니다.
 
     // --- [신규] 일기 데이터 조회 로직 ---
-    // user 정보가 변경될 때 (로그인/로그아웃 시) 이 useEffect가 실행됩니다.
+    // [수정] user 또는 조회 대상 userId가 변경될 때 이 useEffect가 실행됩니다.
     useEffect(() => {
         const fetchJournals = async () => {
-            // 로그인한 사용자가 없으면, 데이터를 비우고 함수를 종료합니다.
-            if (!user) {
+            // [수정] 조회 대상이 '나'인데 로그인을 안했으면 데이터를 비우고 종료합니다.
+            if (!userId && !user) {
                 setJournals(new Map());
                 setLoading(false);
                 return;
             }
 
             setLoading(true);
+            setError(null);
             try {
-                // ❗ 백엔드에 현재 로그인한 유저의 모든 일기를 반환하는 API가 있다고 가정합니다.
-                const response = await api.get('/api/i-log');
+                let response;
+                // [수정] userId가 있으면 친구의 일기를, 없으면 내 일기를 조회합니다.
+                if (userId) {
+                    response = await getUserJournals(userId);
+                } else {
+                    response = await api.get('/api/i-log');
+                }
+
                 const userJournals = response.data; // [{...}, {...}] 형태의 배열
 
                 // 배열을 Map으로 변환하여 상태를 업데이트합니다. key는 날짜, value는 일기 객체입니다.
-                const journalsMap = new Map(userJournals.map(j => [j.ilogDate.split('T')[0], j]));
+                // ✅ [수정] 백엔드 응답 필드명 변경에 따라 'ilogDate'를 'logDate'로 수정합니다.
+                const journalsMap = new Map(userJournals.map(j => [j.logDate.split('T')[0], j]));
                 setJournals(journalsMap);
-                setError(null);
             } catch (err) {
                 console.error("일기 목록 로딩 실패:", err);
                 setError(err);
+                setJournals(new Map()); // 에러 발생 시 목록을 비웁니다.
             } finally {
                 setLoading(false);
             }
         };
 
         fetchJournals();
-    }, [user]); // user 객체가 변경될 때마다 이 로직을 다시 실행합니다.
+    }, [user, userId]); // [수정] user 또는 userId가 변경될 때마다 이 로직을 다시 실행합니다.
 
     /**
      * 서버에 새로운 일기를 생성하는 함수 (이미지 업로드 포함)
@@ -58,7 +68,7 @@ export const JournalProvider = ({children}) => {
      */
         // ✅ [수정] 백엔드에서 이미지와 데이터를 한번에 처리하도록 로직 변경
     const createJournalEntry = useCallback(async (journalPayload) => {
-            const {images, content, selectedDate, isPrivate} = journalPayload;
+            const {images, content, logDate, isPrivate} = journalPayload;
 
             // --- 1단계: 서버에 보낼 FormData 객체 생성 ---
             const formData = new FormData();
@@ -74,8 +84,8 @@ export const JournalProvider = ({children}) => {
             // 일기 데이터(JSON)를 formData에 추가합니다.
             // 백엔드의 ILogCreateRequest DTO와 필드를 맞춥니다.
             const requestData = {
-                userId: user.id,
-                ilogDate: new Date(selectedDate).toISOString().split('T')[0], // DTO 필드명 'ilogDate'에 맞춤
+                writerId: user.id,
+                logDate: new Date(logDate).toISOString().split('T')[0], // ✅ [수정] DTO 필드명 'logDate'에 맞춤
                 content: content,
                 visibility: isPrivate ? 2 : 0,
             };
@@ -94,7 +104,9 @@ export const JournalProvider = ({children}) => {
             setJournals(prev => {
                 const newJournals = new Map(prev);
                 // 서버 응답에 있는 날짜(newJournalEntry.ilogDate)를 사용하는 것이 더 안전합니다.
-                newJournals.set(newJournalEntry.ilogDate, newJournalEntry);
+                // ✅ [개선] Map의 key는 'YYYY-MM-DD' 형식이므로, 응답 데이터의 날짜도 형식을 통일해줍니다.
+                const dateKey = newJournalEntry.logDate.split('T')[0];
+                newJournals.set(dateKey, newJournalEntry);
                 return newJournals;
             });
 
@@ -141,7 +153,9 @@ export const JournalProvider = ({children}) => {
         // ✅ [수정 로직] 로컬 상태(Map)를 업데이트합니다.
         setJournals(prev => {
             const newJournals = new Map(prev);
-            newJournals.set(updatedJournalEntry.ilogDate.split('T')[0], updatedJournalEntry);
+            // ✅ [수정] 백엔드 응답 필드명 변경에 따라 'ilogDate'를 'logDate'로 수정합니다.
+            const dateKey = updatedJournalEntry.logDate.split('T')[0];
+            newJournals.set(dateKey, updatedJournalEntry);
             return newJournals;
         });
 

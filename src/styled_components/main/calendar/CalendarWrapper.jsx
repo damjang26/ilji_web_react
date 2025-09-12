@@ -1,7 +1,7 @@
 import styled, {keyframes} from "styled-components";
 
 export const CalendarWrapper = styled.div`
-
+    position: relative; // 스피너 오버레이를 위한 기준점
     flex-grow: 1; /* 남는 공간 모두 채움 */
     display: flex;
     flex-direction: column;

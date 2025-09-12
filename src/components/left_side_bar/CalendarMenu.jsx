@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Collapse,
   Select,
@@ -8,247 +8,261 @@ import {
   Dropdown,
   ColorPicker,
   Spin,
+  Divider,
 } from "antd";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
-import { useTags } from "../../contexts/TagContext.jsx";
-import { useSchedule } from "../../contexts/ScheduleContext.jsx"; // ScheduleContext 훅 import
+import { PlusOutlined, DeleteOutlined, EditOutlined, MoreOutlined } from "@ant-design/icons";
+import { useTags, NO_TAG_ID } from "../../contexts/TagContext.jsx";
+import { useSchedule } from "../../contexts/ScheduleContext.jsx";
 import * as S from "../../styled_components/left_side_bar/CalendarMenuStyled.jsx";
-
-const sampleGroups = [
-  { id: "g1", name: "프로젝트 A팀" },
-  { id: "g2", name: "스터디 그룹" },
-  { id: "g3", name: "가족" },
-];
-
-const groupOptions = [
-  { value: "", label: "모든 그룹" },
-  ...sampleGroups.map((group) => ({
-    value: group.id,
-    label: group.name,
-  })),
-];
-
-// --- Component ---
+import { getFollowingList } from "../../api.js";
+import { useAuth } from "../../AuthContext.jsx";
 
 const CalendarMenu = () => {
-  const { tags, addTag, deleteTag, loading } = useTags();
-  const { fetchSchedulesByTags, restoreCachedEvents } = useSchedule();
+  const { user } = useAuth();
+  const { tags, addTag, deleteTag, updateTag, loading, addFriendTags, removeFriendTags } = useTags();
+  const { fetchSchedulesByTags } = useSchedule();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState('add');
+  const [editingTag, setEditingTag] = useState(null);
   const [selectedTagIds, setSelectedTagIds] = useState([]);
   const [isInitialTagLoad, setIsInitialTagLoad] = useState(true);
+  const [followingList, setFollowingList] = useState([]);
+  const [selectedFriends, setSelectedFriends] = useState([]);
   const [form] = Form.useForm();
 
-  // 1. 태그 목록 첫 로드 시, 모든 태그를 선택하고 일정을 가져옵니다.
   useEffect(() => {
-    if (tags.length > 0 && isInitialTagLoad && fetchSchedulesByTags) {
-      const allTagIds = tags.map((tag) => tag.id);
-      setSelectedTagIds(allTagIds);
-      fetchSchedulesByTags(allTagIds, { showLoading: true }); // 초기 로드는 로딩 표시
-      setIsInitialTagLoad(false);
+    const fetchFriends = async () => {
+      try {
+        const response = await getFollowingList();
+        setFollowingList(response.data);
+      } catch (error) {
+        console.error("Failed to fetch following list:", error);
+      }
+    };
+    if(user) fetchFriends();
+  }, [user]);
+
+  const myTags = useMemo(() => tags.filter(tag => tag.owner.userId === user?.id), [tags, user?.id]);
+  const prevLoading = useRef(loading);
+
+  useEffect(() => {
+    const wasLoading = prevLoading.current;
+    // 데이터 로딩이 완료되고(true -> false), 초기 설정이 아직 실행되지 않았을 때 한 번만 실행
+    if (isInitialTagLoad && wasLoading && !loading) {
+      const allMyTagIds = tags
+        .filter(tag => tag.owner.userId === user?.id)
+        .map((tag) => tag.id);
+
+      if (allMyTagIds.length > 0) {
+        setSelectedTagIds(allMyTagIds);
+        setIsInitialTagLoad(false);
+      }
     }
-  }, [tags, isInitialTagLoad, fetchSchedulesByTags]);
+    prevLoading.current = loading;
+  }, [loading, tags, user, isInitialTagLoad]);
 
-  // 2. '전체 선택' 체크박스의 상태를 파생합니다.
-  const isAllSelected = tags.length > 0 && selectedTagIds.length === tags.length;
-
-  // 3. '전체 선택' 클릭 핸들러를 수정합니다.
-  const handleSelectAllClick = () => {
-    if (isAllSelected) {
-      // 전체 선택 해제: UI를 즉시 업데이트하고, 서버에 변경 사항을 알립니다.
-      setSelectedTagIds([]);
-      fetchSchedulesByTags([], { showLoading: true }); // 빈 배열로 호출하여 일정을 지웁니다.
-    } else {
-      // 전체 선택 (옵티미스틱 업데이트):
-      // 1. 캐시된 데이터로 UI를 즉시 복원합니다.
-      restoreCachedEvents();
-      // 2. 체크박스 상태를 업데이트합니다.
-      const allTagIds = tags.map((tag) => tag.id);
-      setSelectedTagIds(allTagIds);
-      // 3. 백그라운드에서 최신 데이터를 조용히 가져옵니다.
-      fetchSchedulesByTags(allTagIds, { showLoading: false });
+  useEffect(() => {
+    if (!isInitialTagLoad) {
+      fetchSchedulesByTags(selectedTagIds, { showLoading: true });
     }
-  };
+  }, [selectedTagIds, isInitialTagLoad, fetchSchedulesByTags]);
 
-  // 4. 개별 태그 클릭 핸들러를 수정합니다.
   const handleTagClick = (tagId) => {
-    const newSelectedIds = selectedTagIds.includes(tagId)
-      ? selectedTagIds.filter((id) => id !== tagId)
-      : [...selectedTagIds, tagId];
-
-    setSelectedTagIds(newSelectedIds);
-    fetchSchedulesByTags(newSelectedIds, { showLoading: true }); // 개별 변경은 로딩 표시
+    setSelectedTagIds(prev => 
+      prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
+    );
   };
 
-  // --- 그룹 변경 핸들러 ---
-  const handleGroupChange = (value) => {
-    console.log(`Group selected:`, value);
+  const handleFriendSelectionChange = (selectedFriendIds) => {
+    const newlySelected = selectedFriendIds.filter(id => !selectedFriends.includes(id));
+    const newlyDeselected = selectedFriends.filter(id => !selectedFriendIds.includes(id));
+
+    newlySelected.forEach(friendId => {
+      const friend = followingList.find(f => f.userId === friendId);
+      if (friend) addFriendTags(friend);
+    });
+
+    newlyDeselected.forEach(friendId => {
+      removeFriendTags(friendId);
+      const friendTagsToRemove = tags.filter(tag => tag.owner.userId === friendId).map(t => t.id);
+      setSelectedTagIds(prev => prev.filter(id => !friendTagsToRemove.includes(id)));
+    });
+
+    setSelectedFriends(selectedFriendIds);
   };
 
-  // --- 모달 관련 핸들러 ---
-  const showModal = () => {
+  const showAddModal = () => {
+    setModalMode('add');
+    setEditingTag(null);
+    form.resetFields();
+    setIsModalOpen(true);
+  };
+
+  const showEditModal = (tag) => {
+    setModalMode('edit');
+    setEditingTag(tag);
+    form.setFieldsValue({
+      label: tag.label,
+      color: tag.color,
+      scope: tag.visibility,
+    });
     setIsModalOpen(true);
   };
 
   const handleOk = () => {
-    form
-      .validateFields()
-      .then(async (values) => {
-        const colorValue =
-          typeof values.color === "object" && values.color !== null
-            ? values.color.toHexString()
-            : values.color;
+    form.validateFields().then(async (values) => {
+      const colorValue = typeof values.color === 'object' && values.color !== null ? values.color.toHexString() : values.color;
+      const payload = {
+        label: values.label,
+        color: colorValue,
+        visibility: values.scope,
+      };
 
-        const newTagPayload = {
-          label: values.label,
-          color: colorValue,
-        };
-        await addTag(newTagPayload);
-        form.resetFields();
-        setIsModalOpen(false);
-      })
-      .catch((info) => {
-        console.log("Validate Failed:", info);
-      });
+      if (modalMode === 'add') {
+        await addTag(payload);
+      } else {
+        await updateTag(editingTag.id, payload);
+      }
+      
+      setIsModalOpen(false);
+      form.resetFields();
+    }).catch(info => console.log("Validate Failed:", info));
   };
 
-  const handleCancel = () => {
-    setIsModalOpen(false);
-  };
+  const handleCancel = () => setIsModalOpen(false);
 
-  // --- 삭제 메뉴 아이템 ---
-  const menuItems = [
-    {
-      key: "delete",
-      label: "삭제",
-      icon: <DeleteOutlined />,
-    },
-  ];
+  const groupedTags = useMemo(() => {
+    return tags.reduce((acc, tag) => {
+      const ownerKey = tag.owner.userId;
+      if (!acc[ownerKey]) {
+        acc[ownerKey] = { ownerName: tag.owner.name, tags: [] };
+      }
+      acc[ownerKey].tags.push(tag);
+      return acc;
+    }, {});
+  }, [tags]);
 
-  // --- Collapse 패널 아이템 정의 ---
-  const items = [
-    {
-      key: "1",
-      label: (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <span>태그별 보기</span>
-          <PlusOutlined
-            onClick={(e) => {
-              e.stopPropagation();
-              showModal();
-            }}
-          />
-        </div>
-      ),
-      children: (
-        <S.TagListContainer>
-          {loading ? (
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                height: "100%",
-              }}
-            >
-              <Spin />
-            </div>
-          ) : (
-            <>
-              {/* '전체 선택' 체크박스 */}
-              <S.TagItem>
-                <input
-                  type="checkbox"
-                  checked={isAllSelected}
-                  onChange={handleSelectAllClick}
-                  style={{ marginRight: '8px' }}
-                />
-                <S.ColorSquare color={"#8c8c8c"} />
-                <S.TagLabel>전체 선택</S.TagLabel>
-              </S.TagItem>
+  const TagGroupContent = ({ group, isMyTags = false }) => {
+    const allTagIdsInGroup = group.tags.map(t => t.id);
+    const areAllSelectedInGroup = allTagIdsInGroup.every(id => selectedTagIds.includes(id));
 
-              {/* 개별 태그 체크박스 */}
-              {tags.map((tag) => (
-                <Dropdown
-                  key={tag.id}
-                  menu={{
-                    items: menuItems,
-                    onClick: ({ key }) => {
-                      if (key === "delete") {
-                        deleteTag(tag.id);
-                      }
-                    },
-                  }}
-                  trigger={["contextMenu"]}
-                >
-                  <S.TagItem>
-                    <input
-                      type="checkbox"
-                      checked={selectedTagIds.includes(tag.id)}
-                      onChange={() => handleTagClick(tag.id)}
-                      style={{ marginRight: '8px' }}
-                    />
-                    <S.ColorSquare color={tag.color} />
-                    <S.TagLabel>{tag.label}</S.TagLabel>
-                  </S.TagItem>
+    const handleSelectAll = () => {
+      if (areAllSelectedInGroup) {
+        setSelectedTagIds(prev => prev.filter(id => !allTagIdsInGroup.includes(id)));
+      } else {
+        setSelectedTagIds(prev => [...new Set([...prev, ...allTagIdsInGroup])]);
+      }
+    };
+
+    const menuItems = (tag) => {
+      if (!isMyTags) return [];
+      return [
+        {
+          key: "edit",
+          label: "수정",
+          icon: <EditOutlined />,
+          onClick: () => showEditModal(tag),
+        },
+        {
+          key: "delete",
+          label: "삭제",
+          icon: <DeleteOutlined />,
+          onClick: () => deleteTag(tag.id),
+        },
+      ];
+    }
+
+    return (
+      <>
+        {isMyTags && (
+          <S.TagItem>
+            <input type="checkbox" checked={areAllSelectedInGroup} onChange={handleSelectAll} style={{ marginRight: '8px' }} />
+            <S.TagLabel>전체 선택</S.TagLabel>
+            <PlusOutlined onClick={showAddModal} style={{ marginLeft: 'auto' }} />
+          </S.TagItem>
+        )}
+        {group.tags.map((tag) => (
+          <S.TagItem key={tag.id} onClick={() => handleTagClick(tag.id)}>
+            <input type="checkbox" checked={selectedTagIds.includes(tag.id)} readOnly style={{ marginRight: '8px', cursor: 'pointer' }} />
+            {tag.color && <S.ColorSquare color={tag.color} />}
+            <S.TagLabel>{tag.label}</S.TagLabel>
+            {isMyTags && tag.id !== NO_TAG_ID && (
+              <S.MenuButton onClick={(e) => e.stopPropagation()}>
+                <Dropdown menu={{ items: menuItems(tag) }} trigger={["click"]}>
+                  <MoreOutlined style={{ padding: '4px', cursor: 'pointer' }} />
                 </Dropdown>
-              ))}
-            </>
-          )}
-        </S.TagListContainer>
-      ),
-    },
-    {
-      key: "2",
-      label: "그룹별 보기",
-      children: (
-        <Select
-          defaultValue=""
-          style={{ width: "100%" }}
-          onChange={handleGroupChange}
-          options={groupOptions}
-        />
-      ),
-    },
-  ];
+              </S.MenuButton>
+            )}
+          </S.TagItem>
+        ))}
+      </>
+    );
+  };
+
+  const myTagsGroup = user ? groupedTags[user.id] : null;
+  const friendTagGroups = Object.entries(groupedTags).filter(([ownerId]) => ownerId != (user?.id));
+  const friendOptions = followingList.map(friend => ({ value: friend.userId, label: friend.name }));
 
   return (
-    <>
-      <S.MenuContainer>
-        <Collapse items={items} defaultActiveKey={["1"]} ghost />
-      </S.MenuContainer>
+    <S.MenuContainer>
+      <S.TagListContainer>
+        {loading && tags.length === 0 ? (
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}><Spin /></div>
+        ) : (
+          <>
+            {myTagsGroup && (
+              <Collapse defaultActiveKey={user.id} ghost>
+                <Collapse.Panel header={myTagsGroup.ownerName} key={user.id}>
+                  <TagGroupContent group={myTagsGroup} isMyTags={true} />
+                </Collapse.Panel>
+              </Collapse>
+            )}
 
-      <Modal
-        title="새 태그 추가"
+            <S.FriendSelectContainer>
+              <Select
+                mode="multiple"
+                allowClear
+                style={{ width: '100%' }}
+                placeholder="친구 캘린더 보기"
+                onChange={handleFriendSelectionChange}
+                options={friendOptions}
+                value={selectedFriends}
+              />
+            </S.FriendSelectContainer>
+
+            {friendTagGroups.length > 0 && <Divider style={{ margin: '8px 0' }}/>}
+            
+            <Collapse ghost>
+              {friendTagGroups.map(([ownerId, group]) => (
+                <Collapse.Panel header={group.ownerName} key={ownerId}>
+                  <TagGroupContent group={group} />
+                </Collapse.Panel>
+              ))}
+            </Collapse>
+          </>
+        )}
+      </S.TagListContainer>
+
+      <Modal 
+        title={modalMode === 'add' ? '새 태그 추가' : '태그 수정'}
         open={isModalOpen}
         onOk={handleOk}
         onCancel={handleCancel}
       >
         <Form form={form} layout="vertical" name="form_in_modal">
-          <Form.Item
-            name="label"
-            label="태그 이름"
-            rules={[{ required: true, message: "태그 이름을 입력해주세요!" }]}
-          >
+          <Form.Item name="label" label="태그 이름" rules={[{ required: true, message: "태그 이름을 입력해주세요!" }]}>
             <Input />
           </Form.Item>
-          <Form.Item
-            name="color"
-            label="색상"
-            rules={[{ required: true, message: "색상을 선택해주세요!" }]}
-            initialValue="#ffadad"
-          >
+          <Form.Item name="color" label="색상" rules={[{ required: true, message: "색상을 선택해주세요!" }]} initialValue="#ffadad">
             <ColorPicker showText />
+          </Form.Item>
+          <Form.Item name="scope" label="공개 범위" initialValue="PRIVATE" rules={[{ required: true, message: "공개 범위를 선택해주세요!" }]}>
+            <Select options={[{ value: 'PRIVATE', label: '비공개 (나만 보기)' }, { value: 'MUTUAL_FRIENDS', label: '맞팔로우에게만 공개' }, { value: 'PUBLIC', label: '전체 공개' }]} />
           </Form.Item>
         </Form>
       </Modal>
-    </>
+    </S.MenuContainer>
   );
 };
 

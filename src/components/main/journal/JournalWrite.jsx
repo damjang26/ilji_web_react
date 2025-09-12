@@ -61,10 +61,10 @@ const JournalWrite = ({
     const location = useLocation();
 
     // 1. location.state를 우선으로 사용하고, 없으면 props에서 데이터를 가져옵니다.
-    const journalToEdit = location.state?.journalToEdit || journalToEditFromProp;    
+    const journalToEdit = location.state?.journalToEdit || journalToEditFromProp;
     // ✅ [수정] useState의 '초기화 함수'를 사용해 맨 처음 렌더링 시에만 날짜를 결정합니다.
     // 이렇게 하면 컴포넌트가 리렌더링될 때마다 new Date()가 실행되는 것을 방지할 수 있습니다.
-    const [selectedDate] = useState(() => 
+    const [selectedDate] = useState(() =>
         location.state?.selectedDate || selectedDateFromProp || new Date()
     );
 
@@ -88,26 +88,18 @@ const JournalWrite = ({
             setContent(journalToEdit.content || '');
             setIsPrivate(journalToEdit.visibility === 2);
 
-
-            if (journalToEdit.imgUrl) {
-
-                try {
-                    const imageUrls = JSON.parse(journalToEdit.imgUrl);
-
-                    // ✅ 기존 이미지는 preview URL만 세팅, File 객체 없음
-                    const existingImages = imageUrls.map((url) => {
-                        const filename = url.substring(url.lastIndexOf('/') + 1).split('?')[0];
-                        return {
-                            file: null,   // 아직 File 없음
-                            preview: url,
-                            name: filename
-                        };
-                    });
-
-                    setImages(existingImages);
-                } catch (e) {
-                    console.error("이미지 URL 파싱 실패:", e);
-                }
+            // 이 필드는 이미지 URL 문자열의 배열입니다.
+            if (journalToEdit.images && Array.isArray(journalToEdit.images)) {
+                // 기존 이미지는 preview URL만 세팅, File 객체 없음
+                const existingImages = journalToEdit.images.map((url) => {
+                    const filename = url.substring(url.lastIndexOf('/') + 1).split('?')[0];
+                    return {
+                        file: null,   // 아직 File 없음
+                        preview: url,
+                        name: filename
+                    };
+                });
+                setImages(existingImages);
             }
         }
     }, [isEditMode, journalToEdit]);
@@ -132,7 +124,7 @@ const JournalWrite = ({
     // 날짜 포맷팅 (e.g., "8월 25일")
     const formattedDate = useMemo(() => {
         // 수정 모드일 때는 journalToEdit의 날짜를, 생성 모드일 때는 selectedDate를 사용
-        const dateToFormat = isEditMode ? journalToEdit.ilogDate : selectedDate;
+        const dateToFormat = isEditMode ? journalToEdit.logDate : selectedDate;
         if (!dateToFormat) return '';
         const date = new Date(dateToFormat);
         // toLocaleDateString은 브라우저/시스템의 로케일을 따르므로 일관된 결과를 위해 옵션 지정
@@ -335,8 +327,7 @@ const JournalWrite = ({
                 alert('일기가 성공적으로 수정되었습니다!');
             } else {
                 // ✅ 생성 모드일 경우
-                // 페이로드에 생성에 필요한 selectedDate와 userId를 명시적으로 추가합니다.
-                const createPayload = {...journalPayload, selectedDate};
+                const createPayload = {...journalPayload, logDate: selectedDate};
                 await createJournalEntry(createPayload);
                 alert('일기가 성공적으로 저장되었습니다!');
             }

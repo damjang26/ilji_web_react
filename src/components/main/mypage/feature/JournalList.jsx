@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useMemo, useRef, useCallback} from 'react';
 import {useJournal} from "../../../../contexts/JournalContext.jsx";
-import {useAuth} from "../../../../AuthContext.jsx"; // ❗ 사용자 정보(프로필 사진 등)를 가져오기 위해 추가
+import {useMyPage} from "../../../../contexts/MyPageContext.jsx"; // [수정] isOwner 상태를 가져오기 위해 추가
 import {useNavigate, useLocation} from "react-router-dom"; // ✅ 페이지 이동을 위해 추가
 import {
     FeedContainer,
@@ -25,8 +25,8 @@ const JOURNALS_PER_PAGE = 10;
 const JournalList = () => {
     // 1. Context에서 전체 일기 목록(Map)과 로딩 상태를 가져옵니다.
     const {journals, loading: journalLoading, deleteJournal} = useJournal();
-    // 2. 사용자 정보를 가져옵니다 (프로필 사진, 이름 등).
-    const {user} = useAuth();
+    // 2. [수정] MyPageContext에서 현재 페이지의 소유자 여부를 가져옵니다.
+    const {isOwner} = useMyPage();
     const navigate = useNavigate(); // ✅ navigate 함수 가져오기
     const location = useLocation(); // ✅ 모달 네비게이션의 배경 위치를 위해 추가합니다.
 
@@ -38,8 +38,9 @@ const JournalList = () => {
     // 4. ✅ [수정] journals Map을 최신순으로 정렬된 '배열'로 변환합니다.
     const sortedJournals = useMemo(() => {
         if (!journals || journals.size === 0) return [];
-        // Map의 value들(일기 객체)만 배열로 추출한 뒤, ilogDate를 기준으로 내림차순 정렬합니다.
-        return Array.from(journals.values()).sort((a, b) => new Date(b.ilogDate) - new Date(a.ilogDate));
+        // Map의 value들(일기 객체)만 배열로 추출한 뒤, logDate를 기준으로 내림차순 정렬합니다.
+        // ✅ [수정] 'ilogDate'를 'logDate'로 변경합니다.
+        return Array.from(journals.values()).sort((a, b) => new Date(b.logDate) - new Date(a.logDate));
     }, [journals]);
 
     // 5. 페이지가 바뀌거나, 정렬된 원본 데이터가 바뀔 때마다 화면에 보여줄 목록을 업데이트합니다.
@@ -128,41 +129,35 @@ const JournalList = () => {
                     // 현재 렌더링하는 요소가 마지막 요소인지 확인
                     const isLastElement = displayedJournals.length === index + 1;
 
-                    // ✅ [추가] imgUrl(JSON 문자열)을 파싱하여 첫 번째 이미지 URL을 추출합니다.
-                    let firstImageUrl = null;
-                    if (journal.imgUrl) {
-                        try {
-                            const parsedUrls = JSON.parse(journal.imgUrl);
-                            if (Array.isArray(parsedUrls) && parsedUrls.length > 0) {
-                                firstImageUrl = parsedUrls[0];
-                            }
-                        } catch (e) {
-                            // 파싱에 실패해도 앱이 중단되지 않도록 오류를 콘솔에만 기록합니다.
-                            console.error(`Failed to parse imgUrl for journal ${journal.id}:`, journal.imgUrl);
-                        }
-                    }
+                    // ✅ [수정] 'journal.images' 배열의 첫 번째 요소를 대표 이미지로 사용합니다.
+                    const firstImageUrl = (journal.images && journal.images.length > 0) ? journal.images[0] : null;
 
                     return (
                         // ✅ [수정] PostListStyled 디자인에 journal 객체의 데이터를 매핑합니다.
                         <PostContainer key={journal.id} ref={isLastElement ? lastJournalElementRef : null}>
                             <PostHeader>
-                                <ProfileImage src={user?.picture || '/path/to/default/profile.png'}
-                                              alt={`${user?.name} profile`}/>
+                                {/* ✅ [수정] 각 journal에 포함된 작성자 정보를 사용합니다. */}
+                                <ProfileImage src={journal.writerProfileImage || '/path/to/default/profile.png'}
+                                              alt={`${journal.writerNickname} profile`}/>
                                 <UserInfo>
-                                    <span className="username">{user?.name || '사용자'}</span>
-                                    <span className="date">{new Date(journal.ilogDate).toLocaleDateString()}</span>
+                                    <span className="username">{journal.writerNickname || '사용자'}</span>
+                                    {/* ✅ [수정] 'ilogDate'를 'logDate'로 변경합니다. */}
+                                    <span className="date">{new Date(journal.logDate).toLocaleDateString()}</span>
                                 </UserInfo>
-                                {/* ✅ [신규] 수정 및 삭제 아이콘을 담는 컨테이너 */}
-                                <PostHeaderActions>
-                                    {/* ✅ [수정] onClick 핸들러에 handleEdit 함수를 연결합니다. */}
-                                    <button data-tooltip="수정" onClick={() => handleEdit(journal)}>
-                                        <HiPencilAlt/>
-                                    </button>
-                                    <button data-tooltip="삭제"
-                                            onClick={() => handleDelete(journal.id, journal.ilogDate.split('T')[0])}>
-                                        <MdDeleteForever/>
-                                    </button>
-                                </PostHeaderActions>
+                                {/* [수정] isOwner가 true일 때만 수정/삭제 버튼을 보여줍니다. */}
+                                {isOwner && (
+                                    <PostHeaderActions>
+                                        {/* ✅ [수정] onClick 핸들러에 handleEdit 함수를 연결합니다. */}
+                                        <button data-tooltip="수정" onClick={() => handleEdit(journal)}>
+                                            <HiPencilAlt/>
+                                        </button>
+                                        {/* ✅ [수정] 'ilogDate'를 'logDate'로 변경합니다. */}
+                                        <button data-tooltip="삭제"
+                                                onClick={() => handleDelete(journal.id, journal.logDate.split('T')[0])}>
+                                            <MdDeleteForever/>
+                                        </button>
+                                    </PostHeaderActions>
+                                )}
                             </PostHeader>
 
                             <div>

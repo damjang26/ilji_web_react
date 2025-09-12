@@ -1,19 +1,21 @@
-import React, {useState} from "react";
-import {BrowserRouter, useLocation, Routes, Route} from "react-router-dom";
-import { Spin } from 'antd';
+import React, { useState } from "react";
+import { BrowserRouter, useLocation, Routes, Route } from "react-router-dom";
+import { Spin } from "antd";
 
 import LeftSideBar from "./components/LeftSideBar.jsx";
 import RightSideBar from "./components/RightSideBar.jsx";
 import styled from "styled-components";
-import {useAuth} from "./AuthContext.jsx";
+import { useAuth } from "./AuthContext.jsx";
 import LoginPage from "./components/login/LoginPage.jsx";
 import Main from "./components/Main.jsx";
 import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
-import {JournalProvider} from "./contexts/JournalContext.jsx";
+import { JournalProvider } from "./contexts/JournalContext.jsx";
 import JournalViewModal from "./components/main/journal/JournalViewModal.jsx";
 import { ScheduleProvider } from "./contexts/ScheduleContext.jsx";
+import { MyPageProvider } from "./contexts/MyPageContext.jsx";
 import { TagProvider } from "./contexts/TagContext.jsx";
 import { NotificationsProvider } from "./contexts/NotificationsContext.jsx";
+import SetNicknamePage from "./components/nickname_set/SetNickNamePage.jsx";
 
 const AppWrapper = styled.div`
     display: flex;
@@ -23,11 +25,11 @@ const AppWrapper = styled.div`
 `;
 
 const FullPageSpinner = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100vw;
-  height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
 `;
 
 const ContentWrapper = styled.div`
@@ -39,7 +41,7 @@ const ContentWrapper = styled.div`
 `;
 
 const AppContent = () => {
-    const {user, loading} = useAuth();
+    const { user, loading } = useAuth();
     const location = useLocation();
 
     // navigate로 전달받은 state에 backgroundLocation이 있는지 확인합니다.
@@ -56,25 +58,34 @@ const AppContent = () => {
 
     return user ? (
         <AppWrapper>
-            <LeftSideBar/>
+            <LeftSideBar />
             <ContentWrapper>
                 {/* 1. 배경이 될 메인 라우트를 항상 렌더링합니다. */}
                 <Routes location={background || location}>
-                    <Route path="/*" element={<Main/>}/>
+                    {/* 닉네임이 없는 사용자를 위한 별도 라우트 */}
+                    <Route path="/set-nickname" element={<SetNicknamePage />} />
+                    {/* 닉네임이 있는 사용자를 위한 메인 라우트 */}
+                    <Route path="/*" element={<Main />} />
                 </Routes>
 
                 {/* 2. background state가 있을 경우에만 모달 라우트를 추가로 렌더링합니다. */}
                 {background && (
                     <Routes>
-                        <Route path="/journal/write" element={<JournalWriteModal/>}/>
-                        <Route path="/journal/view/:date" element={<JournalViewModal/>}/>
+                        <Route
+                            path="/journal/write"
+                            element={<JournalWriteModal />}
+                        />
+                        <Route
+                            path="/journal/view/:date"
+                            element={<JournalViewModal />}
+                        />
                     </Routes>
                 )}
             </ContentWrapper>
-            <RightSideBar/>
+            <RightSideBar />
         </AppWrapper>
     ) : (
-        <LoginPage/>
+        <LoginPage />
     );
 };
 
@@ -83,13 +94,15 @@ export default function App() {
         <>
             <BrowserRouter>
                 <JournalProvider>
-                    <ScheduleProvider>
-                        <TagProvider>
-                            <NotificationsProvider>
-                                <AppContent/>
-                            </NotificationsProvider>
-                        </TagProvider>
-                    </ScheduleProvider>
+                    <MyPageProvider>
+                        <ScheduleProvider>
+                            <TagProvider>
+                                <NotificationsProvider>
+                                    <AppContent />
+                                </NotificationsProvider>
+                            </TagProvider>
+                        </ScheduleProvider>
+                    </MyPageProvider>
                 </JournalProvider>
             </BrowserRouter>
             <div id="modal-root"></div>

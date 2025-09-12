@@ -34,7 +34,7 @@ export const ContentBox = styled.div`
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 내부 컨텐츠(헤더, 메인) 배치 */
     display: flex;
-    flex-direction: column;
+    flex-direction: column;ㄴ
     flex-grow: 1; /* 남은 세로 공간을 모두 차지 */
 `;
 
@@ -110,13 +110,13 @@ export const TabMenuContainer = styled.div`
 
 // 개별 탭 버튼
 export const Tab = styled.button`
-    padding: 12px 20px;
+    padding: 15px 20px;
     font-size: 1rem;
-    font-weight: ${props => (props.active ? '600' : '500')}; /* active prop에 따라 글자 굵기 변경 (활성/비활성) */
-    color: ${props => (props.active ? '#343a40' : '#868e96')}; /* active prop에 따라 글자 색상 변경 */
+    font-weight: ${props => (props.$active ? '600' : '500')}; /* active prop에 따라 글자 굵기 변경 (활성/비활성) */
+    color: ${props => (props.$active ? '#343a40' : '#868e96')}; /* active prop에 따라 글자 색상 변경 */
     background-color: transparent; /* 버튼의 기본 배경을 투명하게 설정 */
     border: none; /* 버튼의 기본 테두리 제거 */
-    border-bottom: 3px solid ${props => (props.active ? '#343a40' : 'transparent')}; /* active prop에 따라 하단 테두리 표시 여부 결정 */
+    border-bottom: 3px solid ${props => (props.$active ? '#343a40' : 'transparent')}; /* active prop에 따라 하단 테두리 표시 여부 결정 */
     cursor: pointer;
     margin-bottom: -1px; /* 탭의 하단 테두리가 부모(TabMenuContainer)의 하단 테두리와 겹쳐 보이도록 설정 */
     transition: all 0.2s ease-in-out; /* 색상, 배경 등 모든 속성 변경에 0.2초 동안 부드러운 전환 효과 적용 */
@@ -138,17 +138,29 @@ export const MyPageMain = styled.main`
 // 프로필 이미지를 감싸서 위치(마진 등)를 조정하기 위한 래퍼
 export const ImgWrapper = styled.div`
     position: relative;
+    margin-top: 10px;
+    margin-bottom: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
 `;
 
+// 사용자의 프로필 이미지를 스타일링하는 컴포넌트 (원형, 그림자 효과 등)
+export const ProfileImage = styled.img`
+   width: 120px;
+   height: 120px;
+   border-radius: 50%;
+   object-fit: cover;
+   border: 4px solid #fff;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+   cursor: pointer;
+   background-color: #f0f0f0; /* 이미지가 없을 때를 위한 배경색 */
+ `;
+
+
 //  탭에 따라 선택된 기능이 표시될 영역
 export const FeatureContent = styled.main`
     flex-grow: 1; /* 헤더를 제외한 나머지 모든 수직 공간을 차지 */
-    display: flex;
-    justify-content: center; /* 기능들 수평 중앙에 배치 */
-    align-items: center; /* 기능들 수직 중앙에 배치 */
     padding: 20px;
     width: 100%;
 `;
@@ -160,3 +172,8 @@ export const FeatureBox = styled.div`
     border-radius: 8px;
     font-size: 1.2rem;
 `;
+
+export const Contents = styled.div`
+     padding: 20px;
+     /* 추가적인 스타일링 (예: 게시물 목록) */
+ `;
