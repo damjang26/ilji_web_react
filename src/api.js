@@ -30,15 +30,24 @@ api.interceptors.request.use(
 
 /**
  * 내가 팔로우하는 사용자 목록을 조회합니다.
+ * @param {number} [userId] - 특정 사용자의 ID. 없으면 로그인한 사용자의 목록을 조회합니다.
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
-export const getFollowingList = () => api.get('/api/friends/following');
+export const getFollowingList = (userId) => {
+    // userId가 있으면 해당 유저의 목록을, 없으면 내 목록을 요청합니다.
+    const endpoint = userId ? `/api/friends/following/${userId}` : '/api/friends/following';
+    return api.get(endpoint);
+};
 
 /**
  * 나를 팔로우하는 사용자 목록을 조회합니다.
+ * @param {number} [userId] - 특정 사용자의 ID. 없으면 로그인한 사용자의 목록을 조회합니다.
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
-export const getFollowersList = () => api.get('/api/friends/followers');
+export const getFollowersList = (userId) => {
+    const endpoint = userId ? `/api/friends/followers/${userId}` : '/api/friends/followers';
+    return api.get(endpoint);
+};
 
 /**
  * 다른 사용자를 팔로우합니다.
@@ -67,3 +76,10 @@ export const getFriendStatus = (userId) => api.get(`/api/friends/${userId}/statu
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export const searchUsers = (query) => api.get(`/api/users/search?q=${query}`);
+
+/**
+ * [추가] 특정 사용자의 모든 일기(i-log)를 조회합니다.
+ * @param {number} userId - 조회할 사용자의 ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const getUserJournals = (userId) => api.get(`/api/i-log/user/${userId}`);

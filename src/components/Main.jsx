@@ -21,8 +21,8 @@ const Main = () => {
             <Routes>
                 <Route path="/" element={<FullCalendarExample/>}/>
 
-                {/* [되돌리기] /mypage 경로만 남기고, MyPageWrapper를 렌더링합니다. */}
-                <Route path="/mypage" element={<MyPageWrapper />} />
+                {/* [수정] /mypage 와 /mypage/:userId 경로를 모두 처리합니다. */}
+                <Route path="/mypage/:userId?" element={<MyPageWrapper />} />
 
                 {/* [추가] 정보 수정 페이지 경로를 추가합니다. */}
                 <Route path="/mypageset" element={<MyPageSet />} />

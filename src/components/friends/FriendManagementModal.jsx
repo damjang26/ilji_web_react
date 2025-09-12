@@ -2,188 +2,188 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Modal, Tabs, List, Avatar, Button, message, Input } from "antd";
 import {
-  getFollowingList,
-  getFollowersList,
-  followUser,
-  unfollowUser,
-  searchUsers,
+    getFollowingList,
+    getFollowersList,
+    followUser,
+    unfollowUser,
+    searchUsers,
 } from "../../api";
+import { useAuth } from "../../AuthContext";
 import { useDebounce } from "../../hooks/useDebounce";
 
 const { TabPane } = Tabs;
 const { Search } = Input;
 
-const FriendManagementModal = ({ open, onClose, initialTab = "following" }) => {
-  const [activeTab, setActiveTab] = useState(initialTab);
-  const [following, setFollowing] = useState([]);
-  const [followers, setFollowers] = useState([]);
-  const [loading, setLoading] = useState(false);
+export default function FriendManagementModal({ open, onClose, initialTab, targetUserId }) {
+    const navigate = useNavigate();
+    const { user: loggedInUser, following: myFollowing, fetchMyFollowing } = useAuth();
 
-  // 검색 관련 상태
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
+    const [activeTab, setActiveTab] = useState(initialTab);
+    const [followingList, setFollowingList] = useState([]);
+    const [followerList, setFollowerList] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
-  const fetchFollowing = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await getFollowingList();
-      setFollowing(response.data);
-    } catch (error) {
-      message.error("팔로잉 목록을 불러오는데 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const fetchFollowers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await getFollowersList();
-      setFollowers(response.data);
-    } catch (error) {
-      message.error("팔로워 목록을 불러오는데 실패했습니다.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (open) {
-      setActiveTab(initialTab);
-      if (initialTab === "following") {
-        fetchFollowing();
-        fetchFollowers(); // 버튼 상태를 위해 둘 다 호출
-      } else {
-        fetchFollowers();
-        fetchFollowing(); // 버튼 상태를 위해 둘 다 호출
-      }
-    }
-  }, [open, initialTab, fetchFollowing, fetchFollowers]);
-
-  const handleTabChange = (key) => {
-    setActiveTab(key);
-    if (key === "following") {
-      fetchFollowing();
-    } else if (key === "followers") {
-      fetchFollowers();
-    }
-  };
-
-  useEffect(() => {
-    if (debouncedSearchQuery) {
-      const performSearch = async () => {
-        setIsSearching(true);
+    const fetchLists = useCallback(async (userId) => {
+        setLoading(true);
         try {
-          const response = await searchUsers(debouncedSearchQuery);
-          setSearchResults(response.data);
+            const [followingRes, followersRes] = await Promise.all([
+                getFollowingList(userId),
+                getFollowersList(userId),
+            ]);
+            setFollowingList(followingRes.data);
+            setFollowerList(followersRes.data);
         } catch (error) {
-          message.error("사용자 검색에 실패했습니다.");
+            console.error("Failed to fetch friend lists:", error);
+            message.error("목록을 불러오는 데 실패했습니다.");
         } finally {
-          setIsSearching(false);
+            setLoading(false);
         }
-      };
-      performSearch();
-    } else {
-      setSearchResults([]);
-    }
-  }, [debouncedSearchQuery]);
+    }, []); // Dependencies are empty as the function now relies on its argument.
 
-  const handleFollowUnfollow = async (targetUser, action) => {
-    try {
-      if (action === "follow") {
-        await followUser(targetUser.userId);
-        message.success(`${targetUser.name}님을 팔로우 했습니다.`);
-      } else {
-        await unfollowUser(targetUser.userId);
-        message.success(`${targetUser.name}님을 언팔로우 했습니다.`);
-      }
-      // 목록 새로고침
-      fetchFollowing();
-      fetchFollowers();
-    } catch (error) {
-      message.error("요청에 실패했습니다.");
-    }
-  };
+    useEffect(() => {
+        if (open) {
+            // Fetch lists for the specific user (or the logged-in user if targetUserId is null)
+            fetchLists(targetUserId);
+            fetchMyFollowing(); // Always refresh the logged-in user's following status
+        }
+    }, [open, targetUserId, fetchLists, fetchMyFollowing]);
 
-  const handleProfileClick = (userId) => {
-    onClose(); // 모달을 닫습니다.
-    navigate(`/mypage/${userId}`); // 해당 유저의 마이페이지로 이동합니다.
-  };
+    useEffect(() => {
+        setActiveTab(initialTab);
+    }, [initialTab]);
 
-  const renderUserList = (users, type) => (
-    // const renderUserList = (users) => (
-    <List
-      loading={loading || isSearching}
-      itemLayout="horizontal"
-      dataSource={users}
-      renderItem={(user) => {
-        const isFollowing = following.some((f) => f.userId === user.userId);
-        return (
-          <List.Item
-            actions={[
-              <Button
-                key={`button-${user.userId}`}
-                onClick={() =>
-                  handleFollowUnfollow(
-                    user,
-                    isFollowing ? "unfollow" : "follow"
-                  )
+    useEffect(() => {
+        if (debouncedSearchTerm) {
+            const performSearch = async () => {
+                setIsSearching(true);
+                try {
+                    const response = await searchUsers(debouncedSearchTerm);
+                    setSearchResults(response.data);
+                } catch (error) {
+                    console.error("Search failed:", error);
+                    message.error("사용자 검색에 실패했습니다.");
+                } finally {
+                    setIsSearching(false);
                 }
-              >
-                {isFollowing ? "언팔로우" : "팔로우"}
-              </Button>,
-            ]}
-          >
-            <List.Item.Meta
-              // 프로필 영역을 클릭 가능하게 만듭니다.
-              style={{ cursor: "pointer" }}
-              onClick={() => handleProfileClick(user.userId)}
-              avatar={<Avatar src={user.picture} />} // antd Avatar 컴포넌트 사용
-              title={user.name} // antd List.Item.Meta의 title prop 사용
-            />
-          </List.Item>
-        );
-      }}
-    />
-  );
+            };
+            performSearch();
+        } else {
+            setSearchResults([]);
+        }
+    }, [debouncedSearchTerm]);
 
-  const items = [
-    {
-      key: "following",
-      label: "팔로잉",
-      children: renderUserList(following),
-    },
-    {
-      key: "followers",
-      label: "팔로워",
-      children: renderUserList(followers),
-    },
-  ];
+    const handleFollow = async (targetUserId) => {
+        try {
+            await followUser(targetUserId);
+            message.success("팔로우했습니다.");
+            // Refresh the list for the currently viewed user
+            fetchLists(targetUserId);
+            fetchMyFollowing();
+        } catch (error) {
+            console.error("Follow failed:", error);
+            message.error("팔로우에 실패했습니다.");
+        }
+    };
 
-  return (
-    <Modal
-      title="친구 관리"
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      width={400}
-    >
-      <Search
-        placeholder="이메일 또는 닉네임으로 검색"
-        onChange={(e) => setSearchQuery(e.target.value)}
-        style={{ marginBottom: 20 }}
-        loading={isSearching}
-      />
-      {searchQuery ? (
-        renderUserList(searchResults)
-      ) : (
-        <Tabs activeKey={activeTab} onChange={handleTabChange} items={items} />
-      )}
-    </Modal>
-  );
-};
+    const handleUnfollow = async (targetUserId) => {
+        try {
+            await unfollowUser(targetUserId);
+            message.success("언팔로우했습니다.");
+            // Refresh the list for the currently viewed user
+            fetchLists(targetUserId);
+            fetchMyFollowing();
+        } catch (error) {
+            console.error("Unfollow failed:", error);
+            message.error("언팔로우에 실패했습니다.");
+        }
+    };
 
-export default FriendManagementModal;
+    const handleProfileClick = (userId) => {
+        onClose(); // 모달을 닫는 함수 호출
+        navigate(`/mypage/${userId}`);
+    };
+
+    const renderUserList = (users) => (
+        <List
+            loading={loading || isSearching}
+            itemLayout="horizontal"
+            dataSource={users}
+            locale={{ emptyText: "표시할 사용자가 없습니다." }}
+            renderItem={(item) => {
+                // Add a safeguard to prevent runtime errors if myFollowing is not yet an array
+                const isFollowing = Array.isArray(myFollowing)
+                    ? myFollowing.some((f) => f.userId === item.userId)
+                    : false;
+
+                if (loggedInUser && item.userId === loggedInUser.id) {
+                    return (
+                        <List.Item>
+                            <List.Item.Meta
+                                avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}
+                                                onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }} />
+                                }
+                                title={<a onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }}>{item.name} (나)</a>}
+                                description={item.email}
+                            />
+                        </List.Item>
+                    );
+                }
+
+                return (
+                    <List.Item
+                        actions={[
+                            isFollowing ? (
+                                <Button onClick={() => handleUnfollow(item.userId)}>언팔로우</Button>
+                            ) : (
+                                <Button type="primary" onClick={() => handleFollow(item.userId)}>팔로우</Button>
+                            ),
+                        ]}
+                    >
+                        <List.Item.Meta
+                            avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}
+                                            onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }}/>
+                            }
+                            title={<a onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }}>{item.name}</a>}
+                            description={item.email}
+                        />
+                    </List.Item>
+                );
+            }}
+        />
+    );
+
+    return (
+        <Modal
+            title="친구 목록"
+            open={open}
+            onCancel={onClose}
+            footer={null}
+            width={400}
+        >
+            <Tabs activeKey={activeTab} onChange={setActiveTab} centered>
+                <TabPane tab="새 친구 찾기" key="search">
+                    <Search
+                        placeholder="닉네임 또는 이메일로 검색"
+                        onSearch={(value) => setSearchTerm(value)}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{ marginBottom: 20 }}
+                        enterButton
+                        loading={isSearching}
+                    />
+                    {renderUserList(searchResults)}
+                </TabPane>
+                <TabPane tab={`팔로잉 ${followingList.length}`} key="following">
+                    {renderUserList(followingList)}
+                </TabPane>
+                <TabPane tab={`팔로워 ${followerList.length}`} key="followers">
+                    {renderUserList(followerList)}
+                </TabPane>
+            </Tabs>
+        </Modal>
+    );
+}
