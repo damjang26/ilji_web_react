@@ -15,7 +15,6 @@ import {
     NotiPanel,
     NotiHeader,
     NotiTitle,
-    HeaderActions,
     NotiButton,
     NotiList,
     NotiEmpty,
@@ -31,6 +30,7 @@ import {
     ItemTime,
     ItemTail,
     IconButton,
+    ButtonContainer,
 } from "../../styled_components/left_side_bar/NotificationsPanelStyled.jsx";
 
 const iconByType = (type) => {
@@ -62,11 +62,11 @@ const formatTime = (isoString) => {
     const diffMin = Math.round(diffSec / 60);
     const diffHour = Math.round(diffMin / 60);
 
-    if (diffSec < 60) return `${diffSec}초 전`;
-    if (diffMin < 60) return `${diffMin}분 전`;
-    if (diffHour < 24) return `${diffHour}시간 전`;
+    if (diffSec < 60) return `${diffSec}s ago`;
+    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffHour < 24) return `${diffHour}h ago`;
 
-    return notiDate.toLocaleDateString("ko-KR", {
+    return notiDate.toLocaleDateString("en-US", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
@@ -85,17 +85,18 @@ export default function NotificationsPanel({
     return (
         <NotiPanel>
             <NotiHeader>
-                <NotiTitle>알림</NotiTitle>
-                <HeaderActions>
-                    <NotiButton onClick={onMarkAllRead}>전체읽음</NotiButton>
-                    <NotiButton onClick={onDeleteAll}>전체삭제</NotiButton>
-                </HeaderActions>
+                <NotiTitle>Notifications</NotiTitle>
             </NotiHeader>
+
+            <ButtonContainer>
+                <NotiButton onClick={onMarkAllRead}>Mark all as read</NotiButton>
+                <NotiButton onClick={onDeleteAll}>Delete all</NotiButton>
+            </ButtonContainer>
 
             {!hasItems ? (
                 <NotiEmpty>
                     <EmptyIcon />
-                    <EmptyText>알림이 없습니다.</EmptyText>
+                    <EmptyText>No new notifications.</EmptyText>
                 </NotiEmpty>
             ) : (
                 <NotiList role="list">
@@ -106,7 +107,7 @@ export default function NotificationsPanel({
                                 <ItemMain href={it.linkUrl || "#"}>
                                     <ItemIcon>
                                         {iconByType(it.type)}
-                                        {unread && <UnreadDot aria-label="새 알림" />}
+                                        {unread && <UnreadDot aria-label="New notification" />}
                                     </ItemIcon>
 
                                     <ItemContent>
@@ -123,7 +124,7 @@ export default function NotificationsPanel({
                                     {unread && (
                                         <IconButton
                                             type="button"
-                                            aria-label="읽음 처리"
+                                            aria-label="Mark as read"
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 onItemRead && onItemRead(it.id);
@@ -134,7 +135,7 @@ export default function NotificationsPanel({
                                     )}
                                     <IconButton
                                         type="button"
-                                        aria-label="삭제"
+                                        aria-label="Delete"
                                         onClick={(e) => {
                                             e.preventDefault();
                                             onItemDelete && onItemDelete(it.id);

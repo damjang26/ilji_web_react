@@ -13,7 +13,6 @@ export const NotiHeader = styled.div`
   padding: 16px;
   border-bottom: 1px solid #e0e0e0;
   display: flex;
-  justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
 `;
@@ -24,8 +23,10 @@ export const NotiTitle = styled.h2`
   margin: 0;
 `;
 
-export const HeaderActions = styled.div`
+export const ButtonContainer = styled.div`
   display: flex;
+  justify-content: flex-end;
+  padding: 8px 16px;
   gap: 8px;
 `;
 
@@ -56,6 +57,7 @@ export const NotiEmpty = styled.div`
   align-items: center;
   height: 100%;
   color: #aaa;
+  padding-bottom: 60px; /* Push content up */
 `;
 
 export const EmptyIcon = styled(BellOutlined)`
