@@ -10,7 +10,7 @@ import {
   Spin,
   Divider,
 } from "antd";
-import { PlusOutlined, DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined, EditOutlined, MoreOutlined } from "@ant-design/icons";
 import { useTags, NO_TAG_ID } from "../../contexts/TagContext.jsx";
 import { useSchedule } from "../../contexts/ScheduleContext.jsx";
 import * as S from "../../styled_components/left_side_bar/CalendarMenuStyled.jsx";
@@ -178,19 +178,23 @@ const CalendarMenu = () => {
         {isMyTags && (
           <S.TagItem>
             <input type="checkbox" checked={areAllSelectedInGroup} onChange={handleSelectAll} style={{ marginRight: '8px' }} />
-            <S.ColorSquare color={"#8c8c8c"} />
             <S.TagLabel>전체 선택</S.TagLabel>
             <PlusOutlined onClick={showAddModal} style={{ marginLeft: 'auto' }} />
           </S.TagItem>
         )}
         {group.tags.map((tag) => (
-          <Dropdown key={tag.id} menu={{ items: menuItems(tag) }} trigger={["contextMenu"]} disabled={!isMyTags || tag.id === NO_TAG_ID}>
-            <S.TagItem>
-              <input type="checkbox" checked={selectedTagIds.includes(tag.id)} onChange={() => handleTagClick(tag.id)} style={{ marginRight: '8px' }} />
-              <S.ColorSquare color={tag.color} />
-              <S.TagLabel>{tag.label}</S.TagLabel>
-            </S.TagItem>
-          </Dropdown>
+          <S.TagItem key={tag.id} onClick={() => handleTagClick(tag.id)}>
+            <input type="checkbox" checked={selectedTagIds.includes(tag.id)} readOnly style={{ marginRight: '8px', cursor: 'pointer' }} />
+            {tag.color && <S.ColorSquare color={tag.color} />}
+            <S.TagLabel>{tag.label}</S.TagLabel>
+            {isMyTags && tag.id !== NO_TAG_ID && (
+              <S.MenuButton onClick={(e) => e.stopPropagation()}>
+                <Dropdown menu={{ items: menuItems(tag) }} trigger={["click"]}>
+                  <MoreOutlined style={{ padding: '4px', cursor: 'pointer' }} />
+                </Dropdown>
+              </S.MenuButton>
+            )}
+          </S.TagItem>
         ))}
       </>
     );

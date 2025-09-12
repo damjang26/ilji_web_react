@@ -287,7 +287,6 @@ export function ScheduleProvider({children}) {
                     setError(null);
                 } else {
                     setEvents([]);
-                    setCachedEvents([]);
                     setError(null);
                 }
             } catch (err) {
