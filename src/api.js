@@ -67,3 +67,16 @@ export const getFriendStatus = (userId) => api.get(`/api/friends/${userId}/statu
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export const searchUsers = (query) => api.get(`/api/users/search?q=${query}`);
+
+// =================================
+// 알림 관련 API (신규 추가)
+// =================================
+
+/**
+ * 알림 API 전용 axios 인스턴스.
+ * 쿠키 기반 인증(withCredentials: true)을 사용합니다.
+ */
+export const apiNoti = axios.create({
+    baseURL: "/api",
+    withCredentials: true,
+});

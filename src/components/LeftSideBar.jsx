@@ -22,6 +22,7 @@ const LeftSideBar = () => {
     // ✅ Context에서 알림 데이터/액션 가져오기
     const {
         notifications,
+        unreadCount, // 읽지 않은 개수
         markAllRead,
         deleteAll,
         markRead,
@@ -52,7 +53,11 @@ const LeftSideBar = () => {
                 <MenuItemsContainer>
                     <MenuItemWrapper><Profile/></MenuItemWrapper>
                     <MenuItemWrapper>
-                        <TabMenu toggleButtonRef={toggleButtonRef} onToggle={() => setNotiOpen(!isNotiOpen)}/>
+                        <TabMenu 
+                            unreadCount={unreadCount} // 뱃지에 표시할 개수 전달
+                            toggleButtonRef={toggleButtonRef} 
+                            onToggle={() => setNotiOpen(!isNotiOpen)}
+                        />
                     </MenuItemWrapper>
                     <MenuItemWrapper><CalendarMenu/></MenuItemWrapper>
                 </MenuItemsContainer>
@@ -68,7 +73,7 @@ const LeftSideBar = () => {
                     >
                         {/* 로딩 표시가 필요하면 간단하게 처리 */}
                         {loading ? (
-                            <div style={{ padding: "16px" }}>불러오는 중…</div>
+                            <div style={{ padding: "16px", textAlign: "center" }}>Loading...</div>
                         ) : (
                             <NotificationsPanel
                                 items={notifications}                 // 최신순 정렬은 Context에서 보장
