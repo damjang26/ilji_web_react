@@ -1,7 +1,5 @@
-// NotificationsPanel.jsx
 import React from "react";
 import {
-    BellOutlined,
     MessageOutlined,
     HeartOutlined,
     UserAddOutlined,
@@ -11,7 +9,29 @@ import {
     CheckOutlined,
     DeleteOutlined,
     ClockCircleOutlined,
+    BellOutlined,
 } from "@ant-design/icons";
+import {
+    NotiPanel,
+    NotiHeader,
+    NotiTitle,
+    HeaderActions,
+    NotiButton,
+    NotiList,
+    NotiEmpty,
+    EmptyIcon,
+    EmptyText,
+    NotiItem,
+    ItemMain,
+    ItemIcon,
+    UnreadDot,
+    ItemContent,
+    ItemTitle,
+    ItemBody,
+    ItemTime,
+    ItemTail,
+    IconButton,
+} from "../../styled_components/left_side_bar/NotificationsPanelStyled.jsx";
 
 const iconByType = (type) => {
     switch (type) {
@@ -34,104 +54,85 @@ const iconByType = (type) => {
     }
 };
 
-/**
- * props:
- * - items: [{ id, type, title, body, linkUrl, status('UNREAD'|'READ'), createdAt(ISO) }]
- * - onMarkAllRead, onDeleteAll, onItemRead(id), onItemDelete(id)
- */
+const formatTime = (isoString) => {
+    const now = new Date();
+    const notiDate = new Date(isoString);
+    const diffMs = now - notiDate;
+    const diffSec = Math.round(diffMs / 1000);
+    const diffMin = Math.round(diffSec / 60);
+    const diffHour = Math.round(diffMin / 60);
+
+    if (diffSec < 60) return `${diffSec}초 전`;
+    if (diffMin < 60) return `${diffMin}분 전`;
+    if (diffHour < 24) return `${diffHour}시간 전`;
+
+    return notiDate.toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    });
+};
+
 export default function NotificationsPanel({
-                                               items = [],
-                                               onMarkAllRead,
-                                               onDeleteAll,
-                                               onItemRead,
-                                               onItemDelete,
-                                           }) {
+   items = [],
+   onMarkAllRead,
+   onDeleteAll,
+   onItemRead,
+   onItemDelete,
+}) {
     const hasItems = items && items.length > 0;
 
     return (
-        <div className="noti-panel">
-            {/* Header */}
-            <div className="noti-panel__header">
-                <h2 className="noti-panel__title">알림</h2>
-                <div className="noti-panel__header-actions">
-                    <button
-                        className="noti-btn noti-btn--markall"
-                        type="button"
-                        onClick={onMarkAllRead}
-                    >
-                        전체읽음
-                    </button>
-                    <button
-                        className="noti-btn noti-btn--deleteall"
-                        type="button"
-                        onClick={onDeleteAll}
-                    >
-                        전체삭제
-                    </button>
-                </div>
-            </div>
+        <NotiPanel>
+            <NotiHeader>
+                <NotiTitle>알림</NotiTitle>
+                <HeaderActions>
+                    <NotiButton onClick={onMarkAllRead}>전체읽음</NotiButton>
+                    <NotiButton onClick={onDeleteAll}>전체삭제</NotiButton>
+                </HeaderActions>
+            </NotiHeader>
 
-            {/* List / Empty */}
             {!hasItems ? (
-                <div className="noti-panel__empty">
-                    <BellOutlined className="noti-empty__icon" />
-                    <p className="noti-empty__text">알림이 없습니다.</p>
-                </div>
+                <NotiEmpty>
+                    <EmptyIcon />
+                    <EmptyText>알림이 없습니다.</EmptyText>
+                </NotiEmpty>
             ) : (
-                <div className="noti-panel__list" role="list">
+                <NotiList role="list">
                     {items.map((it) => {
                         const unread = it.status === "UNREAD";
                         return (
-                            <div
-                                key={it.id}
-                                className={`noti-item ${unread ? "is-unread" : ""}`}
-                                role="listitem"
-                            >
-                                <a
-                                    className="noti-item__main"
-                                    href={it.linkUrl || "#"}
-                                    // 링크 이동만, 추가 로직은 필요 시 onClick으로
-                                >
-                                    <div className="noti-item__icon">
+                            <NotiItem key={it.id} unread={unread} role="listitem">
+                                <ItemMain href={it.linkUrl || "#"}>
+                                    <ItemIcon>
                                         {iconByType(it.type)}
-                                        {unread && (
-                                            <span
-                                                className="noti-item__dot"
-                                                aria-label="새 알림"
-                                            />
-                                        )}
-                                    </div>
+                                        {unread && <UnreadDot aria-label="새 알림" />}
+                                    </ItemIcon>
 
-                                    <div className="noti-item__content">
-                                        <div className="noti-item__title">{it.title}</div>
-                                        {it.body ? (
-                                            <div className="noti-item__body">{it.body}</div>
-                                        ) : null}
+                                    <ItemContent>
+                                        <ItemTitle>{it.title}</ItemTitle>
+                                        {it.body && <ItemBody>{it.body}</ItemBody>}
+                                        <ItemTime>
+                                            <ClockCircleOutlined />
+                                            <span>{formatTime(it.createdAt)}</span>
+                                        </ItemTime>
+                                    </ItemContent>
+                                </ItemMain>
 
-                                        <div className="noti-item__time">
-                                            <ClockCircleOutlined className="noti-time__icon" />
-                                            {/* 날짜 표시는 스타일/스크립트에서 포맷팅 하세요 */}
-                                            <span className="noti-time__label" data-iso={it.createdAt}>
-                        {/* 예: '3시간 전' 또는 '2025.09.12 09:30' */}
-                      </span>
-                                        </div>
-                                    </div>
-                                </a>
-
-                                <div className="noti-item__tail">
-                                    <button
-                                        className="icon-btn icon-btn--read"
-                                        type="button"
-                                        aria-label="읽음 처리"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            onItemRead && onItemRead(it.id);
-                                        }}
-                                    >
-                                        <CheckOutlined />
-                                    </button>
-                                    <button
-                                        className="icon-btn icon-btn--delete"
+                                <ItemTail>
+                                    {unread && (
+                                        <IconButton
+                                            type="button"
+                                            aria-label="읽음 처리"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                onItemRead && onItemRead(it.id);
+                                            }}
+                                        >
+                                            <CheckOutlined />
+                                        </IconButton>
+                                    )}
+                                    <IconButton
                                         type="button"
                                         aria-label="삭제"
                                         onClick={(e) => {
@@ -140,13 +141,13 @@ export default function NotificationsPanel({
                                         }}
                                     >
                                         <DeleteOutlined />
-                                    </button>
-                                </div>
-                            </div>
+                                    </IconButton>
+                                </ItemTail>
+                            </NotiItem>
                         );
                     })}
-                </div>
+                </NotiList>
             )}
-        </div>
+        </NotiPanel>
     );
 }
