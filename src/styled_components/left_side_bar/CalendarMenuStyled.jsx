@@ -22,7 +22,12 @@ export const FriendSelectContainer = styled.div`
   flex-shrink: 0; // 축소되지 않도록 설정
 `;
 
-export const TagItem = styled.label`
+export const MenuButton = styled.div`
+  visibility: hidden;
+  margin-left: auto;
+`;
+
+export const TagItem = styled.div`
   display: flex;
   align-items: center;
   margin-bottom: 8px;
@@ -33,6 +38,10 @@ export const TagItem = styled.label`
 
   &:hover {
     background-color: #f0f0f0;
+
+    ${MenuButton} {
+      visibility: visible;
+    }
   }
 `;
 

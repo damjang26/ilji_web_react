@@ -116,7 +116,6 @@ export const TagProvider = ({ children }) => {
     const NO_TAG = {
       id: NO_TAG_ID,
       label: '태그 없음', // name -> label로 수정
-      color: '#808080',
       owner: { userId: user?.id, name: user?.name || 'System' }
     };
 
