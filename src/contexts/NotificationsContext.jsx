@@ -35,10 +35,6 @@ export function NotificationsProvider({ children }) {
     // 1. 초기 데이터 로딩 (REST API)
     const loadInitialData = useCallback(async () => {
         if (!user?.id) return;
-
-        // [DEBUG] Start loading initial data
-        console.log('[DEBUG] Notifications: Starting initial data load...');
-
         setLoading(true);
         try {
             const [listRes, countRes] = await Promise.all([
@@ -46,21 +42,13 @@ export function NotificationsProvider({ children }) {
                 apiNoti.get("/notifications/unread-count")
             ]);
 
-            // [DEBUG] Log raw API response
-            console.log('[DEBUG] Notifications: Raw API response', listRes.data);
-
             const list = listRes.data?.items || [];
             list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-            const mappedList = list.map(mapItem);
-            // [DEBUG] Log data before setting state
-            console.log('[DEBUG] Notifications: Processed list before setting state', mappedList);
-
-            setNotifications(mappedList);
+            setNotifications(list.map(mapItem));
             setUnreadCount(countRes.data?.unread || 0);
         } catch (error) {
-            // [DEBUG] Log error
-            console.error("[DEBUG] Notifications: Failed to load notifications:", error);
+            console.error("Failed to load notifications:", error);
         } finally {
             setLoading(false);
         }
