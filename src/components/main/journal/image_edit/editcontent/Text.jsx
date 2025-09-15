@@ -26,7 +26,7 @@ const FONTS = [
     "Hiragino Sans",  // 히라기노 산스 (macOS의 기본 고딕체)
     "MS PMincho",     // MS P민초 (Windows의 기본 명조체)
 ];
-const FONT_SIZES = [12, 16, 20, 24, 32, 40, 48];
+const FONT_SIZES = [8, 10, 12, 16, 20, 24, 32, 40, 48];
 const COLORS = ["#000000", "#E53E3E", "#3182CE", "#38A169", "#D69E2E", "#ffffff", "#7B5FFF"];
 
 const Text = ({canvas}) => {

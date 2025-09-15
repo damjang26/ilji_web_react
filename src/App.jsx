@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import {BrowserRouter, useLocation, Routes, Route} from "react-router-dom";
-import { Spin } from 'antd';
+import {Spin} from 'antd';
 
 import LeftSideBar from "./components/LeftSideBar.jsx";
 import RightSideBar from "./components/RightSideBar.jsx";
@@ -24,11 +24,11 @@ const AppWrapper = styled.div`
 `;
 
 const FullPageSpinner = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100vw;
-  height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
 `;
 
 const ContentWrapper = styled.div`
@@ -50,7 +50,7 @@ const AppContent = () => {
     if (loading) {
         return (
             <FullPageSpinner>
-                <Spin size="large" />
+                <Spin size="large"/>
             </FullPageSpinner>
         );
     }
@@ -71,7 +71,7 @@ const AppContent = () => {
                 {background && (
                     <Routes>
                         <Route path="/journal/write" element={<JournalWriteModal/>}/>
-                        <Route path="/journal/view/:date" element={<JournalViewModal/>}/>
+                        <Route path="/journals/:journalId" element={<JournalViewModal/>}/>
                     </Routes>
                 )}
             </ContentWrapper>

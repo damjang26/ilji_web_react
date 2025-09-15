@@ -77,6 +77,24 @@ export const getFriendStatus = (userId) => api.get(`/api/friends/${userId}/statu
  */
 export const searchUsers = (query) => api.get(`/api/users/search?q=${query}`);
 
+
+// =================================
+// 좋아요 관련 API
+// =================================
+
+/**
+ * 특정 일기에 대한 '좋아요'를 토글(추가/삭제)합니다.
+ * @param {number} ilogId - 좋아요를 토글할 일기의 ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const toggleLike = (ilogId, userId) => api.post(`/api/ilogs/${ilogId}/like`, {userId});
+
+/**
+ * 특정 일기에 '좋아요'를 누른 사용자 목록을 조회합니다.
+ * @param {number} ilogId - 조회할 일기의 ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const getLikers = (ilogId) => api.get(`/api/ilogs/${ilogId}/like`);
 /**
  * [추가] 특정 사용자의 모든 일기(i-log)를 조회합니다.
  * @param {number} userId - 조회할 사용자의 ID
