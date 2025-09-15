@@ -1,19 +1,21 @@
-import React, {useState} from "react";
-import {BrowserRouter, useLocation, Routes, Route} from "react-router-dom";
-import {Spin} from 'antd';
+import React, { useState } from "react";
+import { BrowserRouter, useLocation, Routes, Route } from "react-router-dom";
+import { Spin } from "antd";
+
 
 import LeftSideBar from "./components/LeftSideBar.jsx";
 import RightSideBar from "./components/RightSideBar.jsx";
 import styled from "styled-components";
-import {useAuth} from "./AuthContext.jsx";
+import { useAuth } from "./AuthContext.jsx";
 import LoginPage from "./components/login/LoginPage.jsx";
 import Main from "./components/Main.jsx";
 import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
-import {JournalProvider} from "./contexts/JournalContext.jsx";
+import { JournalProvider } from "./contexts/JournalContext.jsx";
 import JournalViewModal from "./components/main/journal/JournalViewModal.jsx";
 import { ScheduleProvider } from "./contexts/ScheduleContext.jsx";
 import { MyPageProvider } from "./contexts/MyPageContext.jsx";
 import { TagProvider } from "./contexts/TagContext.jsx";
+import { NotificationsProvider } from "./contexts/NotificationsContext.jsx";
 import SetNicknamePage from "./components/nickname_set/SetNickNamePage.jsx";
 
 const AppWrapper = styled.div`
@@ -40,7 +42,7 @@ const ContentWrapper = styled.div`
 `;
 
 const AppContent = () => {
-    const {user, loading} = useAuth();
+    const { user, loading } = useAuth();
     const location = useLocation();
 
     // navigate로 전달받은 state에 backgroundLocation이 있는지 확인합니다.
@@ -57,7 +59,7 @@ const AppContent = () => {
 
     return user ? (
         <AppWrapper>
-            <LeftSideBar/>
+            <LeftSideBar />
             <ContentWrapper>
                 {/* 1. 배경이 될 메인 라우트를 항상 렌더링합니다. */}
                 <Routes location={background || location}>
@@ -75,10 +77,10 @@ const AppContent = () => {
                     </Routes>
                 )}
             </ContentWrapper>
-            <RightSideBar/>
+            <RightSideBar />
         </AppWrapper>
     ) : (
-        <LoginPage/>
+        <LoginPage />
     );
 };
 
@@ -90,7 +92,9 @@ export default function App() {
                     <MyPageProvider>
                         <ScheduleProvider>
                             <TagProvider>
-                                <AppContent/>
+                                <NotificationsProvider>
+                                    <AppContent />
+                                </NotificationsProvider>
                             </TagProvider>
                         </ScheduleProvider>
                     </MyPageProvider>
