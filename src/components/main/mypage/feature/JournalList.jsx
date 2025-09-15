@@ -4,7 +4,7 @@ import {useNavigate, useLocation} from "react-router-dom"; // ✅ 페이지 이�
 import {
     FeedContainer,
     PostActions,
-    PostContainer, PostHeaderActions,
+    PostContainer, IndexTabActions, IndexTabsContainer, JournalItemWrapper,
     PostContent,
     PostHeader,
     ProfileImage,
@@ -12,15 +12,196 @@ import {
     EmptyFeedContainer,
     EmptyFeedText,
     WriteJournalButton,
-    ImageGrid, ImageWrapper, ActionItem, // ✅ [추가] 이미지 그리드 컴포넌트
+    ActionItem,
+    JournalItemLayoutContainer,
+    JournalItemContentContainer,
+    ImageSliderContainer,
+    ImageSlide, SliderArrow, JournalEntryDate, // ✅ [추가] 슬라이더 및 날짜 컴포넌트
 } from "../../../../styled_components/main/post/PostListStyled.jsx";
-import {FaRegComment, FaRegHeart, FaRegShareSquare} from "react-icons/fa";
+import {FaChevronLeft, FaChevronRight, FaRegHeart} from "react-icons/fa"; // ✅ [추가] 화살표 아이콘
 import {HiPencilAlt} from "react-icons/hi";
 import {MdDeleteForever} from "react-icons/md";
 import {RiQuillPenAiLine} from "react-icons/ri";
+import {formatRelativeTime} from "../../../../utils/timeFormatter.js";
+import {BiSolidShareAlt} from "react-icons/bi";
 
 // 한 번에 불러올 일기 개수
 const JOURNALS_PER_PAGE = 10;
+
+// ✅ [신규] 각 일기 항목을 렌더링하는 컴포넌트
+// 각 아이템이 독립적인 이미지 슬라이더 상태를 갖도록 분리합니다.
+const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    // ✅ [추가] 이미지가 가로로 긴지 여부를 저장하는 상태
+    const [isLandscape, setIsLandscape] = useState(false);
+
+    const hasImages = journal.images && journal.images.length > 0;
+    const imageUrls = journal.images || [];
+
+    // ✅ [추가] 첫 번째 이미지의 비율을 확인하여 isLandscape 상태를 설정하는 로직
+    useEffect(() => {
+        if (hasImages) {
+            const img = new Image();
+            img.src = imageUrls[0];
+            img.onload = () => {
+                // 이미지의 가로가 세로보다 길면 isLandscape를 true로 설정
+                setIsLandscape(img.naturalWidth > img.naturalHeight);
+            };
+        } else {
+            // 이미지가 없으면 false로 초기화
+            setIsLandscape(false);
+        }
+        // journal.id가 바뀔 때마다 (즉, 다른 일기가 렌더링될 때마다) 이 효과를 재실행합니다.
+    }, [journal.id, hasImages, imageUrls]);
+
+    // ✅ [신규] 날짜를 'MONTH DAY, YEAR' 형식으로 포맷팅합니다. (예: JAN 01, 2024)
+    const formattedDate = useMemo(() => {
+        if (!journal?.logDate) return '';
+        return new Date(journal.logDate).toLocaleDateString('en-US', {month: 'short', day: '2-digit', year: 'numeric'});
+    }, [journal.logDate]);
+
+    const handleNextImage = useCallback((e) => {
+        e.stopPropagation(); // 이벤트 버블링 방지
+        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % imageUrls.length);
+    }, [imageUrls.length]);
+
+    const handlePrevImage = useCallback((e) => {
+        e.stopPropagation(); // 이벤트 버블링 방지
+        setCurrentImageIndex((prevIndex) => (prevIndex - 1 + imageUrls.length) % imageUrls.length);
+    }, [imageUrls.length]);
+
+    const handleShare = useCallback(async () => {
+        const shareUrl = window.location.href;
+        const shareTitle = `"${journal.writerNickname}"님의 일기`;
+
+        try {
+            // Web Share API를 사용하여 네이티브 공유 UI를 엽니다.
+            await navigator.share({
+                title: shareTitle,
+                text: `[일지]에서 ${shareTitle}를 확인해보세요!`,
+                url: shareUrl,
+            });
+        } catch (error) {
+            console.log("공유 기능이 지원되지 않거나 사용자가 취소했습니다.", error);
+        }
+    }, [journal]);
+
+    // 이미지가 있는 경우: 2단 레이아웃 (슬라이더 포함)
+    if (hasImages) {
+        return (
+            <JournalItemWrapper>
+                <PostContainer
+                    ref={lastJournalElementRef}
+                    className="has-image"
+                >
+                    <JournalItemLayoutContainer className={isLandscape ? 'landscape' : ''}>
+                        {/* ✅ [수정] 이미지 슬라이더 로직 적용 */}
+                        <ImageSliderContainer>
+                            <ImageSlide src={imageUrls[currentImageIndex]}
+                                        alt={`journal image ${currentImageIndex + 1}`}/>
+                            {imageUrls.length > 1 && (
+                                <>
+                                    <SliderArrow className="prev"
+                                                 onClick={handlePrevImage}><FaChevronLeft/></SliderArrow>
+                                    <SliderArrow className="next"
+                                                 onClick={handleNextImage}><FaChevronRight/></SliderArrow>
+                                </>
+                            )}
+                        </ImageSliderContainer>
+
+                        <JournalItemContentContainer>
+                            <PostHeader>
+                                <ProfileImage
+                                    src={journal.writerProfileImage || '/path/to/default/profile.png'}
+                                    alt={`${journal.writerNickname} profile`}/>
+                                <UserInfo>
+                                    <div>
+                                        {/* ✅ [수정] username과 date를 div로 묶음 */}
+                                        <div>
+                                            <span className="username">{journal.writerNickname || '사용자'}</span>
+                                            <span className="date">{formatRelativeTime(journal.createdAt)}</span>
+                                        </div>
+
+                                        <ActionItem>
+                                            <button><FaRegHeart size={24}/></button>
+                                            {journal.likeCount > 0 && <span>{journal.likeCount}</span>}
+                                        </ActionItem>
+                                    </div>
+                                </UserInfo>
+                            </PostHeader>
+                            <JournalEntryDate>
+                                <h3>{formattedDate}</h3>
+                            </JournalEntryDate>
+                            <PostContent>
+                                {journal.content}
+                            </PostContent>
+                            <PostActions>
+                            </PostActions>
+                        </JournalItemContentContainer>
+                    </JournalItemLayoutContainer>
+                </PostContainer>
+                <IndexTabsContainer>
+                    <IndexTabActions type="share" onClick={() => handleShare}>
+                        <button data-tooltip="공유"><BiSolidShareAlt/></button>
+                    </IndexTabActions>
+                    <IndexTabActions type="edit" onClick={() => onEdit(journal)}>
+                        <button data-tooltip="수정"><HiPencilAlt/></button>
+                    </IndexTabActions>
+                    <IndexTabActions type="delete" onClick={() => onDelete(journal.id, journal.logDate.split('T')[0])}>
+                        <button data-tooltip="삭제">
+                            <MdDeleteForever/></button>
+                    </IndexTabActions>
+                </IndexTabsContainer>
+            </JournalItemWrapper>
+        );
+    }
+
+    // 이미지가 없는 경우: 기존 레이아웃
+    return (
+        <JournalItemWrapper>
+            <PostContainer ref={lastJournalElementRef} className="not-has-image">
+                <PostHeader>
+                    <ProfileImage src={journal.writerProfileImage || '/path/to/default/profile.png'}
+                                  alt={`${journal.writerNickname} profile`}/>
+                    <UserInfo>
+                        <div>
+                            {/* ✅ [수정] username과 date를 div로 묶음 */}
+                            <div>
+                                <span className="username">{journal.writerNickname || '사용자'}</span>
+                                <span className="date">{formatRelativeTime(journal.createdAt)}</span>
+                            </div>
+
+                            <ActionItem>
+                                <button><FaRegHeart size={24}/></button>
+                                {journal.likeCount > 0 && <span>{journal.likeCount}</span>}
+                            </ActionItem>
+                        </div>
+                    </UserInfo>
+                </PostHeader>
+                <JournalEntryDate>
+                    <h3>{formattedDate}</h3>
+                </JournalEntryDate>
+                <PostContent>
+                    {journal.content}
+                </PostContent>
+                <PostActions>
+                </PostActions>
+            </PostContainer>
+            <IndexTabsContainer>
+                <IndexTabActions type="share" onClick={() => handleShare}>
+                    <button data-tooltip="공유"><BiSolidShareAlt/></button>
+                </IndexTabActions>
+                <IndexTabActions type="edit" onClick={() => onEdit(journal)}>
+                    <button data-tooltip="수정"><HiPencilAlt/></button>
+                </IndexTabActions>
+                <IndexTabActions type="delete" onClick={() => onDelete(journal.id, journal.logDate.split('T')[0])}>
+                    <button data-tooltip="삭제">
+                        <MdDeleteForever/></button>
+                </IndexTabActions>
+            </IndexTabsContainer>
+        </JournalItemWrapper>
+    );
+};
 
 const JournalList = () => {
     // 1. Context에서 전체 일기 목록(Map)과 로딩 상태를 가져옵니다.
@@ -98,18 +279,6 @@ const JournalList = () => {
         });
     }, [navigate, location]); // navigate와 location이 변경될 때만 함수를 재생성합니다.
 
-    // ✅ [추가] 일기 클릭 핸들러 (상세보기로 이동)
-    const handleJournalClick = useCallback((e, journal) => {
-        // 이벤트 버블링 방지: 수정/삭제 버튼 클릭 시에는 이 함수가 실행되지 않도록 함
-        if (e.target.closest('button')) return;
-
-        navigate(`/journals/${journal.id}`, {
-            state: {
-                backgroundLocation: location,
-                journalData: journal
-            },
-        });
-    }, [navigate, location]);
 
     // 초기 로딩 중이거나, 작성된 일기가 없을 때의 UI 처리
     if (journalLoading && sortedJournals.length === 0) {
@@ -138,68 +307,14 @@ const JournalList = () => {
                 {displayedJournals.map((journal, index) => {
                     // 현재 렌더링하는 요소가 마지막 요소인지 확인
                     const isLastElement = displayedJournals.length === index + 1;
-
                     return (
-                        <PostContainer
+                        <JournalItem
                             key={journal.id}
-                            ref={isLastElement ? lastJournalElementRef : null}
-                            onClick={(e) => handleJournalClick(e, journal)} // ✅ [추가] 상세보기 클릭 이벤트
-                        >
-                            <PostHeader>
-                                {/* ✅ [수정] 각 journal에 포함된 작성자 정보를 사용합니다. */}
-                                <ProfileImage src={journal.writerProfileImage || '/path/to/default/profile.png'}
-                                              alt={`${journal.writerNickname} profile`}/>
-                                <UserInfo>
-                                    <span className="username">{journal.writerNickname || '사용자'}</span>
-                                    <span className="date">{new Date(journal.logDate).toLocaleDateString()}</span>
-                                </UserInfo>
-                                <PostHeaderActions>
-                                    <button data-tooltip="수정" onClick={() => handleEdit(journal)}>
-                                        <HiPencilAlt/>
-                                    </button>
-                                    <button data-tooltip="삭제"
-                                            onClick={() => handleDelete(journal.id, journal.logDate.split('T')[0])}>
-                                        <MdDeleteForever/>
-                                    </button>
-                                </PostHeaderActions>
-                            </PostHeader>
-                            {/* ✅ [수정] 내용이 길면 잘라서 보여주는 로직 추가 */}
-                            <PostContent>
-                                {journal.content.length > 150 ? (
-                                    <>
-                                        {`${journal.content.substring(0, 150)}... `}
-                                        <span className="more-text">더보기</span>
-                                    </>
-                                ) : (
-                                    journal.content
-                                )}
-                            </PostContent>
-
-                            {/* ✅ [수정] 이미지 그리드 렌더링 로직 */}
-                            {journal.images && journal.images.length > 0 && (
-                                <ImageGrid count={journal.images.length}>
-                                    {journal.images.slice(0, 4).map((imgSrc, imgIndex) => (
-                                        <ImageWrapper key={imgIndex} count={journal.images.length}>
-                                            <img src={imgSrc} alt={`journal image ${imgIndex + 1}`}/>
-                                        </ImageWrapper>
-                                    ))}
-                                </ImageGrid>
-                            )}
-
-                            <PostActions>
-                                <ActionItem>
-                                    <button><FaRegHeart/></button>
-                                    {journal.likeCount > 0 && <span>{journal.likeCount}</span>}
-                                </ActionItem>
-                                <ActionItem>
-                                    <button><FaRegComment/></button>
-                                    {journal.commentCount > 0 && <span>{journal.commentCount}</span>}
-                                </ActionItem>
-                                <ActionItem>
-                                    <button><FaRegShareSquare/></button>
-                                </ActionItem>
-                            </PostActions>
-                        </PostContainer>
+                            journal={journal}
+                            lastJournalElementRef={isLastElement ? lastJournalElementRef : null}
+                            onDelete={handleDelete}
+                            onEdit={handleEdit}
+                        />
                     );
                 })}
                 {hasMore && <div>다음 일기를 불러오는 중...</div>}

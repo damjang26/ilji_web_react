@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import {BrowserRouter, useLocation, Routes, Route} from "react-router-dom";
-import { Spin } from 'antd';
+import {Spin} from 'antd';
 
 import LeftSideBar from "./components/LeftSideBar.jsx";
 import RightSideBar from "./components/RightSideBar.jsx";
@@ -11,8 +11,8 @@ import Main from "./components/Main.jsx";
 import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
 import {JournalProvider} from "./contexts/JournalContext.jsx";
 import JournalViewModal from "./components/main/journal/JournalViewModal.jsx";
-import { ScheduleProvider } from "./contexts/ScheduleContext.jsx";
-import { TagProvider } from "./contexts/TagContext.jsx";
+import {ScheduleProvider} from "./contexts/ScheduleContext.jsx";
+import {TagProvider} from "./contexts/TagContext.jsx";
 
 const AppWrapper = styled.div`
     display: flex;
@@ -22,11 +22,11 @@ const AppWrapper = styled.div`
 `;
 
 const FullPageSpinner = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100vw;
-  height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
 `;
 
 const ContentWrapper = styled.div`
@@ -48,7 +48,7 @@ const AppContent = () => {
     if (loading) {
         return (
             <FullPageSpinner>
-                <Spin size="large" />
+                <Spin size="large"/>
             </FullPageSpinner>
         );
     }
@@ -67,7 +67,6 @@ const AppContent = () => {
                     <Routes>
                         <Route path="/journal/write" element={<JournalWriteModal/>}/>
                         <Route path="/journals/:journalId" element={<JournalViewModal/>}/>
-                        <Route path="/posts/:journalId" element={<JournalViewModal/>}/>
                     </Routes>
                 )}
             </ContentWrapper>

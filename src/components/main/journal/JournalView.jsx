@@ -1,7 +1,8 @@
 import React, {useCallback, useMemo, useState} from 'react';
-import {useParams, useNavigate, useLocation} from 'react-router-dom';
+import {useNavigate, useLocation} from 'react-router-dom';
 import {useJournal} from '../../../contexts/JournalContext';
 import {
+    JournalViewWrapper,
     ViewContainer,
     ProfileSection,
     ProfilePicture,
@@ -13,15 +14,27 @@ import {
     ImageSliderContainer,
     ImageSlide,
     SliderArrow,
-    ContentContainer
+    ContentContainer,
+    ActionsContainer,
+    SideActionTabsContainer,
+    SideActionTab,
+    CommentContainer,
+    CommentContentWrapper,
+    CommentHeader,
+    CommentList,
+    CommentInputContainer,
+    CommentForm
 } from '../../../styled_components/main/journal/JournalViewStyled';
 import {HiPencilAlt} from "react-icons/hi";
 import {MdDeleteForever} from "react-icons/md";
-import {PostHeaderActions} from "../../../styled_components/main/post/PostListStyled.jsx";
-import {FaChevronLeft, FaChevronRight} from "react-icons/fa";
+import {ActionItem} from "../../../styled_components/main/post/PostListStyled.jsx";
+import {FaChevronLeft, FaChevronRight, FaRegComment, FaRegHeart, FaRegShareSquare} from "react-icons/fa";
+import {useAuth} from "../../../AuthContext.jsx";
+import {BiSolidShareAlt} from "react-icons/bi";
+import {TbMessageCirclePlus} from "react-icons/tb";
 
 const JournalView = () => {
-    const {journalId} = useParams(); // ✅ [수정] URL에서 journalId를 가져옵니다.
+    const {user} = useAuth();
     const {deleteJournal} = useJournal();
     const navigate = useNavigate(); // ✅ 페이지 이동을 위해 useNavigate 훅을 사용합니다.
     const location = useLocation(); // ✅ 모달 네비게이션의 배경 위치를 위해 추가합니다.
@@ -30,12 +43,13 @@ const JournalView = () => {
     const journal = location.state?.journalData;
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+    const [newComment, setNewComment] = useState(''); // ✅ [신규] 댓글 입력 상태
+    const [isCommentOpen, setIsCommentOpen] = useState(false); // ✅ [신규] 댓글 창 열림/닫힘 상태
+    // ✅ [신규] 날짜를 'MONTH DAY, YEAR' 형식으로 포맷팅합니다. (예: JAN 01, 2024)
     const formattedDate = useMemo(() => {
-        // ✅ [수정] URL 파라미터 대신 journal 객체의 logDate를 사용합니다.
         if (!journal?.logDate) return '';
-        const d = new Date(journal.logDate);
-        return d.toLocaleDateString('ko-KR', {year: 'numeric', month: 'long', day: 'numeric'});
-    }, [journal]);
+        return new Date(journal.logDate).toLocaleDateString('en-US', {month: 'short', day: '2-digit', year: 'numeric'});
+    }, [journal.logDate]);
 
     const imageUrls = useMemo(() => {
         if (journal && Array.isArray(journal.images)) {
@@ -61,7 +75,6 @@ const JournalView = () => {
 
     // ✅ [추가] 수정 버튼 클릭 핸들러
     const handleEdit = useCallback((journalToEdit) => {
-        // ✅ [수정] 확인 창 없이 바로 수정 모드로 진입하도록 변경
         console.log("✏️ 수정할 일기 객체:", journalToEdit);
         navigate('/journal/write', {
             state: {
@@ -71,6 +84,23 @@ const JournalView = () => {
         });
     }, [navigate, location]); // navigate와 location이 변경될 때만 함수를 재생성합니다.
 
+    // ✅ [신규] 공유 버튼 클릭 핸들러
+    const handleShare = useCallback(async () => {
+        const shareUrl = window.location.href;
+        const shareTitle = `"${journal.writerNickname}"님의 일기`;
+
+        try {
+            // Web Share API를 사용하여 네이티브 공유 UI를 엽니다.
+            await navigator.share({
+                title: shareTitle,
+                text: `[일지]에서 ${shareTitle}를 확인해보세요!`,
+                url: shareUrl,
+            });
+        } catch (error) {
+            console.log("공유 기능이 지원되지 않거나 사용자가 취소했습니다.", error);
+        }
+    }, [journal]);
+
     const handleNextImage = useCallback(() => {
         setCurrentImageIndex((prevIndex) => (prevIndex + 1) % imageUrls.length);
     }, [imageUrls.length]);
@@ -79,6 +109,21 @@ const JournalView = () => {
         setCurrentImageIndex((prevIndex) => (prevIndex - 1 + imageUrls.length) % imageUrls.length);
     }, [imageUrls.length]);
 
+    // ✅ [신규] 댓글 창을 토글하는 함수
+    const toggleCommentView = useCallback((e) => {
+        e.stopPropagation(); // 이벤트 버블링 방지
+        setIsCommentOpen(prev => !prev);
+    }, []);
+
+    // ✅ [신규] 댓글 제출 핸들러
+    const handleCommentSubmit = useCallback((e) => {
+        e.preventDefault();
+        if (!newComment.trim()) return; // 내용이 없으면 제출 방지
+
+        console.log('새 댓글:', newComment);
+        // 여기에 댓글을 서버로 전송하는 API 호출 로직을 추가합니다.
+        setNewComment(''); // 입력창 초기화
+    }, [newComment]);
     if (!journal) {
         return <ViewContainer className="no-image"><p>일기 정보를 불러올 수 없습니다. 목록에서 다시 시도해주세요.</p></ViewContainer>;
     }
@@ -89,72 +134,165 @@ const JournalView = () => {
     // 이미지가 없는 경우의 UI
     if (!hasImages) {
         return (
-            <ViewContainer className="no-image">
-                <ProfileSection>
-                    <ProfilePicture
-                        src={journal?.writerProfileImage || 'https://via.placeholder.com/48'}
-                        alt={`${journal?.writerNickname || 'user'} profile`}
-                        referrerPolicy="no-referrer"/>
-                    <AuthorInfo>
-                        <AuthorName>{journal?.writerNickname || '사용자'}</AuthorName>
-                        <DateDisplay>{formattedDate}</DateDisplay>
-                    </AuthorInfo>
-                    <PostHeaderActions>
-                        <button data-tooltip="수정" onClick={() => handleEdit(journal)}>
-                            <HiPencilAlt/>
-                        </button>
-                        <button data-tooltip="삭제"
-                                onClick={() => handleDelete(journal.id, journal.logDate.split('T')[0])}>
-                            <MdDeleteForever/>
-                        </button>
-                    </PostHeaderActions>
-                </ProfileSection>
-                <ContentSection>
-                    <p>{journal.content}</p>
-                </ContentSection>
-            </ViewContainer>
+            <JournalViewWrapper>
+                <ViewContainer className="no-image" isCommentOpen={isCommentOpen}>
+                    <ProfileSection>
+                        <div>
+                            <ProfilePicture
+                                src={journal?.writerProfileImage || 'https://via.placeholder.com/48'}
+                                alt={`${journal?.writerNickname || 'user'} profile`}
+                                referrerPolicy="no-referrer"/>
+                            <AuthorInfo>
+                                <AuthorName>{journal?.writerNickname || '사용자'}</AuthorName>
+                            </AuthorInfo>
+                        </div>
+                        <ActionItem>
+                            {journal.likeCount > 0 && <span>{journal.likeCount}</span>}
+                            <button><FaRegHeart/></button>
+                        </ActionItem>
+                    </ProfileSection>
+                    <h3>{formattedDate}</h3>
+                    <ContentSection>
+                        <p>{journal.content}</p>
+                    </ContentSection>
+                    <CommentContainer isOpen={isCommentOpen}
+                                      onClick={!isCommentOpen ? toggleCommentView : undefined}>
+                        {isCommentOpen ? (
+                            <CommentContentWrapper>
+                                <CommentHeader>
+                                    <h4>comments</h4>
+                                    <button onClick={toggleCommentView}>Hide</button>
+                                </CommentHeader>
+                                <CommentList>
+                                    {/* 댓글 목록이 여기에 렌더링됩니다. */}
+                                    <p>No comments.</p>
+                                </CommentList>
+                                <CommentInputContainer>
+                                    <ProfilePicture
+                                        src={user?.profileImage || 'https://via.placeholder.com/40'}
+                                        alt="내 프로필"
+                                        referrerPolicy="no-referrer"
+                                    />
+                                    <CommentForm onSubmit={handleCommentSubmit}>
+                                        <input type="text" placeholder="Add a comment..." value={newComment}
+                                               onChange={(e) => setNewComment(e.target.value)}/>
+                                        <button type="submit" disabled={!newComment.trim()}><TbMessageCirclePlus/>
+                                        </button>
+                                    </CommentForm>
+                                </CommentInputContainer>
+                            </CommentContentWrapper>
+                        ) : (
+                            <span>Comments ( )</span>
+                        )}
+                    </CommentContainer>
+                </ViewContainer>
+                {/* ✅ [수정] 컨테이너는 항상 렌더링하고, 내부 탭을 조건부로 보여줍니다. */}
+                <SideActionTabsContainer>
+                    <SideActionTab type="share" onClick={handleShare}>
+                        <button data-tooltip="공유"><BiSolidShareAlt/></button>
+                    </SideActionTab>
+                    {user?.id === journal.writerId && (
+                        <>
+                            <SideActionTab type="edit" onClick={() => handleEdit(journal)}>
+                                <button data-tooltip="수정"><HiPencilAlt/></button>
+                            </SideActionTab>
+                            <SideActionTab type="delete"
+                                           onClick={() => handleDelete(journal.id, journal.logDate.split('T')[0])}>
+                                <button data-tooltip="삭제"><MdDeleteForever/></button>
+                            </SideActionTab>
+                        </>
+                    )}
+                </SideActionTabsContainer>
+            </JournalViewWrapper>
         );
     }
 
     // 이미지가 있는 경우의 UI (책 레이아웃)
     return (
-        <ViewContainer className="has-image">
-            <BookLayoutContainer>
-                <ImageSliderContainer>
-                    <ImageSlide src={imageUrls[currentImageIndex]} alt={`journal image ${currentImageIndex + 1}`}/>
-                    {imageUrls.length > 1 && (
-                        <>
-                            <SliderArrow className="prev" onClick={handlePrevImage}><FaChevronLeft/></SliderArrow>
-                            <SliderArrow className="next" onClick={handleNextImage}><FaChevronRight/></SliderArrow>
-                        </>
-                    )}
-                </ImageSliderContainer>
-                <ContentContainer>
-                    <ProfileSection>
-                        <ProfilePicture
-                            src={journal?.writerProfileImage || 'https://via.placeholder.com/48'}
-                            alt={`${journal?.writerNickname || 'user'} profile`}
-                            referrerPolicy="no-referrer"/>
-                        <AuthorInfo>
-                            <AuthorName>{journal?.writerNickname || '사용자'}</AuthorName>
-                            <DateDisplay>{formattedDate}</DateDisplay>
-                        </AuthorInfo>
-                        <PostHeaderActions>
-                            <button data-tooltip="수정" onClick={() => handleEdit(journal)}>
-                                <HiPencilAlt/>
-                            </button>
-                            <button data-tooltip="삭제"
-                                    onClick={() => handleDelete(journal.id, journal.logDate.split('T')[0])}>
-                                <MdDeleteForever/>
-                            </button>
-                        </PostHeaderActions>
-                    </ProfileSection>
-                    <ContentSection>
-                        <p>{journal.content}</p>
-                    </ContentSection>
-                </ContentContainer>
-            </BookLayoutContainer>
-        </ViewContainer>
+        <JournalViewWrapper>
+            <ViewContainer className="has-image">
+                <BookLayoutContainer isCommentOpen={isCommentOpen}>
+                    <ImageSliderContainer>
+                        <ImageSlide src={imageUrls[currentImageIndex]} alt={`journal image ${currentImageIndex + 1}`}/>
+                        {imageUrls.length > 1 && (
+                            <>
+                                <SliderArrow className="prev" onClick={handlePrevImage}><FaChevronLeft/></SliderArrow>
+                                <SliderArrow className="next" onClick={handleNextImage}><FaChevronRight/></SliderArrow>
+                            </>
+                        )}
+                    </ImageSliderContainer>
+                    <ContentContainer>
+                        <ProfileSection>
+                            <div>
+                                <ProfilePicture
+                                    src={journal?.writerProfileImage || 'https://via.placeholder.com/48'}
+                                    alt={`${journal?.writerNickname || 'user'} profile`}
+                                    referrerPolicy="no-referrer"/>
+                                <AuthorInfo>
+                                    <AuthorName>{journal?.writerNickname || '사용자'}</AuthorName>
+                                </AuthorInfo>
+                            </div>
+                            <ActionItem>
+                                {journal.likeCount > 0 && <span>{journal.likeCount}</span>}
+                                <button><FaRegHeart/></button>
+                            </ActionItem>
+                        </ProfileSection>
+                        <h3>{formattedDate}</h3>
+                        <ContentSection>
+                            <p>{journal.content}</p>
+                        </ContentSection>
+                        {/* ✅ [수정] 클릭 시 댓글 창을 토글하고, 상태에 따라 다른 내용을 보여줍니다. */}
+                        <CommentContainer isOpen={isCommentOpen}
+                                          onClick={!isCommentOpen ? toggleCommentView : undefined}>
+                            {isCommentOpen ? (
+                                <CommentContentWrapper>
+                                    <CommentHeader>
+                                        <h4>comments</h4>
+                                        <button onClick={toggleCommentView}>Hide</button>
+                                    </CommentHeader>
+                                    <CommentList>
+                                        {/* 댓글 목록이 여기에 렌더링됩니다. */}
+                                        <p>No comments</p>
+                                    </CommentList>
+                                    <CommentInputContainer>
+                                        <ProfilePicture
+                                            src={user?.profileImage || 'https://via.placeholder.com/40'}
+                                            alt="내 프로필"
+                                            referrerPolicy="no-referrer"
+                                        />
+                                        <CommentForm onSubmit={handleCommentSubmit}>
+                                            <input type="text" placeholder="Add a comment..." value={newComment}
+                                                   onChange={(e) => setNewComment(e.target.value)}/>
+                                            <button type="submit" disabled={!newComment.trim()}><TbMessageCirclePlus/>
+                                            </button>
+                                        </CommentForm>
+                                    </CommentInputContainer>
+                                </CommentContentWrapper>
+                            ) : (
+                                <span>Comments ( )</span>
+                            )}
+                        </CommentContainer>
+                    </ContentContainer>
+                </BookLayoutContainer>
+            </ViewContainer>
+            {/* ✅ [수정] 컨테이너는 항상 렌더링하고, 내부 탭을 조건부로 보여줍니다. */}
+            <SideActionTabsContainer>
+                <SideActionTab type="share" onClick={handleShare}>
+                    <button data-tooltip="공유"><BiSolidShareAlt/></button>
+                </SideActionTab>
+                {user?.id === journal.writerId && (
+                    <>
+                        <SideActionTab type="edit" onClick={() => handleEdit(journal)}>
+                            <button data-tooltip="수정"><HiPencilAlt/></button>
+                        </SideActionTab>
+                        <SideActionTab type="delete"
+                                       onClick={() => handleDelete(journal.id, journal.logDate.split('T')[0])}>
+                            <button data-tooltip="삭제"><MdDeleteForever/></button>
+                        </SideActionTab>
+                    </>
+                )}
+            </SideActionTabsContainer>
+        </JournalViewWrapper>
     );
 };
 

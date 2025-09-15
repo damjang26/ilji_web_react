@@ -12,14 +12,15 @@ export const formatRelativeTime = (dateString) => {
     const diffInMinutes = Math.floor(diffInSeconds / 60);
     const diffInHours = Math.floor(diffInMinutes / 60);
 
+    // ✅ [수정] 영어권 표현으로 변경 및 단/복수 처리
     if (diffInSeconds < 60) {
-        return "방금 전";
+        return "Just now";
     } else if (diffInMinutes < 60) {
-        return `${diffInMinutes}분 전`;
+        return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
     } else if (diffInHours < 24) {
-        return `${diffInHours}시간 전`;
+        return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
     } else {
-        // 24시간이 지나면 'M월 D일' 형식으로 표시
-        return postDate.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+        // 24시간이 지나면 'Month Day' 형식으로 표시 (예: August 25)
+        return postDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
     }
 };
