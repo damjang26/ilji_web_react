@@ -26,7 +26,13 @@ const Post = () => {
             const data = response.data;
             // console.log("데이터 : ", data);
 
-            setPosts(prevPosts => [...prevPosts, ...data.content]);
+            // ✅ [수정] 기존 게시글에 새로운 게시글을 추가합니다.
+            setPosts(prevPosts => {
+                // 중복 데이터를 방지하기 위해 Set을 사용합니다.
+                const newPosts = [...prevPosts, ...data.content];
+                const uniquePosts = Array.from(new Map(newPosts.map(post => [post.id, post])).values());
+                return uniquePosts;
+            });
             setPage(prevPage => prevPage + 1);
             setHasMore(!data.last);
         } catch (error) {

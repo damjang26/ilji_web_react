@@ -1,7 +1,6 @@
 import {useNavigate} from "react-router-dom";
 import Modal from "./Modal.jsx";
 import JournalView from "./JournalView.jsx";
-import {useState} from "react";
 
 const JournalViewModal = () => {
     const navigate = useNavigate();
@@ -11,7 +10,7 @@ const JournalViewModal = () => {
     };
 
     return (
-        <Modal isOpen={true} onClose={handleClose}>
+        <Modal isOpen={true} onClose={handleClose} variant="journalView">
             <JournalView/>
         </Modal>
     );
