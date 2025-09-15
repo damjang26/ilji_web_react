@@ -12,7 +12,7 @@ const TabMenu = ({toggleButtonRef, onToggle}) => {
     return (
         <TabMenuContainer>
             <MenuLink to="/"><FaCalendarAlt/> Calendar</MenuLink>
-            <MenuLink to="/post"><FaListAlt/> Post</MenuLink>
+            <MenuLink to="/posts"><FaListAlt/> Post</MenuLink>
             <ToggleButton ref={toggleButtonRef} onClick={onToggle}>
                 <FaBell/> Notifications
             </ToggleButton>

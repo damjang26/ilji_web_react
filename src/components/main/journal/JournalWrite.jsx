@@ -26,7 +26,7 @@ import {CloseButton, ModalHeader} from '../../../styled_components/main/journal/
 import ImageEditor from './image_edit/ImageEditor.jsx';
 
 const MAX_CHAR_LIMIT = 3000;
-const MAX_IMAGE_LIMIT = 1;
+const MAX_IMAGE_LIMIT = 2;
 
 // Base64 데이터 URL을 File 객체로 변환하는 헬퍼 함수
 const dataURLtoFile = (dataurl, filename) => {

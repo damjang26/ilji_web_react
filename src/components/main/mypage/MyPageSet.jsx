@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // [추가] 페이지 이동을 위해 useNavigate import
+import { Button, Col, message, Row } from 'antd'; // [추가] 닉네임 중복 확인 UI를 위해 import
+import styled from 'styled-components';
 import { useMyPage } from '../../../contexts/MyPageContext';
 import ImageBox from './ImageBox';
-
+import { api } from '../../../api'; // [추가] API 통신을 위해 import
+ 
 // MyPage.jsx와 레이아웃을 공유하기 위해 기존 스타일 컴포넌트
 import { MyPageContainer, MypageImg, ContentBox, MyPageMain, FeatureContent, ImgWrapper } from '../../../styled_components/main/mypage/MyPageStyled';
 
@@ -21,15 +24,27 @@ import {
     CancelButton
 } from '../../../styled_components/main/mypage/MyPageSetStyled';
 
+// [추가] 닉네임 유효성 검사 메시지를 위한 스타일 컴포넌트
+const ValidationMessage = styled.div`
+    font-size: 0.8rem;
+    color: ${props => props.color || 'red'};
+    margin-top: 4px;
+    height: 1rem; // 메시지가 없을 때도 공간을 차지하여 레이아웃이 밀리는 것을 방지
+`;
+
 const MyPageSet = () => {
     // 1. Context에서 필요한 상태와 함수들을 가져옴
     const { profile: globalProfile, loading, error, updateProfile, handleCancel } = useMyPage();
 
     // 2. 이 컴포넌트의 폼 입력을 위한 '로컬 상태'를 만들기
     const [localProfile, setLocalProfile] = useState(null);
-
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingImageType, setEditingImageType] = useState(null); // 'profileImage' 또는 'bannerImage'
+    // [추가] 닉네임 중복 확인을 위한 상태
+    const [isCheckingNickname, setIsCheckingNickname] = useState(false); // '중복 확인' 버튼 로딩 상태
+    const [isNicknameChecked, setIsNicknameChecked] = useState(true); // 닉네임이 변경되지 않았으면 기본적으로 '확인된' 상태로 간주
+    const [originalNickname, setOriginalNickname] = useState(''); // 원래 닉네임을 저장할 상태
+    const [nicknameMessage, setNicknameMessage] = useState({ text: '', color: 'green' }); // [추가] 닉네임 상태 메시지
 
     // 3. 전역 상태(globalProfile)가 로드되면, 그 데이터를 기반으로 로컬 상태(localProfile)를 초기화
     useEffect(() => {
@@ -37,6 +52,7 @@ const MyPageSet = () => {
             // 날짜 형식을 'YYYY-MM-DD'
             const formattedBirthdate = globalProfile.birthdate ? globalProfile.birthdate.split('T')[0] : '';
             setLocalProfile({ ...globalProfile, birthdate: formattedBirthdate });
+            setOriginalNickname(globalProfile.nickname); // [추가] 원래 닉네임 저장
         }
     }, [globalProfile]);
 
@@ -47,6 +63,18 @@ const MyPageSet = () => {
             ...prevProfile,
             [name]: type === 'checkbox' ? checked : value,
         }));
+
+        // [추가] 닉네임 필드가 변경되면, 중복 확인 상태를 리셋
+        if (name === 'nickname') {
+            if (value !== originalNickname) {
+                setIsNicknameChecked(false);
+                setNicknameMessage({ text: '닉네임 중복 확인이 필요합니다.', color: 'red' });
+            } else {
+                // 원래 닉네임으로 돌아오면 '확인된' 상태로 복구
+                setIsNicknameChecked(true);
+                setNicknameMessage({ text: '', color: 'green' });
+            }
+        }
     };
 
     const handleImageClick = (imageType) => {
@@ -71,7 +99,6 @@ const MyPageSet = () => {
             setIsModalOpen(false); // 성공 시 모달 닫기
         } catch (err) {
             console.error("이미지 업데이트 실패:", err);
-            // Context에서 alert를 이미 띄워주므로 여기서는 추가 작업이 필요 없음
         }
     };
 
@@ -79,6 +106,11 @@ const MyPageSet = () => {
         e.preventDefault();
         if (!localProfile) {
             alert('사용자 정보가 없어 저장할 수 없습니다.');
+            return;
+        }
+        // [추가] 닉네임이 변경되었지만 중복 확인을 하지 않은 경우
+        if (localProfile.nickname !== originalNickname && !isNicknameChecked) {
+            message.warning('변경된 닉네임의 중복 확인을 해주세요.');
             return;
         }
         try {
@@ -95,11 +127,35 @@ const MyPageSet = () => {
             };
             // 텍스트 정보만 업데이트하므로 두 번째 인자는 빈 객체({})
             await updateProfile(profileDataForServer, {});
-
             alert('프로필이 성공적으로 업데이트되었습니다.');
             // 저장 성공 시 updateProfile 함수가 내부적으로 isEditing을 false로 바꾸므로 추가 작업 불필요
         } catch (err) {
             console.error("프로필 저장 실패:", err);
+        }
+    };
+
+    /*** [추가] 닉네임 중복 확인 API를 호출하는 함수*/
+    const handleCheckDuplicate = async () => {
+        const newNickname = localProfile.nickname;
+
+        if (!newNickname || newNickname.trim() === '') {
+            message.warning('닉네임을 입력해주세요.');
+            return;
+        }
+        setIsCheckingNickname(true);
+        try {
+            await api.get(`/api/user/profile/check-nickname?nickname=${newNickname}`);
+            // 성공(200 OK) 시: catch 블록을 건너뛰고 이 코드가 실행됩니다.
+            message.success('사용 가능한 닉네임입니다.');
+            setIsNicknameChecked(true);
+            setNicknameMessage({ text: '사용 가능한 닉네임입니다.', color: 'green' });
+        } catch (error) {
+            // 실패(409 Conflict) 시: 이 코드가 실행됩니다.
+            message.error(error.response?.data?.message || '이미 사용 중인 닉네임입니다.');
+            setIsNicknameChecked(false);
+            setNicknameMessage({ text: '이미 사용 중인 닉네임입니다.', color: 'red' });
+        } finally {
+            setIsCheckingNickname(false);
         }
     };
 
@@ -130,7 +186,24 @@ const MyPageSet = () => {
 
                             <FormGroup>
                                 <FormLabel htmlFor="nickname">닉네임</FormLabel>
-                                <FormInput id="nickname" type="text" name="nickname" value={localProfile.nickname || ''} onChange={handleInputChange} />
+                                {/* [수정] 중복 확인 버튼을 위해 Row, Col 사용 */}
+                                <Row gutter={8}>
+                                    <Col flex="auto">
+                                        <FormInput id="nickname" type="text" name="nickname" value={localProfile.nickname || ''} onChange={handleInputChange} />
+                                    </Col>
+                                    <Col flex="100px">
+                                        <Button
+                                            style={{ width: '100%', height: '40px' }}
+                                            onClick={handleCheckDuplicate}
+                                            loading={isCheckingNickname}
+                                            disabled={isNicknameChecked}
+                                        >
+                                            중복 확인
+                                        </Button>
+                                    </Col>
+                                </Row>
+                                {/* [추가] 닉네임 유효성 검사 메시지 표시 */}
+                                <ValidationMessage color={nicknameMessage.color}>{nicknameMessage.text}</ValidationMessage>
                             </FormGroup>
 
                             <FormGroup>
@@ -178,7 +251,10 @@ const MyPageSet = () => {
                                 <CancelButton type="button" onClick={handleCancel}>
                                     취소
                                 </CancelButton>
-                                <SubmitButton type="submit">저장</SubmitButton>
+                                {/* [수정] 닉네임이 변경되었지만 확인되지 않았다면 저장 버튼 비활성화 */}
+                                <SubmitButton type="submit" disabled={localProfile.nickname !== originalNickname && !isNicknameChecked}>
+                                    저장
+                                </SubmitButton>
                             </ButtonGroup>
                         </SettingsForm>
                     </FeatureContent>
