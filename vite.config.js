@@ -14,7 +14,8 @@ export default defineConfig({
             '/api': {
                 target: 'http://localhost:8090', // 백엔드 서버 주소
                 changeOrigin: true,
-            }
+            }, // WebSocket 경로 프록시 추가
+
         }
     },
 })

@@ -24,7 +24,7 @@ const Post = () => {
         try {
             const response = await api.get(`/api/i-log/feed?page=${currentPage}&size=10`);
             const data = response.data;
-            console.log("데이터 : ", data);
+            // console.log("데이터 : ", data);
 
             // ✅ [수정] 기존 게시글에 새로운 게시글을 추가합니다.
             setPosts(prevPosts => {

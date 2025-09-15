@@ -42,10 +42,12 @@ const JournalView = () => {
     const journal = location.state?.journalData;
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+
     const [comments, setComments] = useState([]); // ✅ [신규] 댓글 목록 상태
     const [newComment, setNewComment] = useState(''); // ✅ [신규] 댓글 입력 상태
     const [isCommentOpen, setIsCommentOpen] = useState(false); // ✅ [신규] 댓글 창 열림/닫힘 상태
     const [commentSortBy, setCommentSortBy] = useState('likes'); // ✅ [신규] 댓글 정렬 상태 (기본: 'likes')
+
 
     // ✅ [신규] 날짜를 'MONTH DAY, YEAR' 형식으로 포맷팅합니다. (예: JAN 01, 2024)
     const formattedDate = useMemo(() => {
@@ -96,7 +98,6 @@ const JournalView = () => {
 
     // ✅ [추가] 수정 버튼 클릭 핸들러
     const handleEdit = useCallback((journalToEdit) => {
-        console.log("✏️ 수정할 일기 객체:", journalToEdit);
         navigate('/journal/write', {
             state: {
                 journalToEdit: journalToEdit, // 수정할 일기 데이터를 전달합니다.

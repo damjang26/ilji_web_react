@@ -282,7 +282,6 @@ const JournalList = () => {
 
     // ✅ [추가] 수정 버튼 클릭 핸들러
     const handleEdit = useCallback((journalToEdit) => {
-        console.log("✏️ 수정할 일기 객체:", journalToEdit);
         navigate('/journal/write', {
             state: {
                 journalToEdit: journalToEdit, // 수정할 일기 데이터를 전달합니다.
