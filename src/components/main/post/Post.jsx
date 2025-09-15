@@ -24,7 +24,7 @@ const Post = () => {
         try {
             const response = await api.get(`/api/i-log/feed?page=${currentPage}&size=10`);
             const data = response.data;
-            console.log("데이터 : ", data);
+            // console.log("데이터 : ", data);
 
             setPosts(prevPosts => [...prevPosts, ...data.content]);
             setPage(prevPage => prevPage + 1);

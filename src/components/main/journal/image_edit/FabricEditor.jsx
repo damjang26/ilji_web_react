@@ -53,7 +53,7 @@ const FabricEditor = forwardRef(({croppedImage}, ref) => {
 
         const timeoutId = setTimeout(() => {
             const container = canvasRef.current.parentElement;
-            console.log('croppedImage (type, length):', typeof croppedImage, croppedImage?.slice?.(0, 2000));
+            // console.log('croppedImage (type, length):', typeof croppedImage, croppedImage?.slice?.(0, 2000));
 
             if (!container || container.clientWidth === 0) {
                 console.error("FabricEditor의 부모 컨테이너를 찾거나 크기를 계산할 수 없습니다.");
@@ -74,7 +74,7 @@ const FabricEditor = forwardRef(({croppedImage}, ref) => {
                     const img = await fabric.Image.fromURL(croppedImage, {
                         crossOrigin: "anonymous",
                     });
-                    console.log("✅ 이미지 로드 성공!", img.width, img.height);
+                    // console.log("✅ 이미지 로드 성공!", img.width, img.height);
 
                     const scale = Math.min(
                         container.clientWidth / img.width,

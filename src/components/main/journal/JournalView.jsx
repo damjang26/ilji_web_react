@@ -26,7 +26,7 @@ const JournalView = () => {
 
     const journal = useMemo(() => getJournal(date), [getJournal, date]);
 
-    console.log('👀 보여줄 일기 데이터:', journal);
+    // console.log('👀 보여줄 일기 데이터:', journal);
 
     const formattedDate = useMemo(() => {
         if (!date) return '';
@@ -66,7 +66,7 @@ const JournalView = () => {
     // ✅ [추가] 수정 버튼 클릭 핸들러
     const handleEdit = useCallback((journalToEdit) => {
         // ✅ [수정] 확인 창 없이 바로 수정 모드로 진입하도록 변경
-        console.log("✏️ 수정할 일기 객체:", journalToEdit);
+        // console.log("✏️ 수정할 일기 객체:", journalToEdit);
         navigate('/journal/write', {
             state: {
                 journalToEdit: journalToEdit, // 수정할 일기 데이터를 전달합니다.

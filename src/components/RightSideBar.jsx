@@ -21,7 +21,7 @@ const SidebarPanel = ({ onClose }) => {
     const [selectedRoomId, setSelectedRoomId] = useState(null);
 
     const chatRoom = (roomId) => {
-        console.log("선택한 채팅방:", roomId);
+        // console.log("선택한 채팅방:", roomId);
         setSelectedRoomId(roomId);
         setActiveView("chatRoom");
     };

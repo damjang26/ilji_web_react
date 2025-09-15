@@ -11,7 +11,7 @@ const JournalWriteModal = () => {
     const [isFabricMode, setIsFabricMode] = useState(false);
 
     // "모달이 열릴 때, location.state에 날짜가 잘 도착했는가?"
-    console.log('JournalWriteModal이 받은 location state:', location.state);
+    // console.log('JournalWriteModal이 받은 location state:', location.state);
 
     // 모달을 닫을 때, 이전 페이지로 돌아갑니다.
     const handleClose = () => {

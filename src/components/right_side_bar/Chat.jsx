@@ -25,7 +25,7 @@ const Chat = ({ roomId, onBack }) => {
         socketRef.current = io('http://localhost:9095', { withCredentials: false });
 
         socketRef.current.on('connect', () => {
-            console.log('Socket connected:', socketRef.current.id);
+            // console.log('Socket connected:', socketRef.current.id);
             socketRef.current.emit('joinRoom', roomId); // 선택된 방에 join
         });
 

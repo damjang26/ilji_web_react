@@ -264,7 +264,7 @@ export function ScheduleProvider({children}) {
     const fetchSchedulesByTags = useCallback(
         async (tagIds = [], options = {}) => {
             const { showLoading = true } = options;
-            console.log(`[DEBUG] fetchSchedulesByTags 호출됨. tagIds: ${tagIds}, showLoading: ${showLoading}`);
+            // console.log(`[DEBUG] fetchSchedulesByTags 호출됨. tagIds: ${tagIds}, showLoading: ${showLoading}`);
 
             if (!user) {
                 setEvents([]);

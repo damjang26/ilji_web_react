@@ -10,12 +10,11 @@ const ChatRoomList = ({ onBack, chatRoom }) => {
 const [roomList, setRoomList] = useState([]);
 
 useEffect(() => {
-    console.log("chat room loaded")
+    // console.log("chat room loaded")
     const fetchRoomList =  async () => {
         try {
             const res = await api.get("/api/chat/list");
             // 2. API로 받아온 데이터를 roomList 상태에 저장합니다.
-            console.log(res.data)
             setRoomList(res.data);
         } catch (error) {
             console.error("채팅방 목록을 불러오는 데 실패했습니다.", error);
