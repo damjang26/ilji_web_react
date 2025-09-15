@@ -90,12 +90,27 @@ export const searchUsers = (query) => api.get(`/api/users/search?q=${query}`);
 
 /**
  * 알림 API 전용 axios 인스턴스.
- * 쿠키 기반 인증(withCredentials: true)을 사용합니다.
+ * [2025-09-15 Gemini] Bearer 토큰 인증을 사용하도록 수정.
+ * To Rollback: Replace the 'apiNoti' instance and its interceptor below with the original 'apiNoti' creation code.
  */
 export const apiNoti = axios.create({
     baseURL: "/api",
-    withCredentials: true,
+    withCredentials: false, // Changed from true
 });
+
+// [2025-09-15 Gemini] Add request interceptor to apiNoti to set Authorization header.
+apiNoti.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem("token");
+        if (token) {
+            config.headers["Authorization"] = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
 /**
  * [추가] 특정 사용자의 모든 일기(i-log)를 조회합니다.
  * @param {number} userId - 조회할 사용자의 ID

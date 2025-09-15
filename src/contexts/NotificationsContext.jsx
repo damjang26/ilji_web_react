@@ -18,8 +18,8 @@ const NotificationsCtx = createContext({
 const mapItem = (n) => ({
     id: n.id,
     type: n.type,
-    title: n.messageTitle,
-    body: n.messageBody,
+    title: n.title, // Changed from n.messageTitle
+    body: n.body,   // Changed from n.messageBody
     linkUrl: n.linkUrl,
     status: n.status,
     createdAt: n.createdAt,
@@ -35,20 +35,32 @@ export function NotificationsProvider({ children }) {
     // 1. 초기 데이터 로딩 (REST API)
     const loadInitialData = useCallback(async () => {
         if (!user?.id) return;
+
+        // [DEBUG] Start loading initial data
+        console.log('[DEBUG] Notifications: Starting initial data load...');
+
         setLoading(true);
         try {
             const [listRes, countRes] = await Promise.all([
-                apiNoti.get("/notifications?size=50"),
+                apiNoti.get("/notifications?status=ALL&size=50"),
                 apiNoti.get("/notifications/unread-count")
             ]);
-            
-            const list = listRes.data?.content || [];
+
+            // [DEBUG] Log raw API response
+            console.log('[DEBUG] Notifications: Raw API response', listRes.data);
+
+            const list = listRes.data?.items || [];
             list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            
-            setNotifications(list.map(mapItem));
+
+            const mappedList = list.map(mapItem);
+            // [DEBUG] Log data before setting state
+            console.log('[DEBUG] Notifications: Processed list before setting state', mappedList);
+
+            setNotifications(mappedList);
             setUnreadCount(countRes.data?.unread || 0);
         } catch (error) {
-            console.error("Failed to load notifications:", error);
+            // [DEBUG] Log error
+            console.error("[DEBUG] Notifications: Failed to load notifications:", error);
         } finally {
             setLoading(false);
         }
@@ -118,18 +130,30 @@ export function NotificationsProvider({ children }) {
         setUnreadCount(0);
     }, []);
 
+    // [2025-09-15 Gemini] Refactored to prevent stale state issues.
+    // To Rollback: Replace this useCallback with the previous one that had a [notifications] dependency.
     const markRead = useCallback(async (id) => {
-        const itemToUpdate = notifications.find(n => n.id === id);
-        if (itemToUpdate && itemToUpdate.status === 'UNREAD') {
-            setUnreadCount(prev => Math.max(0, prev - 1));
-        }
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, status: "READ" } : n));
+        // [DEBUG] Mark item as read
+        console.log(`[DEBUG] Notifications: Attempting to mark item ${id} as read.`);
+
+        setNotifications(prevNotifications => {
+            // [DEBUG] Log state before update
+            console.log(`[DEBUG] Notifications: State before marking ${id} as read`, prevNotifications);
+            const itemToUpdate = prevNotifications.find(n => n.id === id);
+            if (itemToUpdate && itemToUpdate.status === 'NEW') {
+                setUnreadCount(prev => Math.max(0, prev - 1));
+            }
+            const newNotifications = prevNotifications.map(n => n.id === id ? { ...n, status: "READ" } : n);
+            // [DEBUG] Log state after update
+            console.log(`[DEBUG] Notifications: State after marking ${id} as read`, newNotifications);
+            return newNotifications;
+        });
         await apiNoti.post(`/notifications/${id}/read`);
-    }, [notifications]);
+    }, []);
 
     const deleteOne = useCallback(async (id) => {
         const itemToDelete = notifications.find(n => n.id === id);
-        if (itemToDelete && itemToDelete.status === 'UNREAD') {
+        if (itemToDelete && itemToDelete.status === 'NEW') {
             setUnreadCount(prev => Math.max(0, prev - 1));
         }
         setNotifications(prev => prev.filter(n => n.id !== id));

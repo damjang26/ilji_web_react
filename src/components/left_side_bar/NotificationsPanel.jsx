@@ -101,10 +101,17 @@ export default function NotificationsPanel({
             ) : (
                 <NotiList role="list">
                     {items.map((it) => {
-                        const unread = it.status === "UNREAD";
+                        const unread = it.status === "NEW";
                         return (
                             <NotiItem key={it.id} unread={unread} role="listitem">
-                                <ItemMain href={it.linkUrl || "#"}>
+                                <ItemMain
+                                    href={it.linkUrl || "#"}
+                                    onClick={() => {
+                                        if (it.status === "NEW") {
+                                            onItemRead && onItemRead(it.id);
+                                        }
+                                    }}
+                                >
                                     <ItemIcon>
                                         {iconByType(it.type)}
                                         {unread && <UnreadDot aria-label="New notification" />}
