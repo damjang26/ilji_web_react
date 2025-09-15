@@ -10,9 +10,11 @@ import {
     Title
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleDetailStyled.jsx";
 import { Button, ActionButtons } from "../../../styled_components/common/FormElementsStyled.jsx";
+import { useAuth } from "../../../AuthContext.jsx";
 
 const ScheduleDetail = ({item, displayDate, onCancel, onEdit, onDelete}) => {
     const { tags } = useTags();
+    const { user } = useAuth();
 
     if (!item) {
         return <div>일정을 선택해주세요.</div>;
@@ -64,6 +66,8 @@ const ScheduleDetail = ({item, displayDate, onCancel, onEdit, onDelete}) => {
         // 여러 날에 걸쳐 진행되는 경우
         return `${startDateStr} ${startTimeStr} - ${endDateStr} ${endTimeStr}`;
     };
+    
+    const isOwner = user && user.id === item.extendedProps.calendarId;
 
     return (
         <DetailWrapper>
@@ -94,10 +98,12 @@ const ScheduleDetail = ({item, displayDate, onCancel, onEdit, onDelete}) => {
                 </div>}
             </InfoSection>
 
-            <ActionButtons>
-                <Button className="secondary" onClick={() => onDelete(item.id)}>삭제</Button>
-                <Button className="primary" onClick={() => onEdit(item)}>수정</Button>
-            </ActionButtons>
+            {isOwner && (
+                <ActionButtons>
+                    <Button className="secondary" onClick={() => onDelete(item.id)}>삭제</Button>
+                    <Button className="primary" onClick={() => onEdit(item)}>수정</Button>
+                </ActionButtons>
+            )}
         </DetailWrapper>
     )
 }

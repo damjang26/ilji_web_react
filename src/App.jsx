@@ -11,8 +11,10 @@ import Main from "./components/Main.jsx";
 import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
 import {JournalProvider} from "./contexts/JournalContext.jsx";
 import JournalViewModal from "./components/main/journal/JournalViewModal.jsx";
-import {ScheduleProvider} from "./contexts/ScheduleContext.jsx";
-import {TagProvider} from "./contexts/TagContext.jsx";
+import { ScheduleProvider } from "./contexts/ScheduleContext.jsx";
+import { MyPageProvider } from "./contexts/MyPageContext.jsx";
+import { TagProvider } from "./contexts/TagContext.jsx";
+import SetNicknamePage from "./components/nickname_set/SetNickNamePage.jsx";
 
 const AppWrapper = styled.div`
     display: flex;
@@ -59,7 +61,10 @@ const AppContent = () => {
             <ContentWrapper>
                 {/* 1. 배경이 될 메인 라우트를 항상 렌더링합니다. */}
                 <Routes location={background || location}>
-                    <Route path="/*" element={<Main/>}/>
+                    {/* 닉네임이 없는 사용자를 위한 별도 라우트 */}
+                    <Route path="/set-nickname" element={<SetNicknamePage />} />
+                    {/* 닉네임이 있는 사용자를 위한 메인 라우트 */}
+                    <Route path="/*" element={<Main />} />
                 </Routes>
 
                 {/* 2. background state가 있을 경우에만 모달 라우트를 추가로 렌더링합니다. */}
@@ -82,11 +87,13 @@ export default function App() {
         <>
             <BrowserRouter>
                 <JournalProvider>
-                    <ScheduleProvider>
-                        <TagProvider>
-                            <AppContent/>
-                        </TagProvider>
-                    </ScheduleProvider>
+                    <MyPageProvider>
+                        <ScheduleProvider>
+                            <TagProvider>
+                                <AppContent/>
+                            </TagProvider>
+                        </ScheduleProvider>
+                    </MyPageProvider>
                 </JournalProvider>
             </BrowserRouter>
             <div id="modal-root"></div>

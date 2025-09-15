@@ -1,5 +1,6 @@
 import React, {useState, useEffect, useMemo, useRef, useCallback} from 'react';
 import {useJournal} from "../../../../contexts/JournalContext.jsx";
+import {useMyPage} from "../../../../contexts/MyPageContext.jsx"; // [수정] isOwner 상태를 가져오기 위해 추가
 import {useNavigate, useLocation} from "react-router-dom"; // ✅ 페이지 이동을 위해 추가
 import {
     FeedContainer,
@@ -215,6 +216,8 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
 const JournalList = () => {
     // 1. Context에서 전체 일기 목록(Map)과 로딩 상태를 가져옵니다.
     const {journals, loading: journalLoading, deleteJournal} = useJournal();
+    // 2. [수정] MyPageContext에서 현재 페이지의 소유자 여부를 가져옵니다.
+    const {isOwner} = useMyPage();
     const navigate = useNavigate(); // ✅ navigate 함수 가져오기
     const location = useLocation(); // ✅ 모달 네비게이션의 배경 위치를 위해 추가합니다.
 
