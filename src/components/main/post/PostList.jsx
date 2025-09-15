@@ -15,8 +15,20 @@ const defaultProfilePic = "https://images.unsplash.com/photo-1511367461989-f85a2
 
 const PostList = ({posts, loading, hasMore, lastPostElementRef}) => {
 
+    const getUniquePosts = (posts) => {
+        if (!Array.isArray(posts)) return [];
+        const seen = new Set();
+        return posts.filter(post => {
+            const duplicate = seen.has(post.id);
+            seen.add(post.id);
+            return !duplicate;
+        });
+    };
+
+    const uniquePosts = getUniquePosts(posts);
+
     // 초기 로딩 중이거나, 게시글이 아직 하나도 없을 때의 UI를 처리합니다.
-    if (posts.length === 0) {
+    if (uniquePosts.length === 0) {
         if (loading) {
             return <div>피드를 불러오는 중...</div>; // 여기에 로딩 스피너 컴포넌트를 넣으면 더 좋습니다.
         }
@@ -27,9 +39,9 @@ const PostList = ({posts, loading, hasMore, lastPostElementRef}) => {
         <>
             <h1>Journal List</h1>
             <FeedContainer>
-                {posts.map((post, index) => {
+                {uniquePosts.map((post, index) => {
                     // 마지막 게시글인지 확인하여 ref를 연결합니다.
-                    const isLastElement = posts.length === index + 1;
+                    const isLastElement = uniquePosts.length === index + 1;
                     // 백엔드에서 받은 이미지 배열의 첫 번째 이미지를 사용합니다.
                     const postImage = post.images && post.images.length > 0 ? post.images[0] : null;
 
