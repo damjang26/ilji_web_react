@@ -1,8 +1,7 @@
-import React, { createContext, useCallback, useContext, useEffect, useState, useRef } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { useAuth } from "../AuthContext.jsx";
 import { apiNoti } from "../api.js"; // 알림 전용 axios 인스턴스
-import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
+import { io } from 'socket.io-client';
 
 const NotificationsCtx = createContext({
     notifications: [],
@@ -30,7 +29,6 @@ export function NotificationsProvider({ children }) {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(true);
-    const stompClientRef = useRef(null);
 
     // 1. 초기 데이터 로딩 (REST API)
     const loadInitialData = useCallback(async () => {
@@ -58,34 +56,41 @@ export function NotificationsProvider({ children }) {
         loadInitialData();
     }, [loadInitialData]);
 
-    // 2. 웹소켓 연결 (실시간 새 알림 수신)
+    // 2. 웹소켓 연결 (실시간 새 알림 수신) - Socket.IO
     useEffect(() => {
         if (!user?.id) return;
 
-        const client = new Client({
-            webSocketFactory: () => new SockJS('/ws'),
-            reconnectDelay: 5000,
-            onConnect: () => {
-                client.subscribe(`/topic/notifications/${user.id}`, (message) => {
-                    const newNoti = JSON.parse(message.body);
-                    const newItem = mapItem(newNoti);
-                    // 목록의 맨 위에 새 알림 추가
-                    setNotifications(prev => [newItem, ...prev]);
-                    // 읽지 않은 카운트 증가
-                    setUnreadCount(prev => prev + 1);
-                });
-            },
-            onStompError: (frame) => {
-                console.error('Broker reported error: ' + frame.headers['message']);
-                console.error('Additional details: ' + frame.body);
-            },
+        // 실제 서버 URL 및 포트로 대체하세요.
+        const SOCKET_SERVER_URL = 'http://localhost:9092';
+        const socket = io(SOCKET_SERVER_URL);
+
+        socket.on('connect', () => {
+            console.log('Socket.IO 서버에 연결되었습니다.');
+            // 알림을 위한 사용자별 룸 참여
+            socket.emit('join', { userId: user.id });
         });
 
-        client.activate();
-        stompClientRef.current = client;
+        socket.on('disconnect', () => {
+            console.log('Socket.IO 서버에서 연결이 끊어졌습니다.');
+        });
+
+        // 알림 이벤트 수신 대기
+        socket.on('notification', (notificationData) => {
+            console.log('새 알림 수신:', notificationData);
+            const newItem = mapItem(notificationData);
+            // 목록의 맨 위에 새 알림 추가
+            setNotifications(prev => [newItem, ...prev]);
+            // 읽지 않은 카운트 증가
+            setUnreadCount(prev => prev + 1);
+        });
+
+        socket.on('error', (error) => {
+            console.error('Socket.IO 오류:', error);
+        });
 
         return () => {
-            client.deactivate();
+            console.log('Socket.IO 연결을 해제합니다.');
+            socket.disconnect();
         };
     }, [user?.id]);
     
@@ -118,35 +123,27 @@ export function NotificationsProvider({ children }) {
         setUnreadCount(0);
     }, []);
 
-    // [2025-09-15 Gemini] Refactored to prevent stale state issues.
-    // To Rollback: Replace this useCallback with the previous one that had a [notifications] dependency.
     const markRead = useCallback(async (id) => {
-        // [DEBUG] Mark item as read
-        console.log(`[DEBUG] Notifications: Attempting to mark item ${id} as read.`);
-
         setNotifications(prevNotifications => {
-            // [DEBUG] Log state before update
-            console.log(`[DEBUG] Notifications: State before marking ${id} as read`, prevNotifications);
             const itemToUpdate = prevNotifications.find(n => n.id === id);
             if (itemToUpdate && itemToUpdate.status === 'NEW') {
                 setUnreadCount(prev => Math.max(0, prev - 1));
             }
-            const newNotifications = prevNotifications.map(n => n.id === id ? { ...n, status: "READ" } : n);
-            // [DEBUG] Log state after update
-            console.log(`[DEBUG] Notifications: State after marking ${id} as read`, newNotifications);
-            return newNotifications;
+            return prevNotifications.map(n => n.id === id ? { ...n, status: "READ" } : n);
         });
         await apiNoti.post(`/notifications/${id}/read`);
     }, []);
 
     const deleteOne = useCallback(async (id) => {
-        const itemToDelete = notifications.find(n => n.id === id);
-        if (itemToDelete && itemToDelete.status === 'NEW') {
-            setUnreadCount(prev => Math.max(0, prev - 1));
-        }
-        setNotifications(prev => prev.filter(n => n.id !== id));
+        setNotifications(prevNotifications => {
+            const itemToDelete = prevNotifications.find(n => n.id === id);
+            if (itemToDelete && itemToDelete.status === 'NEW') {
+                setUnreadCount(prevUnread => Math.max(0, prevUnread - 1));
+            }
+            return prevNotifications.filter(n => n.id !== id);
+        });
         await apiNoti.delete(`/notifications/${id}`);
-    }, [notifications]);
+    }, []);
 
     const value = {
         notifications,
