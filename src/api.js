@@ -136,3 +136,18 @@ export const getLikers = (ilogId) => api.get(`/api/ilogs/${ilogId}/like`);
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export const getUserJournals = (userId) => api.get(`/api/i-log/user/${userId}`);
+
+// =================================
+// 채팅 관련 API
+// =================================
+
+/**
+ * 새로운 채팅방을 생성합니다.
+ * @param {string} roomName - 채팅방 이름
+ * @param {number[]} userIds - 참여할 사용자들의 ID 배열
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const createChatRoom = (roomName, userIds) => {
+    return api.post("/api/chat/create", { roomName, userIds });
+};
+

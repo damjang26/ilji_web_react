@@ -159,7 +159,7 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, handleEdit, user
                             </PostActions>
                         </JournalItemContentContainer>
                     </JournalItemLayoutContainer>
-                    <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}/>
+                    <PostComment journal={journal} $isOpen={isCommentOpen} onToggle={toggleCommentView}/>
                 </PostContainer>
                 <IndexTabsContainer>
                     <IndexTabActions type="share" onClick={() => handleShare}>
@@ -185,7 +185,7 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, handleEdit, user
     // 이미지가 없는 경우: 기존 레이아웃
     return (
         <JournalItemWrapper>
-            <PostContainer ref={lastJournalElementRef} isCommentOpen={isCommentOpen} className="not-has-image">
+            <PostContainer ref={lastJournalElementRef} $isCommentOpen={isCommentOpen} className="not-has-image">
                 <PostHeader>
                     <ProfileImage src={journal.writerProfileImage || '/path/to/default/profile.png'}
                                   alt={`${journal.writerNickname} profile`}/>
@@ -219,7 +219,7 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, handleEdit, user
                 <PostContent>
                     {journal.content}
                 </PostContent>
-                <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}/>
+                <PostComment journal={journal} $isOpen={isCommentOpen} onToggle={toggleCommentView}/>
             </PostContainer>
             <IndexTabsContainer>
                 <IndexTabActions type="share" onClick={() => handleShare}>
@@ -248,9 +248,21 @@ const PostList = ({posts, loading, hasMore, lastPostElementRef}) => {
     const navigate = useNavigate();
     const {deleteJournal} = useJournal();
 
+    const getUniquePosts = (posts) => {
+        if (!Array.isArray(posts)) return [];
+        const seen = new Set();
+        return posts.filter(post => {
+            const duplicate = seen.has(post.id);
+            if (!duplicate) {
+                seen.add(post.id);
+            }
+            return !duplicate;
+        });
+    };
+
     useEffect(() => {
-        // 부모로부터 받은 posts 데이터가 변경될 때마다 localPosts를 업데이트합니다.
-        setLocalPosts(posts);
+        // 부모로부터 받은 posts 데이터가 변경될 때마다 중복을 제거하여 localPosts를 업데이트합니다.
+        setLocalPosts(getUniquePosts(posts));
         console.log(posts)
     }, [posts]);
 

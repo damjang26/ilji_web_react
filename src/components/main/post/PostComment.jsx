@@ -36,7 +36,7 @@ const PostComment = ({journal, isOpen, onToggle}) => {
     }, [newComment]);
 
     return (
-        <PostCommentContainer isOpen={isOpen}
+        <PostCommentContainer $isOpen={isOpen}
                               onClick={!isOpen ? onToggle : undefined}>
             {isOpen ? (
                 <PostCommentContentWrapper>
