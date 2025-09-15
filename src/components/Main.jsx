@@ -70,13 +70,8 @@ const Main = () => {
         <MainContent>
             <Routes>
                 <Route path="/" element={<FullCalendarExample/>}/>
-
-                {/* [수정] /mypage 와 /mypage/:userId 경로를 모두 처리합니다. */}
                 <Route path="/mypage/:userId?" element={<MyPageWrapper />} />
-
-                {/* [추가] 정보 수정 페이지 경로를 추가합니다. */}
                 <Route path="/mypageset" element={<MyPageSet />} />
-
                 <Route path="/post/*" element={<Post/>}/>
             </Routes>
         </MainContent>

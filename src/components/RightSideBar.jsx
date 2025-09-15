@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import MessageTab from "./right_side_bar/MessageTab.jsx";
 import { Tooltip } from "antd";
 import ScheduleTab from "./right_side_bar/ScheduleTab.jsx";
@@ -12,23 +12,45 @@ import {
     SidebarPanelWrapper,
 } from "../styled_components/RightSideBarStyled.jsx";
 import { useSchedule } from "../contexts/ScheduleContext.jsx";
+import ChatRoomList from "./right_side_bar/ChatRoomList.jsx";
+import Chat from "./right_side_bar/Chat.jsx";
 
 // 사이드바 패널의 전체 내용을 담는 컴포넌트
-const SidebarPanel = ({ onClose }) => (
-    <>
-        <PanelHeader>
-            <Tooltip title="사이드바 접기" placement="left">
-                <CloseButton onClick={onClose}>
-                    <FaChevronRight />
-                </CloseButton>
-            </Tooltip>
-        </PanelHeader>
-        <PanelBody>
-            <MessageTab />
-            <ScheduleTab />
-        </PanelBody>
-    </>
-);
+const SidebarPanel = ({ onClose }) => {
+    const [activeView, setActiveView] = useState('default');
+    const [selectedRoomId, setSelectedRoomId] = useState(null);
+
+    const chatRoom = (roomId) => {
+        // console.log("선택한 채팅방:", roomId);
+        setSelectedRoomId(roomId);
+        setActiveView("chatRoom");
+    };
+
+    return (
+        <>
+            <PanelHeader>
+                <Tooltip title="사이드바 접기" placement="left">
+                    <CloseButton onClick={onClose}>
+                        <FaChevronRight />
+                    </CloseButton>
+                </Tooltip>
+            </PanelHeader>
+            <PanelBody>
+                {activeView === 'default' && (
+                    <>
+                        <MessageTab onShowChatRoom={() => setActiveView('chatRoomList')} />
+                    </>
+                )}
+                {activeView === 'chatRoomList' && (
+                    <ChatRoomList chatRoom={chatRoom} onBack={() => setActiveView('default')} />
+                )}
+                {activeView === 'chatRoom' && (
+                    <Chat roomId={selectedRoomId} onBack={() => setActiveView('chatRoomList')} />
+                )}
+            </PanelBody>
+        </>
+    );
+};
 
 const RightSideBar = () => {
     const { isSidebarOpen, closeSidebar, toggleSidebar } = useSchedule();

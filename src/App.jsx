@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { BrowserRouter, useLocation, Routes, Route } from "react-router-dom";
 import { Spin } from "antd";
 
+
 import LeftSideBar from "./components/LeftSideBar.jsx";
 import RightSideBar from "./components/RightSideBar.jsx";
 import styled from "styled-components";
@@ -51,7 +52,7 @@ const AppContent = () => {
     if (loading) {
         return (
             <FullPageSpinner>
-                <Spin size="large" />
+                <Spin size="large"/>
             </FullPageSpinner>
         );
     }
@@ -71,14 +72,8 @@ const AppContent = () => {
                 {/* 2. background state가 있을 경우에만 모달 라우트를 추가로 렌더링합니다. */}
                 {background && (
                     <Routes>
-                        <Route
-                            path="/journal/write"
-                            element={<JournalWriteModal />}
-                        />
-                        <Route
-                            path="/journal/view/:date"
-                            element={<JournalViewModal />}
-                        />
+                        <Route path="/journal/write" element={<JournalWriteModal/>}/>
+                        <Route path="/journals/:journalId" element={<JournalViewModal/>}/>
                     </Routes>
                 )}
             </ContentWrapper>

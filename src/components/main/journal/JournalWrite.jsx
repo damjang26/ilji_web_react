@@ -26,7 +26,7 @@ import {CloseButton, ModalHeader} from '../../../styled_components/main/journal/
 import ImageEditor from './image_edit/ImageEditor.jsx';
 
 const MAX_CHAR_LIMIT = 3000;
-const MAX_IMAGE_LIMIT = 1;
+const MAX_IMAGE_LIMIT = 2;
 
 // Base64 데이터 URL을 File 객체로 변환하는 헬퍼 함수
 const dataURLtoFile = (dataurl, filename) => {
@@ -198,11 +198,11 @@ const JournalWrite = ({
                 const response = await fetch(`http://localhost:8090/api/proxy/image?url=${encodeURIComponent(image.preview)}`);
                 // if (!response.ok) throw new Error('이미지 로드 실패');
                 const blob = await response.blob();
-                console.log(blob);
+                // console.log(blob);
                 const filename = image.name || `image_${Date.now()}.png`;
-                console.log(filename);
+                // console.log(filename);
                 file = new File([blob], filename, {type: blob.type});
-                console.log(file)
+                // console.log(file)
             }
             const blobUrl = URL.createObjectURL(file); // Canvas용 URL 생성
             setEditingImageInfo({image: {...image, file, preview: blobUrl}, index});
@@ -311,7 +311,7 @@ const JournalWrite = ({
     const onSubmit = async () => {
         if (isSubmitting) return; // 중복 제출 방지
         setIsSubmitting(true);
-        console.log("onSubmit selectedDate:", selectedDate);
+        // console.log("onSubmit selectedDate:", selectedDate);
 
         // Context 함수에 전달할 데이터 묶음(payload)을 만듭니다.
         const journalPayload = {
