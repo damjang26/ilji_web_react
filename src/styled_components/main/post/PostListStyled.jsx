@@ -33,12 +33,12 @@ export const PostContainer = styled.article`
     flex-direction: column;
     z-index: 1;
     transition: background-color 0.2s ease;
-    min-height: ${({isCommentOpen}) => (isCommentOpen ? '600px' : '250px')};
+    min-height: ${({$isCommentOpen}) => ($isCommentOpen ? '600px' : '250px')};
 
     &.not-has-image,
     &.landscape {
         /* ✅ [수정] 댓글 창 상태에 따라 최대 높이를 동적으로 조절합니다. */
-        max-height: ${({isCommentOpen}) => (isCommentOpen ? '600px' : '500px')};
+        max-height: ${({$isCommentOpen}) => ($isCommentOpen ? '600px' : '500px')};
         transition: height 0.4s ease-in-out, background-color 0.4s ease-in-out, border-top 0.4s ease-in-out;
     }
 
@@ -540,7 +540,7 @@ export const WriteJournalButton = styled.button`
 `;
 
 // ✅ [신규] 일기 목록의 날짜 표시 스타일
-export const JournalEntryDate = styled.h4`
+export const JournalEntryDate = styled.div`
     display: flex; /* 자식 요소들을 가로로 정렬 */
     align-items: center; /* 수직 중앙 정렬 */
     justify-content: space-between; /* 양쪽 끝으로 요소를 분배 */

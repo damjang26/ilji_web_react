@@ -39,22 +39,6 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, handleEdit, user
     const hasImages = journal.images && journal.images.length > 0;
     const imageUrls = journal.images || [];
 
-    const getUniquePosts = (posts) => {
-        if (!Array.isArray(posts)) return [];
-        const seen = new Set();
-        return posts.filter(post => {
-            const duplicate = seen.has(post.id);
-            seen.add(post.id);
-            return !duplicate;
-        });
-    };
-
-    const uniquePosts = getUniquePosts(posts);
-
-    // 초기 로딩 중이거나, 게시글이 아직 하나도 없을 때의 UI를 처리합니다.
-    if (uniquePosts.length === 0) {
-        if (loading) {
-            return <div>피드를 불러오는 중...</div>; // 여기에 로딩 스피너 컴포넌트를 넣으면 더 좋습니다.
     // ✅ [추가] 첫 번째 이미지의 비율을 확인하여 isLandscape 상태를 설정하는 로직
     useEffect(() => {
         if (hasImages) {
@@ -71,15 +55,6 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, handleEdit, user
         // journal.id가 바뀔 때마다 (즉, 다른 일기가 렌더링될 때마다) 이 효과를 재실행합니다.
     }, [journal.id, hasImages, imageUrls]);
 
-    return (
-        <>
-            <h1>Journal List</h1>
-            <FeedContainer>
-                {uniquePosts.map((post, index) => {
-                    // 마지막 게시글인지 확인하여 ref를 연결합니다.
-                    const isLastElement = uniquePosts.length === index + 1;
-                    // 백엔드에서 받은 이미지 배열의 첫 번째 이미지를 사용합니다.
-                    const postImage = post.images && post.images.length > 0 ? post.images[0] : null;
     // ✅ [신규] 날짜를 'MONTH DAY, YEAR' 형식으로 포맷팅합니다. (예: JAN 01, 2024)
     const formattedDate = useMemo(() => {
         if (!journal?.logDate) return '';
@@ -184,7 +159,7 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, handleEdit, user
                             </PostActions>
                         </JournalItemContentContainer>
                     </JournalItemLayoutContainer>
-                    <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}/>
+                    <PostComment journal={journal} $isOpen={isCommentOpen} onToggle={toggleCommentView}/>
                 </PostContainer>
                 <IndexTabsContainer>
                     <IndexTabActions type="share" onClick={() => handleShare}>
@@ -210,7 +185,7 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, handleEdit, user
     // 이미지가 없는 경우: 기존 레이아웃
     return (
         <JournalItemWrapper>
-            <PostContainer ref={lastJournalElementRef} isCommentOpen={isCommentOpen} className="not-has-image">
+            <PostContainer ref={lastJournalElementRef} $isCommentOpen={isCommentOpen} className="not-has-image">
                 <PostHeader>
                     <ProfileImage src={journal.writerProfileImage || '/path/to/default/profile.png'}
                                   alt={`${journal.writerNickname} profile`}/>
@@ -244,7 +219,7 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, handleEdit, user
                 <PostContent>
                     {journal.content}
                 </PostContent>
-                <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}/>
+                <PostComment journal={journal} $isOpen={isCommentOpen} onToggle={toggleCommentView}/>
             </PostContainer>
             <IndexTabsContainer>
                 <IndexTabActions type="share" onClick={() => handleShare}>
@@ -273,9 +248,21 @@ const PostList = ({posts, loading, hasMore, lastPostElementRef}) => {
     const navigate = useNavigate();
     const {deleteJournal} = useJournal();
 
+    const getUniquePosts = (posts) => {
+        if (!Array.isArray(posts)) return [];
+        const seen = new Set();
+        return posts.filter(post => {
+            const duplicate = seen.has(post.id);
+            if (!duplicate) {
+                seen.add(post.id);
+            }
+            return !duplicate;
+        });
+    };
+
     useEffect(() => {
-        // 부모로부터 받은 posts 데이터가 변경될 때마다 localPosts를 업데이트합니다.
-        setLocalPosts(posts);
+        // 부모로부터 받은 posts 데이터가 변경될 때마다 중복을 제거하여 localPosts를 업데이트합니다.
+        setLocalPosts(getUniquePosts(posts));
         console.log(posts)
     }, [posts]);
 
