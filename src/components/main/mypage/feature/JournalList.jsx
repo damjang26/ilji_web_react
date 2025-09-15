@@ -3,8 +3,10 @@ import {useJournal} from "../../../../contexts/JournalContext.jsx";
 import {useNavigate, useLocation} from "react-router-dom"; // ✅ 페이지 이동을 위해 추가
 import {
     FeedContainer,
-    PostActions,
-    PostContainer, IndexTabActions, IndexTabsContainer, JournalItemWrapper,
+    PostContainer,
+    IndexTabActions,
+    IndexTabsContainer,
+    JournalItemWrapper,
     PostContent,
     PostHeader,
     ProfileImage,
@@ -16,7 +18,7 @@ import {
     JournalItemLayoutContainer,
     JournalItemContentContainer,
     ImageSliderContainer,
-    ImageSlide, SliderArrow, JournalEntryDate, // ✅ [추가] 슬라이더 및 날짜 컴포넌트
+    ImageSlide, SliderArrow, JournalEntryDate,
 } from "../../../../styled_components/main/post/PostListStyled.jsx";
 import {FaChevronLeft, FaChevronRight, FaRegHeart} from "react-icons/fa"; // ✅ [추가] 화살표 아이콘
 import {HiPencilAlt} from "react-icons/hi";
@@ -24,6 +26,7 @@ import {MdDeleteForever} from "react-icons/md";
 import {RiQuillPenAiLine} from "react-icons/ri";
 import {formatRelativeTime} from "../../../../utils/timeFormatter.js";
 import {BiSolidShareAlt} from "react-icons/bi";
+import PostComment from "../../post/PostComment.jsx";
 
 // 한 번에 불러올 일기 개수
 const JOURNALS_PER_PAGE = 10;
@@ -34,6 +37,8 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     // ✅ [추가] 이미지가 가로로 긴지 여부를 저장하는 상태
     const [isLandscape, setIsLandscape] = useState(false);
+    // ✅ [추가] 댓글 창의 열림/닫힘 상태를 부모에서 관리합니다.
+    const [isCommentOpen, setIsCommentOpen] = useState(false);
 
     const hasImages = journal.images && journal.images.length > 0;
     const imageUrls = journal.images || [];
@@ -70,6 +75,12 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
         setCurrentImageIndex((prevIndex) => (prevIndex - 1 + imageUrls.length) % imageUrls.length);
     }, [imageUrls.length]);
 
+    // ✅ [추가] 댓글 창을 토글하는 함수
+    const toggleCommentView = useCallback((e) => {
+        e?.stopPropagation(); // 이벤트 버블링 방지
+        setIsCommentOpen(prev => !prev);
+    }, []);
+
     const handleShare = useCallback(async () => {
         const shareUrl = window.location.href;
         const shareTitle = `"${journal.writerNickname}"님의 일기`;
@@ -89,10 +100,10 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
     // 이미지가 있는 경우: 2단 레이아웃 (슬라이더 포함)
     if (hasImages) {
         return (
-            <JournalItemWrapper>
+            <JournalItemWrapper ref={lastJournalElementRef}>
                 <PostContainer
-                    ref={lastJournalElementRef}
                     className="has-image"
+                    isCommentOpen={isCommentOpen}
                 >
                     <JournalItemLayoutContainer className={isLandscape ? 'landscape' : ''}>
                         {/* ✅ [수정] 이미지 슬라이더 로직 적용 */}
@@ -135,10 +146,9 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
                             <PostContent>
                                 {journal.content}
                             </PostContent>
-                            <PostActions>
-                            </PostActions>
                         </JournalItemContentContainer>
                     </JournalItemLayoutContainer>
+                    <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}/>
                 </PostContainer>
                 <IndexTabsContainer>
                     <IndexTabActions type="share" onClick={() => handleShare}>
@@ -158,8 +168,8 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
 
     // 이미지가 없는 경우: 기존 레이아웃
     return (
-        <JournalItemWrapper>
-            <PostContainer ref={lastJournalElementRef} className="not-has-image">
+        <JournalItemWrapper ref={lastJournalElementRef}>
+            <PostContainer className="not-has-image" isCommentOpen={isCommentOpen}>
                 <PostHeader>
                     <ProfileImage src={journal.writerProfileImage || '/path/to/default/profile.png'}
                                   alt={`${journal.writerNickname} profile`}/>
@@ -184,8 +194,7 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
                 <PostContent>
                     {journal.content}
                 </PostContent>
-                <PostActions>
-                </PostActions>
+                <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}/>
             </PostContainer>
             <IndexTabsContainer>
                 <IndexTabActions type="share" onClick={() => handleShare}>

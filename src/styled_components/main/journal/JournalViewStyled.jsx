@@ -262,7 +262,7 @@ export const CommentContainer = styled.div`
     cursor: ${({isOpen}) => (isOpen ? 'default' : 'pointer')};
 
     &:hover {
-        background-color: ${({isOpen}) => (isOpen ? '#ffffff' : '#fafafa')};
+        background-color: ${({isOpen}) => (isOpen ? '#ffffff' : '#efefef')};
     }
 `;
 
@@ -288,16 +288,52 @@ export const CommentContentWrapper = styled.div`
 export const CommentHeader = styled.div`
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-end;
     margin-bottom: 12px;
+`;
 
-    button {
-        font-size: 14px;
-        color: #8e8e8e;
-        cursor: pointer;
-        background: none;
-        border: none;
-        padding: 4px;
+//  제목과 정렬 옵션을 묶는 컨테이너
+export const CommentTitleContainer = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+`;
+
+// ✅ [신규] 댓글 숨기기 버튼
+export const HideButton = styled.button`
+    font-size: 14px;
+    color: #8e8e8e;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 4px;
+    font-weight: 600;
+
+    &:hover {
+        color: #262626;
+    }
+`;
+
+// ✅ [신규] 댓글 제목 스타일 컴포넌트 (h4 기본 여백 제거)
+export const CommentTitle = styled.h4`
+    margin: 0;
+    padding: 0;
+    font-size: 1rem; /* h4와 유사한 폰트 크기 유지 */
+    font-weight: bold;
+`;
+
+// 정렬 옵션 버튼
+export const SortOption = styled.button`
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: ${props => props.active ? '#65676b' : '#888'};
+    font-weight: ${props => props.active ? 'bold' : 'normal'};
+    padding: 0;
+
+    &:hover {
+        color: #65676b;
     }
 `;
 

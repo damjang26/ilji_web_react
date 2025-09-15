@@ -1,5 +1,5 @@
-import React, {useCallback, useMemo, useState} from 'react';
-import {useNavigate, useLocation} from 'react-router-dom';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {useLocation, useNavigate} from 'react-router-dom';
 import {useJournal} from '../../../contexts/JournalContext';
 import {
     JournalViewWrapper,
@@ -8,27 +8,26 @@ import {
     ProfilePicture,
     AuthorInfo,
     AuthorName,
-    DateDisplay,
     ContentSection,
     BookLayoutContainer,
     ImageSliderContainer,
     ImageSlide,
     SliderArrow,
     ContentContainer,
-    ActionsContainer,
     SideActionTabsContainer,
     SideActionTab,
-    CommentContainer,
+    CommentContainer, CommentTitleContainer,
     CommentContentWrapper,
     CommentHeader,
     CommentList,
-    CommentInputContainer,
-    CommentForm
+    CommentInputContainer, CommentTitle, HideButton,
+    CommentForm,
+    SortOption
 } from '../../../styled_components/main/journal/JournalViewStyled';
 import {HiPencilAlt} from "react-icons/hi";
 import {MdDeleteForever} from "react-icons/md";
 import {ActionItem} from "../../../styled_components/main/post/PostListStyled.jsx";
-import {FaChevronLeft, FaChevronRight, FaRegComment, FaRegHeart, FaRegShareSquare} from "react-icons/fa";
+import {FaChevronLeft, FaChevronRight, FaRegHeart} from "react-icons/fa";
 import {useAuth} from "../../../AuthContext.jsx";
 import {BiSolidShareAlt} from "react-icons/bi";
 import {TbMessageCirclePlus} from "react-icons/tb";
@@ -43,8 +42,11 @@ const JournalView = () => {
     const journal = location.state?.journalData;
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+    const [comments, setComments] = useState([]); // ✅ [신규] 댓글 목록 상태
     const [newComment, setNewComment] = useState(''); // ✅ [신규] 댓글 입력 상태
     const [isCommentOpen, setIsCommentOpen] = useState(false); // ✅ [신규] 댓글 창 열림/닫힘 상태
+    const [commentSortBy, setCommentSortBy] = useState('likes'); // ✅ [신규] 댓글 정렬 상태 (기본: 'likes')
+
     // ✅ [신규] 날짜를 'MONTH DAY, YEAR' 형식으로 포맷팅합니다. (예: JAN 01, 2024)
     const formattedDate = useMemo(() => {
         if (!journal?.logDate) return '';
@@ -57,6 +59,25 @@ const JournalView = () => {
         }
         return [];
     }, [journal]);
+
+    // ✅ [신규] 댓글 창이 열리거나 정렬 순서가 바뀔 때 댓글을 불러옵니다.
+    // useEffect(() => {
+    //     const fetchComments = async () => {
+    //         if (!journal?.id) return;
+    //         try {
+    //             const response = await api.get(`/api/ilogs/${journal.id}/comments?sortBy=${commentSortBy}`);
+    //             setComments(response.data);
+    //             console.log(`${commentSortBy} 순으로 댓글 로딩 완료:`, response.data);
+    //         } catch (error) {
+    //             console.error("댓글을 불러오는 중 오류가 발생했습니다.", error);
+    //             setComments([]); // 오류 발생 시 댓글 목록 초기화
+    //         }
+    //     };
+    //
+    //     if (isCommentOpen) {
+    //         fetchComments();
+    //     }
+    // }, [isCommentOpen, journal?.id, commentSortBy]);
 
     const handleDelete = async (journalId, pageDate) => {
         // 사용자가 정말 삭제할 것인지 확인
@@ -124,8 +145,50 @@ const JournalView = () => {
         // 여기에 댓글을 서버로 전송하는 API 호출 로직을 추가합니다.
         setNewComment(''); // 입력창 초기화
     }, [newComment]);
+
+    // ✅ [리팩토링] 중복되는 댓글 UI를 별도의 함수로 추출합니다.
+    const renderCommentSection = () => (
+        <CommentContainer isOpen={isCommentOpen}
+                          onClick={!isCommentOpen ? toggleCommentView : undefined}>
+            {isCommentOpen ? (
+                <CommentContentWrapper>
+                    <CommentHeader>
+                        <CommentTitleContainer>
+                            <CommentTitle>comments({comments.length})</CommentTitle>
+                            <SortOption active={commentSortBy === 'likes'}
+                                        onClick={() => setCommentSortBy('likes')}>인기순</SortOption>
+                            <SortOption active={commentSortBy === 'recent'}
+                                        onClick={() => setCommentSortBy('recent')}>최신순</SortOption>
+                        </CommentTitleContainer>
+                        <HideButton onClick={toggleCommentView}>Hide</HideButton>
+                    </CommentHeader>
+                    <CommentList>
+                        {comments.length > 0 ?
+                            comments.map(comment => <div key={comment.commentId}>{comment.content}</div>)
+                            : <p>아직 댓글이 없습니다.</p>}
+                    </CommentList>
+                    <CommentInputContainer>
+                        <ProfilePicture
+                            src={user?.profileImage || 'https://via.placeholder.com/40'}
+                            alt="내 프로필"
+                            referrerPolicy="no-referrer"
+                        />
+                        <CommentForm onSubmit={handleCommentSubmit}>
+                            <input type="text" placeholder="Add a comment..." value={newComment}
+                                   onChange={(e) => setNewComment(e.target.value)}/>
+                            <button type="submit" disabled={!newComment.trim()}><TbMessageCirclePlus/></button>
+                        </CommentForm>
+                    </CommentInputContainer>
+                </CommentContentWrapper>
+            ) : (
+                <span>Comments ({journal.commentCount || 0})</span>
+            )}
+        </CommentContainer>
+    );
+
     if (!journal) {
-        return <ViewContainer className="no-image"><p>일기 정보를 불러올 수 없습니다. 목록에서 다시 시도해주세요.</p></ViewContainer>;
+        return <ViewContainer className="no-image"><p>일기 정보를 불러올 수 없습니다. 목록에서 다시 시도해주세요.</p>
+        </ViewContainer>;
     }
 
     // 이미지가 있는지 여부 확인
@@ -155,36 +218,7 @@ const JournalView = () => {
                     <ContentSection>
                         <p>{journal.content}</p>
                     </ContentSection>
-                    <CommentContainer isOpen={isCommentOpen}
-                                      onClick={!isCommentOpen ? toggleCommentView : undefined}>
-                        {isCommentOpen ? (
-                            <CommentContentWrapper>
-                                <CommentHeader>
-                                    <h4>comments</h4>
-                                    <button onClick={toggleCommentView}>Hide</button>
-                                </CommentHeader>
-                                <CommentList>
-                                    {/* 댓글 목록이 여기에 렌더링됩니다. */}
-                                    <p>No comments.</p>
-                                </CommentList>
-                                <CommentInputContainer>
-                                    <ProfilePicture
-                                        src={user?.profileImage || 'https://via.placeholder.com/40'}
-                                        alt="내 프로필"
-                                        referrerPolicy="no-referrer"
-                                    />
-                                    <CommentForm onSubmit={handleCommentSubmit}>
-                                        <input type="text" placeholder="Add a comment..." value={newComment}
-                                               onChange={(e) => setNewComment(e.target.value)}/>
-                                        <button type="submit" disabled={!newComment.trim()}><TbMessageCirclePlus/>
-                                        </button>
-                                    </CommentForm>
-                                </CommentInputContainer>
-                            </CommentContentWrapper>
-                        ) : (
-                            <span>Comments ( )</span>
-                        )}
-                    </CommentContainer>
+                    {renderCommentSection()}
                 </ViewContainer>
                 {/* ✅ [수정] 컨테이너는 항상 렌더링하고, 내부 탭을 조건부로 보여줍니다. */}
                 <SideActionTabsContainer>
@@ -242,36 +276,7 @@ const JournalView = () => {
                             <p>{journal.content}</p>
                         </ContentSection>
                         {/* ✅ [수정] 클릭 시 댓글 창을 토글하고, 상태에 따라 다른 내용을 보여줍니다. */}
-                        <CommentContainer isOpen={isCommentOpen}
-                                          onClick={!isCommentOpen ? toggleCommentView : undefined}>
-                            {isCommentOpen ? (
-                                <CommentContentWrapper>
-                                    <CommentHeader>
-                                        <h4>comments</h4>
-                                        <button onClick={toggleCommentView}>Hide</button>
-                                    </CommentHeader>
-                                    <CommentList>
-                                        {/* 댓글 목록이 여기에 렌더링됩니다. */}
-                                        <p>No comments</p>
-                                    </CommentList>
-                                    <CommentInputContainer>
-                                        <ProfilePicture
-                                            src={user?.profileImage || 'https://via.placeholder.com/40'}
-                                            alt="내 프로필"
-                                            referrerPolicy="no-referrer"
-                                        />
-                                        <CommentForm onSubmit={handleCommentSubmit}>
-                                            <input type="text" placeholder="Add a comment..." value={newComment}
-                                                   onChange={(e) => setNewComment(e.target.value)}/>
-                                            <button type="submit" disabled={!newComment.trim()}><TbMessageCirclePlus/>
-                                            </button>
-                                        </CommentForm>
-                                    </CommentInputContainer>
-                                </CommentContentWrapper>
-                            ) : (
-                                <span>Comments ( )</span>
-                            )}
-                        </CommentContainer>
+                        {renderCommentSection()}
                     </ContentContainer>
                 </BookLayoutContainer>
             </ViewContainer>

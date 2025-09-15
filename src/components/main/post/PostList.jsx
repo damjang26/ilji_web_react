@@ -27,12 +27,14 @@ import {HiPencilAlt} from "react-icons/hi";
 import {MdDeleteForever} from "react-icons/md";
 import {useNavigate} from "react-router-dom";
 import {useJournal} from "../../../contexts/JournalContext.jsx";
-import {BiSolidShareAlt} from "react-icons/bi"; // ✅ 중앙 API 파일에서 좋아요 함수 임포트
+import {BiSolidShareAlt} from "react-icons/bi";
+import PostComment from "./PostComment.jsx"; // ✅ 중앙 API 파일에서 좋아요 함수 임포트
 
 const JournalItem = ({journal, lastJournalElementRef, onDelete, handleEdit, user, handleLikeClick}) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     // ✅ [추가] 이미지가 가로로 긴지 여부를 저장하는 상태
     const [isLandscape, setIsLandscape] = useState(false);
+    const [isCommentOpen, setIsCommentOpen] = useState(false);
 
     const hasImages = journal.images && journal.images.length > 0;
     const imageUrls = journal.images || [];
@@ -89,12 +91,19 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, handleEdit, user
         }
     }, [journal]);
 
+    // ✅ [추가] 댓글 창을 토글하는 함수
+    const toggleCommentView = useCallback((e) => {
+        e?.stopPropagation(); // 이벤트 버블링 방지
+        setIsCommentOpen(prev => !prev);
+    }, []);
+
     // 이미지가 있는 경우: 2단 레이아웃 (슬라이더 포함)
     if (hasImages) {
         return (
             <JournalItemWrapper>
                 <PostContainer
                     ref={lastJournalElementRef}
+                    isCommentOpen={isCommentOpen}
                     className="has-image"
                 >
                     <JournalItemLayoutContainer className={isLandscape ? 'landscape' : ''}>
@@ -150,6 +159,7 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, handleEdit, user
                             </PostActions>
                         </JournalItemContentContainer>
                     </JournalItemLayoutContainer>
+                    <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}/>
                 </PostContainer>
                 <IndexTabsContainer>
                     <IndexTabActions type="share" onClick={() => handleShare}>
@@ -175,7 +185,7 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, handleEdit, user
     // 이미지가 없는 경우: 기존 레이아웃
     return (
         <JournalItemWrapper>
-            <PostContainer ref={lastJournalElementRef} className="not-has-image">
+            <PostContainer ref={lastJournalElementRef} isCommentOpen={isCommentOpen} className="not-has-image">
                 <PostHeader>
                     <ProfileImage src={journal.writerProfileImage || '/path/to/default/profile.png'}
                                   alt={`${journal.writerNickname} profile`}/>
@@ -209,8 +219,7 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, handleEdit, user
                 <PostContent>
                     {journal.content}
                 </PostContent>
-                <PostActions>
-                </PostActions>
+                <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}/>
             </PostContainer>
             <IndexTabsContainer>
                 <IndexTabActions type="share" onClick={() => handleShare}>

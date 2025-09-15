@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import {ProfilePicture} from "../journal/JournalViewStyled.jsx";
 
 // 전체 피드를 감싸고 중앙 정렬하는 컨테이너
 export const FeedContainer = styled.div`
@@ -23,25 +24,26 @@ export const JournalItemWrapper = styled.div`
 
 // 개별 포스트(게시물) 카드
 export const PostContainer = styled.article`
-    position: relative; /* ✅ [추가] 자식 요소의 absolute 포지셔닝 기준 */
-    overflow: visible; /* ✅ [추가] 컨테이너 밖으로 나가는 탭이 보이도록 설정 */
+    position: relative;
+    overflow: hidden; /* ✅ [수정] 자식 요소(이미지 등)가 컨테이너 밖으로 나가지 않도록 설정합니다. */
     background-color: #ffffff;
     border: 1px solid #dbdbdb;
     border-radius: 8px;
     display: flex;
     flex-direction: column;
     z-index: 1;
-
     transition: background-color 0.2s ease;
+    min-height: ${({isCommentOpen}) => (isCommentOpen ? '600px' : '250px')};
 
     &.not-has-image,
     &.landscape {
-        max-height: 500px;
-        min-height: 250px;
+        /* ✅ [수정] 댓글 창 상태에 따라 최대 높이를 동적으로 조절합니다. */
+        max-height: ${({isCommentOpen}) => (isCommentOpen ? '600px' : '500px')};
+        transition: height 0.4s ease-in-out, background-color 0.4s ease-in-out, border-top 0.4s ease-in-out;
     }
 
     &:hover {
-        background-color: #f5f5f5; /* 연한 회색 배경 */
+        //background-color: #f5f5f5; /* 연한 회색 배경 */
 `;
 
 // 포스트 헤더 (프로필 사진, 유저 아이디, 날짜)
@@ -548,4 +550,181 @@ export const JournalEntryDate = styled.h4`
     margin: 0;
     text-transform: none; /* 대문자 변환 제거 */
     letter-spacing: normal; /* 자간 기본값으로 복원 */
+`;
+
+// 댓글 관련 디자인
+
+export const PostCommentContainer = styled.div`
+    position: absolute; /* ✅ [수정] 부모(PostContainer) 기준으로 위치 지정 */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 2; /* ✅ [추가] 다른 콘텐츠 위로 올라오도록 설정 */
+    border-radius: 0 0 7px 7px; /* ✅ [수정] 하단 모서리만 둥글게 */
+
+    /* ✅ [수정] 높이와 배경색에 transition을 적용하여 부드러운 애니메이션 효과를 줍니다. */
+    height: ${({isOpen}) => (isOpen ? '500px' : '50px')};
+    background-color: ${({isOpen}) => (isOpen ? '#ffffff' : '#ffffff')};
+    border-top: 1px solid ${({isOpen}) => (isOpen ? '#dbdbdb' : '#ffffff')};
+    box-shadow: ${({isOpen}) => (isOpen ? '0 -4px 12px rgba(0, 0, 0, 0.08)' : 'none')};
+    transition: height 0.4s ease-in-out, background-color 0.4s ease-in-out, border-top 0.4s ease-in-out;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #65676b;
+    cursor: ${({isOpen}) => (isOpen ? 'default' : 'pointer')};
+
+    &:hover {
+        background-color: ${({isOpen}) => (isOpen ? '#ffffff' : '#efefef')};
+    }
+`;
+
+// ✅ [신규] 확장된 댓글 창 내부 콘텐츠를 감싸는 래퍼
+export const PostCommentContentWrapper = styled.div`
+    width: 100%;
+    height: 100%;
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* 내부 스크롤을 위해 */
+    opacity: 0;
+    animation: fadeIn 0.4s ease-in-out 0.2s forwards;
+
+    @keyframes fadeIn {
+        to {
+            opacity: 1;
+        }
+    }
+`;
+
+// ✅ [신규] 확장된 댓글 창의 헤더 (제목, 닫기 버튼)
+export const PostCommentHeader = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 12px;
+`;
+
+//  제목과 정렬 옵션을 묶는 컨테이너
+export const PostCommentTitleContainer = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+`;
+
+// ✅ [신규] 댓글 숨기기 버튼
+export const PostHideButton = styled.button`
+    font-size: 14px;
+    color: #8e8e8e;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 4px;
+    font-weight: 600;
+
+    &:hover {
+        color: #262626;
+    }
+`;
+
+// ✅ [신규] 댓글 제목 스타일 컴포넌트 (h4 기본 여백 제거)
+export const PostCommentTitle = styled.h4`
+    margin: 0;
+    padding: 0;
+    font-size: 1rem; /* h4와 유사한 폰트 크기 유지 */
+    font-weight: bold;
+`;
+
+// 정렬 옵션 버튼
+export const PostSortOption = styled.button`
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: ${props => props.active ? '#65676b' : '#888'};
+    font-weight: ${props => props.active ? 'bold' : 'normal'};
+    padding: 0;
+
+    &:hover {
+        color: #65676b;
+    }
+`;
+
+// ✅ [신규] 댓글 목록을 감싸는 컨테이너
+export const PostCommentList = styled.div`
+    flex-grow: 1; /* 남는 공간을 모두 차지 */
+    overflow-y: auto; /* 댓글이 많아지면 스크롤 */
+    padding: 8px 0;
+`;
+
+// ✅ [신규] 댓글 입력창을 감싸는 컨테이너
+export const PostCommentInputContainer = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #efefef;
+    margin-top: auto; /* CommentList가 스크롤 되더라도 항상 하단에 위치 */
+
+    /* 입력창에서는 프로필 사진을 조금 더 작게 */
+
+    ${ProfilePicture} {
+        width: 40px;
+        height: 40px;
+    }
+`;
+
+// ✅ [신규] 댓글 입력 폼
+export const PostCommentForm = styled.form`
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+
+    input {
+        width: 100%;
+        border: none;
+        outline: none;
+        background-color: transparent;
+        font-size: 14px;
+        padding: 8px 0;
+
+        &::placeholder {
+            color: #a8a8a8;
+        }
+    }
+
+    button {
+        background: none;
+        border: none;
+        color: #7b5fff;
+        font-weight: 1000;
+        padding: 5px;
+        border-radius: 50%;
+        font-size: 25px; /* ✅ [수정] 아이콘 크기를 키웁니다. */
+        cursor: pointer;
+        margin-left: 8px;
+        transition: color 0.2s ease;
+        display: flex; /* ✅ [추가] 아이콘을 중앙에 배치하기 위해 flex를 사용합니다. */
+        align-items: center;
+
+        &:hover {
+            background-color: rgba(131, 29, 240, 0.1);
+        }
+
+        &:disabled {
+            color: #c3b3ff;
+            cursor: not-allowed;
+        }
+    }
+`;
+
+export const ProfileImg = styled.img`
+    /* ✅ [수정] 오른쪽 영역에서는 조금 작게 */
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
 `;
