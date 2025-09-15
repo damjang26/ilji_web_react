@@ -24,7 +24,6 @@ export default defineConfig({
                 target: 'ws://localhost:8090',
                 ws: true,
             }
-            }, // WebSocket 경로 프록시 추가
         }
     },
 })
