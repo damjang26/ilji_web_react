@@ -10,6 +10,7 @@ import {
 } from "../../api";
 import { useAuth } from "../../AuthContext";
 import { useDebounce } from "../../hooks/useDebounce";
+import { useUserActions } from "../../hooks/useUserActions.js"; // ✅ [추가] 커스텀 훅 임포트
 
 const { TabPane } = Tabs;
 const { Search } = Input;
@@ -77,36 +78,9 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
         }
     }, [debouncedSearchTerm]);
 
-    const handleFollow = async (targetUserId) => {
-        try {
-            await followUser(targetUserId);
-            message.success("팔로우했습니다.");
-            // Refresh the list for the currently viewed user
-            fetchLists(targetUserId);
-            fetchMyFollowing();
-        } catch (error) {
-            console.error("Follow failed:", error);
-            message.error("팔로우에 실패했습니다.");
-        }
-    };
-
-    const handleUnfollow = async (targetUserId) => {
-        try {
-            await unfollowUser(targetUserId);
-            message.success("언팔로우했습니다.");
-            // Refresh the list for the currently viewed user
-            fetchLists(targetUserId);
-            fetchMyFollowing();
-        } catch (error) {
-            console.error("Unfollow failed:", error);
-            message.error("언팔로우에 실패했습니다.");
-        }
-    };
-
-    const handleProfileClick = (userId) => {
-        onClose(); // 모달을 닫는 함수 호출
-        navigate(`/mypage/${userId}`);
-    };
+    // ✅ [수정] 커스텀 훅을 사용하여 액션 함수들을 가져옵니다.
+    // 액션 완료 후 `fetchLists`를 호출하여 현재 모달의 목록을 새로고침합니다.
+    const { handleFollow, handleUnfollow, handleProfileClick } = useUserActions(() => fetchLists(targetUserId));
 
     const renderUserList = (users) => (
         <List
@@ -124,10 +98,10 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
                     return (
                         <List.Item>
                             <List.Item.Meta
-                                avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}
-                                                onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }} />
+                                avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`} 
+                                                onClick={() => handleProfileClick(item.userId, onClose)} style={{ cursor: 'pointer' }} />
                                 }
-                                title={<a onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }}>{item.name} (나)</a>}
+                                title={<a onClick={() => handleProfileClick(item.userId, onClose)} style={{ cursor: 'pointer' }}>{item.name} (나)</a>}
                                 description={item.email}
                             />
                         </List.Item>
@@ -145,10 +119,10 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
                         ]}
                     >
                         <List.Item.Meta
-                            avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}
-                                            onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }}/>
+                            avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`} 
+                                            onClick={() => handleProfileClick(item.userId, onClose)} style={{ cursor: 'pointer' }}/>
                             }
-                            title={<a onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }}>{item.name}</a>}
+                            title={<a onClick={() => handleProfileClick(item.userId, onClose)} style={{ cursor: 'pointer' }}>{item.name}</a>}
                             description={item.email}
                         />
                     </List.Item>

@@ -78,7 +78,8 @@ const ImageEditor = ({imageInfo, onSave, onCancel, onFabricModeChange}) => {
             */}
             <div style={{display: editingStep === 'crop' ? 'block' : 'none'}}>
                 <ModalHeader>
-                    <IconButton onClick={handleCancelEdit} style={{color: '#555'}}><FaArrowLeft/></IconButton>
+                    <IconButton data-tooltip="back" onClick={handleCancelEdit}
+                                style={{color: '#555'}}><FaArrowLeft/></IconButton>
                     <h2>이미지 자르기</h2>
                     <PostButton onClick={handleNextStep}>다음</PostButton>
                 </ModalHeader>

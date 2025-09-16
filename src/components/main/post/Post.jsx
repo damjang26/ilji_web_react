@@ -1,8 +1,9 @@
 import {Route, Routes} from "react-router-dom";
 import PostList from "./PostList.jsx";
-import {useCallback, useEffect, useRef, useState} from "react";
+import {useCallback, useEffect, useState} from "react";
 import {useAuth} from "../../../AuthContext.jsx";
-import {api} from "../../../api.js";
+import {getFeed} from "../../../api.js"; // ✅ [개선] 중앙 API 함수 사용
+import {useInView} from 'react-intersection-observer'; // ✅ [핵심] useInView 훅 임포트
 
 const Post = () => {
     const [posts, setPosts] = useState([])
@@ -11,66 +12,71 @@ const Post = () => {
     const [hasMore, setHasMore] = useState(true);  // 더 불러올 데이터가 있는지 여부
     const {user} = useAuth();
 
-    const fetchPosts = useCallback(async () => {
-        if (!user) {
-            setPosts([]);
-            return;
-        }
-        if (loading || !hasMore) return; // 로딩 중이거나 더 이상 데이터가 없으면 중단
+    // ✅ [핵심] useInView 훅으로 IntersectionObserver 로직 대체
+    const {ref, inView} = useInView({
+        threshold: 0, // 요소가 1px이라도 보이면 inView는 true가 됨
+    });
+
+    const fetchPosts = useCallback(async (fetchPage) => {
+        // 로딩 중이거나, 더 불러올 데이터가 없거나, 사용자가 없으면 중단
+        if (loading || !user) return;
         setLoading(true);
 
-        const currentPage = page;
-
         try {
-            const response = await api.get(`/api/i-log/feed?page=${currentPage}&size=10`);
+            const response = await getFeed({page: fetchPage, size: 10});
             const data = response.data;
-            // console.log("데이터 : ", data);
+            // console.log("데이터", data); // 디버깅 후 주석 처리 또는 삭제
 
-            // ✅ [수정] 기존 게시글에 새로운 게시글을 추가합니다.
+            // ✅ [개선] 중복 데이터 처리 로직 개선
             setPosts(prevPosts => {
-                // 중복 데이터를 방지하기 위해 Set을 사용합니다.
-                const newPosts = [...prevPosts, ...data.content];
-                const uniquePosts = Array.from(new Map(newPosts.map(post => [post.id, post])).values());
-                return uniquePosts;
+                const postMap = new Map();
+                // 기존 게시물을 Map에 추가
+                // 첫 페이지 로딩 시에는 기존 게시물이 없음
+                if (fetchPage > 0) {
+                    prevPosts.forEach(post => postMap.set(post.id, post));
+                }
+                // 새로운 게시물을 Map에 추가 (중복되면 덮어씀)
+                data.content.forEach(post => postMap.set(post.id, post));
+                // Map의 값들을 배열로 변환하여 반환
+                return Array.from(postMap.values());
             });
-            setPage(prevPage => prevPage + 1);
+
             setHasMore(!data.last);
         } catch (error) {
-            console.error(`피드 로딩 실패 (페이지: ${currentPage}):`, error);
+            console.error(`피드 로딩 실패 (페이지: ${fetchPage}):`, error);
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
-    }, [user, loading, hasMore, page]); // 'page'를 다시 추가하여 currentPage를 참조하도록 합니다.
-
-    // Intersection Observer를 위한 로직 (스크롤이 바닥에 닿았는지 감지)
-    const observer = useRef();
-    const lastPostElementRef = useCallback(node => {
-        if (loading) return;
-        if (observer.current) observer.current.disconnect();
-        observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMore) {
-                fetchPosts(); // 화면에 보이면 다음 페이지 로드
-            }
-        });
-        if (node) observer.current.observe(node);
-    }, [loading, hasMore, fetchPosts]);
+    }, [user, loading]);
 
     useEffect(() => {
+        // 사용자가 변경되면(로그인/로그아웃) 모든 상태를 초기화합니다.
         setPosts([]);
         setPage(0);
         setHasMore(true);
     }, [user]);
 
-    // 2. 'page' 상태가 0으로 초기화되면, 첫 페이지 데이터를 불러옵니다.
+    // ✅ [추가] 첫 페이지(page=0) 데이터를 로드하는 로직
     useEffect(() => {
-        if (user && page === 0 && hasMore) {
-            fetchPosts();
+        if (user) {
+            setPage(0); // 페이지 상태를 0으로 설정하여 로딩 시작
+            fetchPosts(0); // 첫 페이지 데이터 로드
         }
-    }, [user, page, hasMore, fetchPosts]); // fetchPosts를 의존성에 추가하여 최신 함수를 사용하도록 보장합니다.
+    }, [user]); // 사용자가 바뀔 때만 실행
+
+    // ✅ [수정] 무한 스크롤은 page > 0 일 때만 동작하도록 수정
+    useEffect(() => {
+        // 사용자가 있고, 감지 요소가 보이며, 더 불러올 데이터가 있고, 로딩 중이 아닐 때
+        if (inView && hasMore && !loading) {
+            const nextPage = page + 1;
+            setPage(nextPage);
+            fetchPosts(nextPage);
+        }
+    }, [inView, hasMore, loading]);
 
     return (<div>
         <Routes>
-            <Route path="/" element={<PostList posts={posts} loading={loading} hasMore={hasMore}
-                                               lastPostElementRef={lastPostElementRef}/>}/>
+            <Route path="/" element={<PostList posts={posts} setPosts={setPosts} loading={loading} hasMore={hasMore} lastPostElementRef={ref}/>}/>
         </Routes>
     </div>);
 }
