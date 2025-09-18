@@ -168,10 +168,10 @@ const MyPageSet = () => {
                                 <FormInput id="interests" type="text" name="interests" value={localProfile.interests || ''} onChange={handleInputChange} placeholder="쉼표(,)로 구분하여 입력" />
                             </FormGroup>
 
-                            <CheckboxGroup>
-                                <FormCheckbox id="isPrivate" type="checkbox" name="isPrivate" checked={localProfile.isPrivate || false} onChange={handleInputChange} />
-                                <FormLabel htmlFor="isPrivate">계정 비공개</FormLabel>
-                            </CheckboxGroup>
+                            {/*<CheckboxGroup>*/}
+                            {/*    <FormCheckbox id="isPrivate" type="checkbox" name="isPrivate" checked={localProfile.isPrivate || false} onChange={handleInputChange} />*/}
+                            {/*    <FormLabel htmlFor="isPrivate">계정 비공개</FormLabel>*/}
+                            {/*</CheckboxGroup>*/}
 
                             <ButtonGroup>
                                 {/* [수정] 취소 버튼 클릭 시 handleCancel을 호출하여 MyPage로 돌아갑니다. */}
