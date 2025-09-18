@@ -331,15 +331,13 @@ const JournalWrite = ({
                 await createJournalEntry(createPayload);
                 alert('일기가 성공적으로 저장되었습니다!');
             }
-
-
-            onClose(); // 저장 후 모달 닫기
         } catch (error) {
             console.error("일기 저장 실패:", error);
             // 서버에서 보낸 에러 메시지가 있다면 보여주는 것이 더 좋습니다.
             alert(error.response?.data?.message || '일기 저장에 실패했습니다.');
         } finally {
             setIsSubmitting(false); // 제출 상태 해제
+            onClose(); // 저장 후 모달 닫기
         }
     };
 
@@ -375,7 +373,7 @@ const JournalWrite = ({
                         onDragLeave={handleDragLeave}
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
-                        isDragging={isDragging} // ✅ 스타일링을 위해 isDragging 상태 전달
+                        $isDragging={isDragging} // ✅ 스타일링을 위해 isDragging 상태 전달
                         placeholder="오늘은 무슨 일이 있었나요?"
                     />
 
@@ -425,7 +423,7 @@ const JournalWrite = ({
                                 <FaUserTag/>
                             </IconButton>
                         </ActionButtons>
-                        <CharCounter error={content.length === MAX_CHAR_LIMIT}>
+                        <CharCounter $error={content.length === MAX_CHAR_LIMIT}>
                             {content.length} / {MAX_CHAR_LIMIT}
                         </CharCounter>
                         <CheckboxLabel>

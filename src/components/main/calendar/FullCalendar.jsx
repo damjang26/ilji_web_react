@@ -1,4 +1,4 @@
-import React, {useState, useRef, useMemo} from "react";
+import React, {useState, useRef, useMemo, useEffect} from "react";
 import ReactDOM from "react-dom";
 import {
     CalendarWrapper,
@@ -52,6 +52,48 @@ export default function FullCalendarExample() {
         left: 0,
     });
     const popoverHideTimer = useRef(null);
+    const actionHandledRef = useRef(false); // New ref
+
+    useEffect(() => {
+        if (location.state?.action === 'openJournalModal' && !actionHandledRef.current) {
+            actionHandledRef.current = true; // Set flag to prevent re-execution
+
+            // 1. Clear the action from the state to prevent re-triggering
+            const { action, ...rest } = location.state;
+            navigate(location.pathname, { state: rest, replace: true });
+
+            // 2. Open the journal write modal for today's date
+            const dateFromState = location.state?.date;
+            navigate("/journal/write", {
+                state: {
+                    backgroundLocation: location,
+                    selectedDate: dateFromState ? new Date(dateFromState) : new Date(),
+                },
+            });
+        }
+        // Reset the flag if location changes and action is no longer present
+        if (!location.state?.action && actionHandledRef.current) {
+            actionHandledRef.current = false;
+        }
+    }, [location, navigate]);
+
+    useEffect(() => {
+        if (location.state?.action === 'openJournalModal') {
+            // 1. 다른 페이지로 이동했다가 돌아왔을 때 다시 실행되는 것을 방지하기 위해 state를 정리합니다.
+            const { action, ...rest } = location.state;
+            navigate(location.pathname, { state: rest, replace: true });
+
+            const dateFromState = location.state?.date;
+
+            // 2. 캘린더의 기존 로직을 그대로 사용하여 오늘 날짜의 일기 작성 모달을 엽니다.
+            navigate("/journal/write", {
+                state: {
+                    backgroundLocation: location,
+                    selectedDate: dateFromState ? new Date(dateFromState) : new Date(),
+                },
+            });
+        }
+    }, [location, navigate]);
 
     // ✅ [수정] 타임존 문제 방지를 위해 Date 객체를 'YYYY-MM-DD'로 직접 변환합니다.
     const formatDate = (date) => {
