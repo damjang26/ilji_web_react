@@ -25,7 +25,7 @@ import {
 import {CloseButton, ModalHeader} from '../../../styled_components/main/journal/ModalStyled';
 import ImageEditor from './image_edit/ImageEditor.jsx';
 
-const MAX_CHAR_LIMIT = 3000;
+const MAX_CHAR_LIMIT = 2000;
 const MAX_IMAGE_LIMIT = 2;
 
 // Base64 데이터 URL을 File 객체로 변환하는 헬퍼 함수
@@ -40,13 +40,6 @@ const dataURLtoFile = (dataurl, filename) => {
     }
     return new File([u8arr], filename, {type: mime});
 };
-
-// ✅ [추가] URL로부터 이미지를 가져와 File 객체로 변환하는 헬퍼 함수
-// const urlToImageFile = async (url, filename) => {
-//     const response = await fetch(url);
-//     const blob = await response.blob();
-//     return new File([blob], filename, {type: blob.type});
-// };
 
 const JournalWrite = ({
                           onClose,
@@ -128,7 +121,7 @@ const JournalWrite = ({
         if (!dateToFormat) return '';
         const date = new Date(dateToFormat);
         // toLocaleDateString은 브라우저/시스템의 로케일을 따르므로 일관된 결과를 위해 옵션 지정
-        return date.toLocaleDateString('ko-KR', {month: 'long', day: 'numeric'});
+        return date.toLocaleDateString('en-US', {month: 'long', day: '2-digit'});
     }, [isEditMode, journalToEdit, selectedDate]);
 
     const handleContentChange = (e) => {

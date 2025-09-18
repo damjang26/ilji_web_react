@@ -112,6 +112,18 @@ apiNoti.interceptors.request.use(
         return Promise.reject(error);
     }
 );
+// =================================
+// 일기 관련 API
+// =================================
+
+/**
+ * 소셜 피드 목록을 조회합니다. (페이징)
+ * @param {object} params - 요청 파라미터
+ * @param {number} params.page - 페이지 번호
+ * @param {number} params.size - 페이지 크기
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const getFeed = (params) => api.get('/api/i-log/feed', {params});
 
 // =================================
 // 좋아요 관련 API
@@ -129,13 +141,70 @@ export const toggleLike = (ilogId, userId) => api.post(`/api/ilogs/${ilogId}/lik
  * @param {number} ilogId - 조회할 일기의 ID
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
-export const getLikers = (ilogId) => api.get(`/api/ilogs/${ilogId}/like`);
+export const getPostLikers = (ilogId) => api.get(`/api/ilogs/${ilogId}/like`);
 /**
  * [추가] 특정 사용자의 모든 일기(i-log)를 조회합니다.
  * @param {number} userId - 조회할 사용자의 ID
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
 export const getUserJournals = (userId) => api.get(`/api/i-log/user/${userId}`);
+
+
+/**
+ * 특정 사용자가 '좋아요'를 누른 일기 목록을 조회합니다.
+ * @param {object} params - 요청 파라미터
+ * @param {number} params.userId - 조회할 사용자의 ID
+ * @param {string} params.sortBy - 정렬 기준 ('liked_at', 'uploaded_at', 'popular')
+ * @param {number} params.page - 페이지 번호
+ * @param {number} params.size - 페이지 크기
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const getLikedPosts = (params) => api.get('/api/i-log/liked', {params});
+
+// =================================
+// 댓글 관련 API
+// =================================
+
+/**
+ * 특정 일기(i-log)의 댓글 목록을 조회합니다.
+ * @param {number} ilogId - 조회할 일기의 ID
+ * @param {object} params - 정렬 옵션 등 쿼리 파라미터 (예: { sortBy: 'likes' })
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const getComments = (ilogId, params) => api.get(`/api/ilogs/${ilogId}/comments`, {params});
+
+/**
+ * 특정 일기(i-log)에 새 댓글을 작성합니다.
+ * @param {number} ilogId - 댓글을 작성할 일기의 ID
+ * @param {object} data - 댓글 내용 (예: { content: '새 댓글입니다.' })
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const addComment = (ilogId, data) => api.post(`/api/ilogs/${ilogId}/comments`, data);
+
+/**
+ * 특정 댓글을 삭제합니다.
+ * @param {number} commentId - 삭제할 댓글의 ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const deleteComment = (commentId) => api.delete(`/api/comments/${commentId}`);
+
+// =================================
+// 댓글 좋아요 관련 API
+// =================================
+
+/**
+ * 특정 댓글에 대한 '좋아요'를 토글(추가/삭제)합니다.
+ * @param {number} commentId - 좋아요를 토글할 댓글의 ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const toggleCommentLike = (commentId) => api.post(`/api/comments/${commentId}/like`);
+
+/**
+ * 특정 댓글에 '좋아요'를 누른 사용자 목록을 조회합니다.
+ * @param {number} commentId - 조회할 댓글의 ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const getCommentLikers = (commentId) => api.get(`/api/comments/${commentId}/like`);
 
 // =================================
 // 채팅 관련 API
@@ -150,4 +219,5 @@ export const getUserJournals = (userId) => api.get(`/api/i-log/user/${userId}`);
 export const createChatRoom = (roomName, userIds) => {
     return api.post("/api/chat/create", { roomName, userIds });
 };
+
 

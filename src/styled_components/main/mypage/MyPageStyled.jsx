@@ -34,7 +34,8 @@ export const ContentBox = styled.div`
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 내부 컨텐츠(헤더, 메인) 배치 */
     display: flex;
-    flex-direction: column;ㄴ
+    flex-direction: column;
+    ㄴ
     flex-grow: 1; /* 남은 세로 공간을 모두 차지 */
 `;
 
@@ -147,15 +148,15 @@ export const ImgWrapper = styled.div`
 
 // 사용자의 프로필 이미지를 스타일링하는 컴포넌트 (원형, 그림자 효과 등)
 export const ProfileImage = styled.img`
-   width: 120px;
-   height: 120px;
-   border-radius: 50%;
-   object-fit: cover;
-   border: 4px solid #fff;
-   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-   cursor: pointer;
-   background-color: #f0f0f0; /* 이미지가 없을 때를 위한 배경색 */
- `;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    background-color: #f0f0f0; /* 이미지가 없을 때를 위한 배경색 */
+`;
 
 
 //  탭에 따라 선택된 기능이 표시될 영역
@@ -174,6 +175,39 @@ export const FeatureBox = styled.div`
 `;
 
 export const Contents = styled.div`
-     padding: 20px;
-     /* 추가적인 스타일링 (예: 게시물 목록) */
- `;
+    padding: 20px;
+    /* 추가적인 스타일링 (예: 게시물 목록) */
+`;
+
+
+// =================================
+// LikeList 정렬 옵션 관련 스타일 (신규 추가)
+// =================================
+
+export const SortOptionsContainer = styled.div`
+    display: flex;
+    justify-content: flex-end; /* 버튼들을 오른쪽으로 정렬 */
+    gap: 16px; /* 버튼 사이의 간격 */
+    padding: 8px 0;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #efefef; /* 구분선 */
+`;
+
+export const SortButton = styled.button`
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s, color 0.2s;
+
+    /* active prop에 따라 스타일 동적 변경 */
+    color: ${({$active}) => ($active ? '#000000' : '#8e8e8e')};
+    font-weight: ${({$active}) => ($active ? '600' : '400')};
+
+    &:hover {
+        background-color: #f0f2f5;
+        color: #000000;
+    }
+`;

@@ -19,7 +19,7 @@ import {
     JournalItemLayoutContainer,
     JournalItemContentContainer,
     ImageSliderContainer,
-    ImageSlide, SliderArrow, JournalEntryDate,
+    ImageSlide, SliderArrow, JournalEntryDate, CommentPlaceholder,
 } from "../../../../styled_components/main/post/PostListStyled.jsx";
 import {FaChevronLeft, FaChevronRight, FaRegHeart} from "react-icons/fa"; // ✅ [추가] 화살표 아이콘
 import {HiPencilAlt} from "react-icons/hi";
@@ -149,10 +149,11 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
                             </PostContent>
                         </JournalItemContentContainer>
                     </JournalItemLayoutContainer>
+                    <CommentPlaceholder/>
                     <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}/>
                 </PostContainer>
                 <IndexTabsContainer>
-                    <IndexTabActions type="share" onClick={() => handleShare}>
+                    <IndexTabActions type="share" onClick={handleShare}>
                         <button data-tooltip="공유"><BiSolidShareAlt/></button>
                     </IndexTabActions>
                     <IndexTabActions type="edit" onClick={() => onEdit(journal)}>
@@ -195,10 +196,11 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
                 <PostContent>
                     {journal.content}
                 </PostContent>
+                <CommentPlaceholder/>
                 <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}/>
             </PostContainer>
             <IndexTabsContainer>
-                <IndexTabActions type="share" onClick={() => handleShare}>
+                <IndexTabActions type="share" onClick={handleShare}>
                     <button data-tooltip="공유"><BiSolidShareAlt/></button>
                 </IndexTabActions>
                 <IndexTabActions type="edit" onClick={() => onEdit(journal)}>

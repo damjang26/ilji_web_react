@@ -582,6 +582,12 @@ export const PostCommentContainer = styled.div`
     }
 `;
 
+// ✅ [신규] PostComment가 absolute일 때 공간을 차지하기 위한 플레이스홀더
+export const CommentPlaceholder = styled.div`
+    width: 100%;
+    height: 50px; /* PostComment가 닫혔을 때의 높이와 동일하게 설정 */
+`;
+
 // ✅ [신규] 확장된 댓글 창 내부 콘텐츠를 감싸는 래퍼
 export const PostCommentContentWrapper = styled.div`
     width: 100%;
@@ -727,4 +733,160 @@ export const ProfileImg = styled.img`
     height: 36px;
     border-radius: 50%;
     object-fit: cover;
+`;
+
+export const LikeCountSpan = styled.span`
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
+`;
+
+// =================================
+// 댓글 아이템 관련 스타일 (신규 추가)
+// =================================
+
+export const CommentItemContainer = styled.div`
+    display: flex;
+    gap: 16px;
+    padding: 12px 4px;
+`;
+
+export const CommentAvatar = styled.img`
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    margin-top: 4px;
+`;
+
+export const CommentBody = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+`;
+
+export const CommentHeader = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+`;
+
+export const CommentAuthor = styled.span`
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
+`;
+
+export const CommentTimestamp = styled.span`
+    font-size: 12px;
+    color: #8e8e8e;
+`;
+
+export const CommentText = styled.p`
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+`;
+
+export const EmptyComment = styled.p`
+    text-align: center;
+    color: #8e8e8e;
+    padding: 40px 0;
+`;
+
+export const CommentActions = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+`;
+
+export const CommentActionButton = styled.button`
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    color: #65676b;
+    font-size: 16px;
+
+    &:hover {
+        color: #262626;
+    }
+`;
+
+export const CommentLikeCount = styled.span`
+    font-size: 12px;
+    color: #8e8e8e;
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
+`;
+
+
+// =================================
+// 댓글 메뉴(삭제 등) 관련 스타일 (신규 추가)
+// =================================
+
+export const CommentMenuContainer = styled.div`
+    position: relative;
+    margin-left: auto; /* 버튼을 오른쪽 끝으로 밀어냄 */
+`;
+
+export const CommentMenuButton = styled.button`
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #606060;
+
+    &:hover {
+        background-color: #f0f0f0;
+    }
+`;
+
+export const CommentDropdownMenu = styled.div`
+    position: absolute;
+    top: 44%;
+    right: 4px;
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    width: 90px;
+    padding: 8px 0;
+`;
+
+export const CommentDropdownItem = styled.button`
+    background: none;
+    border: none;
+    width: 100%;
+    padding: 8px 16px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 14px;
+
+    &:hover {
+        background-color: #f0f0f0;
+    }
 `;
