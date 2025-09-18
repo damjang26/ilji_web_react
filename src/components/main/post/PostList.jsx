@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import React, {useCallback, useState, useEffect, useMemo} from 'react';
 import {
     FeedContainer,
     PostActions,
@@ -16,23 +16,37 @@ import {
     ImageSliderContainer,
     ImageSlide,
     SliderArrow,
-    JournalItemContentContainer, JournalEntryDate, IndexTabsContainer, IndexTabActions, CommentPlaceholder, LikeCountSpan
+    JournalItemContentContainer,
+    JournalEntryDate,
+    IndexTabsContainer,
+    IndexTabActions,
+    CommentPlaceholder,
+    LikeCountSpan
 } from "../../../styled_components/main/post/PostListStyled.jsx";
-import { FaRegHeart, FaHeart, FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { formatRelativeTime } from '../../../utils/timeFormatter.js';
-import { TbNotebook } from "react-icons/tb";
-import { useAuth } from "../../../AuthContext.jsx";
-import { toggleLike, getPostLikers } from "../../../api.js"; // getPostLikers 임포트
-import { HiPencilAlt } from "react-icons/hi";
-import { MdDeleteForever } from "react-icons/md";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useJournal } from "../../../contexts/JournalContext.jsx";
-import { BiSolidShareAlt } from "react-icons/bi";
+import {FaRegHeart, FaHeart, FaChevronLeft, FaChevronRight} from "react-icons/fa";
+import {formatRelativeTime} from '../../../utils/timeFormatter.js';
+import {TbNotebook} from "react-icons/tb";
+import {useAuth} from "../../../AuthContext.jsx";
+import {toggleLike, getPostLikers} from "../../../api.js"; // getPostLikers 임포트
+import {HiPencilAlt} from "react-icons/hi";
+import {MdDeleteForever} from "react-icons/md";
+import {useNavigate, useLocation} from "react-router-dom";
+import {useJournal} from "../../../contexts/JournalContext.jsx";
+import {BiSolidShareAlt} from "react-icons/bi";
 import PostComment from "./PostComment.jsx";
 import PostLikersModal from "./PostLikersModal.jsx"; // 좋아요 목록 모달 임포트
-import { message } from "antd"; // antd 메시지 임포트
+import {message} from "antd"; // antd 메시지 임포트
 
-const JournalItem = ({ journal, lastJournalElementRef, onDelete, handleEdit, user, handleLikeClick, onLikeCountClick, onCommentCountChange }) => {
+const JournalItem = ({
+                         journal,
+                         lastJournalElementRef,
+                         onDelete,
+                         handleEdit,
+                         user,
+                         handleLikeClick,
+                         onLikeCountClick,
+                         onCommentCountChange
+                     }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     // ✅ [추가] 이미지가 가로로 긴지 여부를 저장하는 상태
     const [isLandscape, setIsLandscape] = useState(false);
@@ -135,9 +149,12 @@ const JournalItem = ({ journal, lastJournalElementRef, onDelete, handleEdit, use
                                             <span className="username">{journal.writerNickname || '사용자'}</span>
                                             <span className="date">{formatRelativeTime(journal.createdAt)}</span>
                                         </div>
-                                        <ActionItem> 
+                                        <ActionItem>
                                             {journal.likeCount > 0 && (
-                                                <LikeCountSpan onClick={(e) => { e.stopPropagation(); onLikeCountClick(journal.id); }}>
+                                                <LikeCountSpan onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onLikeCountClick(journal.id);
+                                                }}>
                                                     {journal.likeCount}
                                                 </LikeCountSpan>
                                             )}
@@ -166,7 +183,8 @@ const JournalItem = ({ journal, lastJournalElementRef, onDelete, handleEdit, use
                         </JournalItemContentContainer>
                     </JournalItemLayoutContainer>
                     <CommentPlaceholder/>
-                    <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView} onCommentCountChange={onCommentCountChange} />
+                    <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}
+                                 onCommentCountChange={onCommentCountChange}/>
                 </PostContainer>
                 <IndexTabsContainer>
                     {/* ✅ [수정] onClick 핸들러에서 불필요한 화살표 함수를 제거하고, handleShare를 직접 호출하도록 변경합니다. */}
@@ -207,7 +225,10 @@ const JournalItem = ({ journal, lastJournalElementRef, onDelete, handleEdit, use
 
                             <ActionItem>
                                 {journal.likeCount > 0 && (
-                                    <LikeCountSpan onClick={(e) => { e.stopPropagation(); onLikeCountClick(journal.id); }}>
+                                    <LikeCountSpan onClick={(e) => {
+                                        e.stopPropagation();
+                                        onLikeCountClick(journal.id);
+                                    }}>
                                         {journal.likeCount}
                                     </LikeCountSpan>
                                 )}
@@ -232,7 +253,8 @@ const JournalItem = ({ journal, lastJournalElementRef, onDelete, handleEdit, use
                     {journal.content}
                 </PostContent>
                 <CommentPlaceholder/>
-                <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView} onCommentCountChange={onCommentCountChange} />
+                <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}
+                             onCommentCountChange={onCommentCountChange}/>
             </PostContainer>
             <IndexTabsContainer>
                 {/* ✅ [수정] onClick 핸들러에서 불필요한 화살표 함수를 제거하고, handleShare를 직접 호출하도록 변경합니다. */}
@@ -256,16 +278,17 @@ const JournalItem = ({ journal, lastJournalElementRef, onDelete, handleEdit, use
     );
 };
 
-const PostList = ({ posts, setPosts, loading, hasMore, lastPostElementRef }) => {
+const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
     const {user} = useAuth();
     const navigate = useNavigate();
     const location = useLocation(); // ✅ [추가] useLocation 훅을 호출하여 location 객체를 가져옵니다.
-    const { deleteJournal } = useJournal();
+    const {deleteJournal} = useJournal();
 
     // --- 좋아요 목록 모달 관련 상태 추가 ---
     const [isLikersModalOpen, setLikersModalOpen] = useState(false);
     const [likersList, setLikersList] = useState([]);
     const [currentPostId, setCurrentPostId] = useState(null);
+    const [isLikersLoading, setIsLikersLoading] = useState(false); // ✅ [추가] 좋아요 목록 로딩 상태
     // ------------------------------------
 
     // ✅ [수정] handleDelete 함수를 useCallback으로 감싸 불필요한 재생성을 방지합니다.
@@ -332,27 +355,35 @@ const PostList = ({ posts, setPosts, loading, hasMore, lastPostElementRef }) => 
     const handleLikeCountClick = useCallback(async (postId) => {
         if (!postId) return;
         setCurrentPostId(postId); // 모달 내에서 목록 갱신을 위해 현재 포스트 ID 저장
+        setLikersModalOpen(true); // ✅ [수정] 모달을 즉시 엽니다.
+        setIsLikersLoading(true); // ✅ [추가] 로딩 상태를 true로 설정합니다.
+
         try {
             const response = await getPostLikers(postId);
+            // ✅ [수정] console.log에서 쉼표(,)를 사용하거나 response.data를 직접 확인합니다.
+            console.log("좋아요 목록 응답 객체:", response);
+            console.log("좋아요 목록 데이터 (배열):", response.data);
             setLikersList(response.data);
-            setLikersModalOpen(true);
         } catch (error) {
             console.error("좋아요 목록을 불러오는 데 실패했습니다.", error);
             message.error("좋아요 목록을 불러오는 데 실패했습니다.");
+            setLikersModalOpen(false); // ✅ [추가] 에러 발생 시 모달을 닫습니다.
+        } finally {
+            setIsLikersLoading(false); // ✅ [추가] 성공/실패 여부와 관계없이 로딩 상태를 해제합니다.
         }
-    }, []);
+    }, []); // 의존성 배열이 비어있으므로 컴포넌트가 처음 렌더링될 때 한 번만 생성됩니다.
 
     // 모달 내에서 팔로우/언팔로우 시 목록을 새로고침하는 함수
     const refreshLikersList = useCallback(() => {
         if (currentPostId) handleLikeCountClick(currentPostId);
     }, [currentPostId, handleLikeCountClick]);
     // ------------------------------------
-    
+
     // --- 댓글 개수 변경 관련 함수 추가 ---
     const handleCommentCountChange = useCallback((postId, newCount) => {
         setPosts(currentPosts =>
             currentPosts.map(p =>
-                p.id === postId ? { ...p, commentCount: newCount } : p
+                p.id === postId ? {...p, commentCount: newCount} : p
             )
         );
     }, [setPosts]);
@@ -407,6 +438,7 @@ const PostList = ({ posts, setPosts, loading, hasMore, lastPostElementRef }) => 
                 open={isLikersModalOpen}
                 onClose={() => setLikersModalOpen(false)}
                 users={likersList}
+                loading={isLikersLoading} // ✅ [추가] 로딩 상태를 모달에 전달합니다.
                 onUpdate={refreshLikersList}
             />
         </div>

@@ -38,6 +38,7 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
     const [isLikersModalOpen, setLikersModalOpen] = useState(false);
     const [likersList, setLikersList] = useState([]);
     const [currentCommentId, setCurrentCommentId] = useState(null);
+    const [isLikersLoading, setIsLikersLoading] = useState(false);
     // --------------------------------
 
     // 댓글 창이 열리거나 정렬 순서가 바뀔 때 댓글 목록을 불러옵니다.
@@ -75,8 +76,8 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
                 profileImage: user.picture,
             },
             createdAt: new Date().toISOString(),
-            isLiked: false, // ✅ [핵심] '좋아요' 상태 초기값 설정
-            likeCount: 0,   // ✅ [핵심] '좋아요' 개수 초기값 설정
+            isLiked: false,
+            likeCount: 0,
             replies: [],
         };
         setComments(prev => [newCommentObj, ...prev]);
@@ -146,7 +147,7 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
             message.error("댓글 삭제에 실패했습니다.");
             // 3. 실패 시 롤백
             setComments(originalComments);
-            onCommentCountChange(prevCount => prevCount + 1); // 댓글 수 원상 복구
+            onCommentCountChange(prevCount => prevCount + 1);
         }
     }, [comments, onCommentCountChange]);
 
@@ -154,16 +155,22 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
     const handleLikeCountClick = useCallback(async (commentId) => {
         if (!commentId) return;
         setCurrentCommentId(commentId);
+        setLikersModalOpen(true);
+        setIsLikersLoading(true);
+
         try {
             const response = await getCommentLikers(commentId);
             setLikersList(response.data);
-            setLikersModalOpen(true);
         } catch (error) {
             console.error("좋아요 목록을 불러오는 데 실패했습니다.", error);
             message.error("좋아요 목록을 불러오는 데 실패했습니다.");
+            setLikersModalOpen(false);
+        } finally {
+            setIsLikersLoading(false);
         }
     }, []);
 
+    // 모달 내에서 팔로우/언팔로우 액션 후 목록을 새로고침하는 함수
     const refreshLikersList = useCallback(() => {
         if (currentCommentId) {
             handleLikeCountClick(currentCommentId);
@@ -220,6 +227,7 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
                         open={isLikersModalOpen}
                         onClose={() => setLikersModalOpen(false)}
                         users={likersList}
+                        loading={isLikersLoading}
                         onUpdate={refreshLikersList}
                         title="댓글을 좋아한 사람"
                     />

@@ -7,7 +7,7 @@ import { useUserActions } from "../../../hooks/useUserActions.js"; // ✅ [추�
  * 게시글에 좋아요를 누른 사용자 목록을 보여주는 전용 모달 컴포넌트입니다.
  * FriendManagementModal에서 파생되었지만, 좋아요 목록 표시에 특화되어 기능이 단순화되었습니다.
  */
-export default function PostLikersModal({ open, onClose, users, onUpdate }) {
+export default function PostLikersModal({ open, onClose, users, onUpdate, loading }) { // ✅ [수정] loading prop 추가
     const { user: loggedInUser, following: myFollowing } = useAuth();
 
     // ✅ [수정] 커스텀 훅을 사용하여 액션 함수들을 가져옵니다.
@@ -18,6 +18,7 @@ export default function PostLikersModal({ open, onClose, users, onUpdate }) {
         <List
             itemLayout="horizontal"
             dataSource={userList}
+            loading={loading} // ✅ [추가] antd List 컴포넌트에 로딩 상태 전달
             locale={{ emptyText: "좋아요를 누른 사용자가 없습니다." }}
             renderItem={(item) => {
                 const isFollowing = Array.isArray(myFollowing)
@@ -29,11 +30,10 @@ export default function PostLikersModal({ open, onClose, users, onUpdate }) {
                     return (
                         <List.Item>
                             <List.Item.Meta
-                                avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`} 
+                                avatar={<Avatar src={item.profileImageUrl || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`} 
                                                 onClick={() => handleProfileClick(item.userId, onClose)} style={{ cursor: 'pointer' }} />
                                 }
-                                title={<a onClick={() => handleProfileClick(item.userId, onClose)} style={{ cursor: 'pointer' }}>{item.name} (나)</a>}
-                                description={item.email}
+                                title={<a onClick={() => handleProfileClick(item.userId, onClose)} style={{ cursor: 'pointer' }}>{item.nickname} (나)</a>}
                             />
                         </List.Item>
                     );
@@ -51,11 +51,10 @@ export default function PostLikersModal({ open, onClose, users, onUpdate }) {
                         ]}
                     >
                         <List.Item.Meta
-                            avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}
+                            avatar={<Avatar src={item.profileImageUrl || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}
                                             onClick={() => handleProfileClick(item.userId, onClose)} style={{ cursor: 'pointer' }}/>
                             }
-                            title={<a onClick={() => handleProfileClick(item.userId, onClose)} style={{ cursor: 'pointer' }}>{item.name}</a>}
-                            description={item.email}
+                            title={<a onClick={() => handleProfileClick(item.userId, onClose)} style={{ cursor: 'pointer' }}>{item.nickname}</a>}
                         />
                     </List.Item>
                 );
