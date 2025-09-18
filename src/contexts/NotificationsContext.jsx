@@ -31,11 +31,13 @@ const mapItem = (n) => {
     return {
         id: n.id, // 백엔드 필드명 `id` 사용
         type: n.type,
-        title: n.title, // 백엔드 필드명 `title` 사용
-        body: n.body || '', // 백엔드 필드명 `body` 사용
+        title: n.title || n.message_title || '내용 없는 알림', // `title`과 `message_title` 필드를 모두 지원하여 안정성 확보
+        body: n.body || n.message_body || '', // `body`와 `message_body` 필드를 모두 지원
         linkUrl: n.linkUrl, // 백엔드에서 제공하는 `linkUrl` 사용
         status: n.status, // 백엔드 필드명 `status` 사용
         createdAt: n.createdAt,
+        entityId: n.entityId, // 라우팅에 필요한 entityId 추가
+        entityType: n.entityType, // 타입 구분을 위한 entityType 추가
         // 나머지 메타 데이터도 전달
         ...(n.meta || {}),
     };

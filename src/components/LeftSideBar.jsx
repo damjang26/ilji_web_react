@@ -41,15 +41,23 @@ const LeftSideBar = () => {
 
         // 2. 타입에 따라 분기
         if (item.type === "DIARY_REMINDER") {
-            // 캘린더 페이지로 이동하면서 특별 지시와 날짜를 state에 담아 전달
+            // 캘린더 페이지로 이동하면서 글쓰기 모달을 열도록 지시
             navigate("/", { 
                 state: { 
                     action: 'openJournalModal',
                     date: item.createdAt, // 알림 생성 날짜를 전달
                 } 
             });
+        } else if (item.type === "LIKE_CREATED") {
+            // '좋아요' 알림은 캘린더 페이지로 이동하면서 조회 모달을 열도록 지시
+            navigate("/", {
+                state: {
+                    action: 'openJournalViewModal',
+                    journalId: item.entityId,
+                }
+            });
         } else {
-            // 다른 모든 알림은 기존 linkUrl을 사용
+            // 나머지 모든 알림은 기존 linkUrl을 사용
             if (item.linkUrl) {
                 navigate(item.linkUrl);
             }

@@ -184,6 +184,17 @@ export const JournalProvider = ({children, userId}) => {
     // ✅ 특정 날짜의 일기 데이터를 가져오는 함수 추가
     const getJournal = useCallback((date) => journals.get(date), [journals]);
 
+    // ✅ [신규] ID로 특정 일기 하나를 서버에서 직접 조회하는 함수
+    const getJournalById = useCallback(async (id) => {
+        try {
+            const response = await api.get(`/api/i-log/${id}`);
+            return response.data;
+        } catch (err) {
+            console.error(`ID(${id})로 일기 조회 실패:`, err);
+            throw err; // 에러를 상위로 전파하여 컴포넌트에서 처리할 수 있도록 함
+        }
+    }, []);
+
     const value = {
         journals,
         loading,
@@ -192,7 +203,8 @@ export const JournalProvider = ({children, userId}) => {
         updateJournalEntry,
         deleteJournal,
         hasJournal,
-        getJournal
+        getJournal,
+        getJournalById, // ✅ 내보내는 값에 추가
     };
 
     return (
