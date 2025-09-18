@@ -14,15 +14,32 @@ const NotificationsCtx = createContext({
 });
 
 // API 응답 -> 프론트엔드 아이템 형태로 매핑하는 헬퍼 함수
-const mapItem = (n) => ({
-    id: n.id,
-    type: n.type,
-    title: n.title, // Changed from n.messageTitle
-    body: n.body,   // Changed from n.messageBody
-    linkUrl: n.linkUrl,
-    status: n.status,
-    createdAt: n.createdAt,
-});
+const mapItem = (n) => {
+    // 데이터가 비정상적인 경우를 대비한 방어 코드
+    if (!n || typeof n !== 'object') {
+        return {
+            id: Math.random().toString(),
+            type: 'ERROR',
+            title: 'Invalid notification data received',
+            body: '',
+            linkUrl: '#',
+            status: 'NEW',
+            createdAt: new Date().toISOString(),
+        };
+    }
+
+    return {
+        id: n.id, // 백엔드 필드명 `id` 사용
+        type: n.type,
+        title: n.title, // 백엔드 필드명 `title` 사용
+        body: n.body || '', // 백엔드 필드명 `body` 사용
+        linkUrl: n.linkUrl, // 백엔드에서 제공하는 `linkUrl` 사용
+        status: n.status, // 백엔드 필드명 `status` 사용
+        createdAt: n.createdAt,
+        // 나머지 메타 데이터도 전달
+        ...(n.meta || {}),
+    };
+};
 
 export function NotificationsProvider({ children }) {
     const { user } = useAuth();

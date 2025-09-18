@@ -49,6 +49,8 @@ const iconByType = (type) => {
             return <CalendarOutlined />;
         case "DIARY_REMINDER":
             return <BellOutlined />;
+        case "FOLLOW_JOURNAL_CREATED": // Add this case
+            return <BookOutlined />;
         default:
             return <BellOutlined />;
     }
