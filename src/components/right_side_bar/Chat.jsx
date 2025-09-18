@@ -22,7 +22,7 @@ const Chat = ({ roomId, onBack }) => {
             .catch(err => console.error("기존 메시지 로드 실패:", err));
 
         // ✅ 2. 소켓 연결
-        socketRef.current = io('http://localhost:9095', { withCredentials: false });
+        socketRef.current = io('http://localhost:9092', { withCredentials: false });
 
         socketRef.current.on('connect', () => {
             // console.log('Socket connected:', socketRef.current.id);

@@ -12,7 +12,6 @@ import { useAuth } from "../../AuthContext";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useUserActions } from "../../hooks/useUserActions.js"; // ✅ [추가] 커스텀 훅 임포트
 
-const { TabPane } = Tabs;
 const { Search } = Input;
 
 export default function FriendManagementModal({ open, onClose, initialTab, targetUserId }) {
@@ -78,15 +77,58 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
         }
     }, [debouncedSearchTerm]);
 
+
     // ✅ [수정] 커스텀 훅을 사용하여 액션 함수들을 가져옵니다.
     // 액션 완료 후 `fetchLists`를 호출하여 현재 모달의 목록을 새로고침합니다.
     const { handleFollow, handleUnfollow, handleProfileClick } = useUserActions(() => fetchLists(targetUserId));
+
+    const handleFollow = async (userToFollowId) => {
+        try {
+            await followUser(userToFollowId);
+            message.success("팔로우했습니다.");
+            // Refresh the list for the currently viewed user (from props)
+            fetchLists(targetUserId);
+            fetchMyFollowing();
+        } catch (error) {
+            console.error("Follow failed:", error);
+            message.error("팔로우에 실패했습니다.");
+        }
+    };
+
+    const handleUnfollow = async (userToUnfollowId) => {
+        try {
+            await unfollowUser(userToUnfollowId);
+            message.success("언팔로우했습니다.");
+            // Refresh the list for the currently viewed user (from props)
+            fetchLists(targetUserId);
+            fetchMyFollowing();
+        } catch (error) {
+            console.error("Unfollow failed:", error);
+            message.error("언팔로우에 실패했습니다.");
+        }
+    };
+
+    const handleProfileClick = (userId) => {
+        onClose(); // 모달을 닫는 함수 호출
+        navigate(`/mypage/${userId}`);
+    };
+
+
+    const getUniqueUsers = (users) => {
+        if (!Array.isArray(users)) return [];
+        const seen = new Set();
+        return users.filter(user => {
+            const duplicate = seen.has(user.userId);
+            seen.add(user.userId);
+            return !duplicate;
+        });
+    };
 
     const renderUserList = (users) => (
         <List
             loading={loading || isSearching}
             itemLayout="horizontal"
-            dataSource={users}
+            dataSource={getUniqueUsers(users)}
             locale={{ emptyText: "표시할 사용자가 없습니다." }}
             renderItem={(item) => {
                 // Add a safeguard to prevent runtime errors if myFollowing is not yet an array
@@ -96,7 +138,7 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
 
                 if (loggedInUser && item.userId === loggedInUser.id) {
                     return (
-                        <List.Item>
+                        <List.Item key={item.userId}>
                             <List.Item.Meta
                                 avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`} 
                                                 onClick={() => handleProfileClick(item.userId, onClose)} style={{ cursor: 'pointer' }} />
@@ -110,6 +152,7 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
 
                 return (
                     <List.Item
+                        key={item.userId}
                         actions={[
                             isFollowing ? (
                                 <Button onClick={() => handleUnfollow(item.userId)}>언팔로우</Button>
@@ -131,16 +174,12 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
         />
     );
 
-    return (
-        <Modal
-            title="친구 목록"
-            open={open}
-            onCancel={onClose}
-            footer={null}
-            width={400}
-        >
-            <Tabs activeKey={activeTab} onChange={setActiveTab} centered>
-                <TabPane tab="새 친구 찾기" key="search">
+    const tabItems = [
+        {
+            key: 'search',
+            label: '새 친구 찾기',
+            children: (
+                <>
                     <Search
                         placeholder="닉네임 또는 이메일로 검색"
                         onSearch={(value) => setSearchTerm(value)}
@@ -150,14 +189,30 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
                         loading={isSearching}
                     />
                     {renderUserList(searchResults)}
-                </TabPane>
-                <TabPane tab={`팔로잉 ${followingList.length}`} key="following">
-                    {renderUserList(followingList)}
-                </TabPane>
-                <TabPane tab={`팔로워 ${followerList.length}`} key="followers">
-                    {renderUserList(followerList)}
-                </TabPane>
-            </Tabs>
+                </>
+            ),
+        },
+        {
+            key: 'following',
+            label: `팔로잉 ${followingList.length}`,
+            children: renderUserList(followingList),
+        },
+        {
+            key: 'followers',
+            label: `팔로워 ${followerList.length}`,
+            children: renderUserList(followerList),
+        },
+    ];
+
+    return (
+        <Modal
+            title="친구 목록"
+            open={open}
+            onCancel={onClose}
+            footer={null}
+            width={400}
+        >
+            <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} centered />
         </Modal>
     );
 }

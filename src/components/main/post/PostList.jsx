@@ -211,7 +211,7 @@ const JournalItem = ({
     // 이미지가 없는 경우: 기존 레이아웃
     return (
         <JournalItemWrapper>
-            <PostContainer ref={lastJournalElementRef} isCommentOpen={isCommentOpen} className="not-has-image">
+            <PostContainer ref={lastJournalElementRef} $isCommentOpen={isCommentOpen} className="not-has-image">
                 <PostHeader>
                     <ProfileImage src={journal.writerProfileImage || '/path/to/default/profile.png'}
                                   alt={`${journal.writerNickname} profile`}/>
@@ -284,12 +284,32 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
     const location = useLocation(); // ✅ [추가] useLocation 훅을 호출하여 location 객체를 가져옵니다.
     const {deleteJournal} = useJournal();
 
+
     // --- 좋아요 목록 모달 관련 상태 추가 ---
     const [isLikersModalOpen, setLikersModalOpen] = useState(false);
     const [likersList, setLikersList] = useState([]);
     const [currentPostId, setCurrentPostId] = useState(null);
     const [isLikersLoading, setIsLikersLoading] = useState(false); // ✅ [추가] 좋아요 목록 로딩 상태
     // ------------------------------------
+
+    const getUniquePosts = (posts) => {
+        if (!Array.isArray(posts)) return [];
+        const seen = new Set();
+        return posts.filter(post => {
+            const duplicate = seen.has(post.id);
+            if (!duplicate) {
+                seen.add(post.id);
+            }
+            return !duplicate;
+        });
+    };
+
+    useEffect(() => {
+        // 부모로부터 받은 posts 데이터가 변경될 때마다 중복을 제거하여 localPosts를 업데이트합니다.
+        setLocalPosts(getUniquePosts(posts));
+        console.log(posts)
+    }, [posts]);
+
 
     // ✅ [수정] handleDelete 함수를 useCallback으로 감싸 불필요한 재생성을 방지합니다.
     const handleDelete = useCallback(async (journalId, journalDate) => {
