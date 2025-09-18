@@ -19,7 +19,7 @@ const JournalWriteModal = () => {
     };
 
     return (
-        <Modal isOpen={true} onClose={handleClose} isFabricStep={isFabricMode}>
+        <Modal isOpen={true} onClose={handleClose} $isFabricStep={isFabricMode}>
             <JournalWrite
                 onClose={handleClose}
                 selectedDate={selectedDate}

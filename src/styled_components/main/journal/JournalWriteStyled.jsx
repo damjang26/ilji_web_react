@@ -32,7 +32,7 @@ export const StyledTextarea = styled.textarea`
     border-radius: 5px;
 
     transition: border-color 0.2s, background-color 0.2s;
-    background-color: ${props => props.isDragging ? "#ede9ff" : "#fff"};
+    background-color: ${props => props.$isDragging ? "#ede9ff" : "#fff"};
 
     &:focus {
         outline: none;
@@ -190,7 +190,7 @@ export const EmojiPickerWrapper = styled.div`
 
 export const CharCounter = styled.div`
     font-size: 13px;
-    color: ${({error}) => (error ? '#d93025' : '#888')};
+    color: ${({$error}) => ($error ? '#d93025' : '#888')};
 `;
 
 export const CheckboxLabel = styled.label`
