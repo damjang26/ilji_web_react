@@ -304,13 +304,6 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
         });
     };
 
-    useEffect(() => {
-        // 부모로부터 받은 posts 데이터가 변경될 때마다 중복을 제거하여 localPosts를 업데이트합니다.
-        setLocalPosts(getUniquePosts(posts));
-        console.log(posts)
-    }, [posts]);
-
-
     // ✅ [수정] handleDelete 함수를 useCallback으로 감싸 불필요한 재생성을 방지합니다.
     const handleDelete = useCallback(async (journalId, journalDate) => {
         // 사용자가 정말 삭제할 것인지 확인
@@ -425,7 +418,8 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
 
     return (<div>
             <FeedContainer>
-                {posts.map((post, index) => {
+                {/* ✅ [수정] 렌더링 시점에 중복된 게시물을 제거합니다. */}
+                {getUniquePosts(posts).map((post, index) => {
                     // 현재 렌더링하는 요소가 마지막 요소인지 확인
                     const isLastElement = posts.length === index + 1 && hasMore;
                     return (
