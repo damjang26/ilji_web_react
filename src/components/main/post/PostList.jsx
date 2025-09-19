@@ -1,6 +1,7 @@
 import React, {useCallback, useState, useEffect, useMemo} from 'react';
 import {
     FeedContainer,
+    FindFriendsButton,
     PostActions,
     PostContainer,
     PostContent,
@@ -17,11 +18,11 @@ import {
     ImageSlide,
     SliderArrow,
     JournalItemContentContainer,
-    JournalEntryDate,
+    JournalEntryDate, JournalDateHeading,
     IndexTabsContainer,
-    IndexTabActions,
+    IndexTabActions, OriginalImage,
     CommentPlaceholder,
-    LikeCountSpan
+    LikeCountSpan, SpringBinder, SpringBinder2
 } from "../../../styled_components/main/post/PostListStyled.jsx";
 import {FaRegHeart, FaHeart, FaChevronLeft, FaChevronRight} from "react-icons/fa";
 import {formatRelativeTime} from '../../../utils/timeFormatter.js';
@@ -35,7 +36,8 @@ import {useJournal} from "../../../contexts/JournalContext.jsx";
 import {BiSolidShareAlt} from "react-icons/bi";
 import PostComment from "./PostComment.jsx";
 import PostLikersModal from "./PostLikersModal.jsx"; // 좋아요 목록 모달 임포트
-import {message} from "antd"; // antd 메시지 임포트
+import FriendManagementModal from "../../friends/FriendManagementModal.jsx";
+import {message, Modal} from "antd"; // antd 메시지 임포트
 
 const JournalItem = ({
                          journal,
@@ -45,12 +47,15 @@ const JournalItem = ({
                          user,
                          handleLikeClick,
                          onLikeCountClick,
-                         onCommentCountChange
+                         onCommentCountChange,
+                         onProfileClick, // ✅ [추가] 프로필 클릭 핸들러 prop
+                         onImageClick // ✅ [추가] 이미지 클릭 핸들러 prop
                      }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     // ✅ [추가] 이미지가 가로로 긴지 여부를 저장하는 상태
     const [isLandscape, setIsLandscape] = useState(false);
     const [isCommentOpen, setIsCommentOpen] = useState(false);
+    const spring = "/images/spring_binder.png"
 
     const hasImages = journal.images && journal.images.length > 0;
     const imageUrls = journal.images || [];
@@ -117,6 +122,8 @@ const JournalItem = ({
     if (hasImages) {
         return (
             <JournalItemWrapper>
+                <SpringBinder src={spring} alt="Spring binder"/>
+                <SpringBinder2 src={spring} alt="Spring binder"/>
                 <PostContainer
                     ref={lastJournalElementRef}
                     isCommentOpen={isCommentOpen}
@@ -124,7 +131,8 @@ const JournalItem = ({
                 >
                     <JournalItemLayoutContainer className={isLandscape ? 'landscape' : ''}>
                         {/* ✅ [수정] 이미지 슬라이더 로직 적용 */}
-                        <ImageSliderContainer>
+                        {/* ✅ [수정] 이미지 클릭 시 모달을 열도록 핸들러 추가 */}
+                        <ImageSliderContainer onClick={() => onImageClick(imageUrls[currentImageIndex])}>
                             <ImageSlide src={imageUrls[currentImageIndex]}
                                         alt={`journal image ${currentImageIndex + 1}`}/>
                             {imageUrls.length > 1 && (
@@ -140,13 +148,17 @@ const JournalItem = ({
                         <JournalItemContentContainer>
                             <PostHeader>
                                 <ProfileImage
+                                    // ✅ [수정] 프로필 클릭 이벤트 추가
+                                    onClick={() => onProfileClick(journal.writerId)}
                                     src={journal.writerProfileImage || '/path/to/default/profile.png'}
                                     alt={`${journal.writerNickname} profile`}/>
                                 <UserInfo>
                                     <div>
                                         {/* ✅ [수정] username과 date를 div로 묶음 */}
                                         <div>
-                                            <span className="username">{journal.writerNickname || '사용자'}</span>
+                                            {/* ✅ [수정] 닉네임 클릭 이벤트 추가 */}
+                                            <span className="username"
+                                                  onClick={() => onProfileClick(journal.writerId)}>{journal.writerNickname || '사용자'}</span>
                                             <span className="date">{formatRelativeTime(journal.createdAt)}</span>
                                         </div>
                                         <ActionItem>
@@ -173,13 +185,11 @@ const JournalItem = ({
                                 </UserInfo>
                             </PostHeader>
                             <JournalEntryDate>
-                                <h3>{formattedDate}</h3>
+                                <JournalDateHeading>{formattedDate}</JournalDateHeading>
                             </JournalEntryDate>
                             <PostContent>
                                 {journal.content}
                             </PostContent>
-                            <PostActions>
-                            </PostActions>
                         </JournalItemContentContainer>
                     </JournalItemLayoutContainer>
                     <CommentPlaceholder/>
@@ -211,15 +221,20 @@ const JournalItem = ({
     // 이미지가 없는 경우: 기존 레이아웃
     return (
         <JournalItemWrapper>
-            <PostContainer ref={lastJournalElementRef} $isCommentOpen={isCommentOpen} className="not-has-image">
+            <SpringBinder src={spring} alt="Spring binder"/>
+            <SpringBinder2 src={spring} alt="Spring binder"/>
+            <PostContainer ref={lastJournalElementRef} isCommentOpen={isCommentOpen} className="not-has-image">
                 <PostHeader>
-                    <ProfileImage src={journal.writerProfileImage || '/path/to/default/profile.png'}
-                                  alt={`${journal.writerNickname} profile`}/>
+                    <ProfileImage // ✅ [수정] 프로필 클릭 이벤트 추가
+                        onClick={() => onProfileClick(journal.writerId)}
+                        src={journal.writerProfileImage || '/path/to/default/profile.png'}
+                        alt={`${journal.writerNickname} profile`}/>
                     <UserInfo>
                         <div>
-                            {/* ✅ [수정] username과 date를 div로 묶음 */}
                             <div>
-                                <span className="username">{journal.writerNickname || '사용자'}</span>
+                                {/* ✅ [수정] 닉네임 클릭 이벤트 추가 */}
+                                <span className="username"
+                                      onClick={() => onProfileClick(journal.writerId)}>{journal.writerNickname || '사용자'}</span>
                                 <span className="date">{formatRelativeTime(journal.createdAt)}</span>
                             </div>
 
@@ -247,7 +262,7 @@ const JournalItem = ({
                     </UserInfo>
                 </PostHeader>
                 <JournalEntryDate>
-                    <h3>{formattedDate}</h3>
+                    <JournalDateHeading>{formattedDate}</JournalDateHeading>
                 </JournalEntryDate>
                 <PostContent>
                     {journal.content}
@@ -290,6 +305,11 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
     const [likersList, setLikersList] = useState([]);
     const [currentPostId, setCurrentPostId] = useState(null);
     const [isLikersLoading, setIsLikersLoading] = useState(false); // ✅ [추가] 좋아요 목록 로딩 상태
+    const [isFriendModalOpen, setIsFriendModalOpen] = useState(false);
+    // --- 이미지 모달 관련 상태 추가 ---
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const [selectedImageUrl, setSelectedImageUrl] = useState('');
+
     // ------------------------------------
 
     const getUniquePosts = (posts) => {
@@ -328,6 +348,20 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
             }
         });
     }, [navigate, location]); // navigate와 location이 변경될 때만 함수를 재생성합니다.
+
+    // ✅ [추가] 프로필 이미지 또는 닉네임 클릭 시 해당 유저의 마이페이지로 이동하는 함수
+    const handleProfileClick = useCallback((writerId) => {
+        if (writerId) {
+            navigate(`/mypage/${writerId}`);
+        }
+    }, [navigate]);
+
+    // ✅ [추가] 이미지 클릭 시 모달을 여는 함수
+    const handleImageClick = useCallback((imageUrl) => {
+        setSelectedImageUrl(imageUrl);
+        setIsImageModalOpen(true);
+    }, []);
+
     // ✅ [수정] 좋아요 버튼 클릭 핸들러 (API 연동)
     const handleLikeClick = useCallback(async (postId) => {
         // 1. 낙관적 업데이트: 서버 응답을 기다리지 않고 UI를 즉시 변경합니다.
@@ -405,14 +439,25 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
     // 초기 로딩 중이거나, 게시글이 아직 하나도 없을 때의 UI를 처리합니다.
     if (!loading && posts.length === 0) {
         return (
-            <EmptyFeedContainer>
-                <TbNotebook size={64}/>
-                <h2>새로운 이야기를 찾아보세요</h2>
-                <EmptyFeedText>
-                    📖 아직 보여드릴 일기가 없어요.<br/>
-                    새로운 친구를 팔로우하고 함께 일상을 나눠 보세요!
-                </EmptyFeedText>
-            </EmptyFeedContainer>
+            <>
+                <EmptyFeedContainer>
+                    <TbNotebook size={64}/>
+                    <h2>Explore fresh stories</h2>
+                    <EmptyFeedText>
+                        📖 Looks like there’s nothing here yet.<br/>
+                        Follow new friends to share and connect!
+                    </EmptyFeedText>
+                    <FindFriendsButton onClick={() => setIsFriendModalOpen(true)}>
+                        Find Friends
+                    </FindFriendsButton>
+                </EmptyFeedContainer>
+                <FriendManagementModal
+                    open={isFriendModalOpen}
+                    onClose={() => setIsFriendModalOpen(false)}
+                    initialTab="search" // '새 친구 찾기' 탭을 기본으로 설정
+                    targetUserId={user.id} // 현재 로그인한 사용자의 ID 전달
+                />
+            </>
         );
     }
 
@@ -432,6 +477,8 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
                             user={user}
                             handleLikeClick={handleLikeClick}
                             onLikeCountClick={handleLikeCountClick}
+                            onProfileClick={handleProfileClick} // ✅ [추가] 프로필 클릭 핸들러 전달
+                            onImageClick={handleImageClick} // ✅ [추가] 이미지 클릭 핸들러 전달
                             onCommentCountChange={(newCount) => handleCommentCountChange(post.id, newCount)}
                         />
                     );
@@ -455,6 +502,18 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
                 loading={isLikersLoading} // ✅ [추가] 로딩 상태를 모달에 전달합니다.
                 onUpdate={refreshLikersList}
             />
+
+            {/* ✅ [추가] 이미지 원본 보기 모달 */}
+            <Modal
+                open={isImageModalOpen}
+                onCancel={() => setIsImageModalOpen(false)}
+                footer={null}
+                centered
+                width="auto"
+                bodyStyle={{padding: 0, background: 'none'}}
+            >
+                <OriginalImage src={selectedImageUrl} alt="Original post image"/>
+            </Modal>
         </div>
     );
 };

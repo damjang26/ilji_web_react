@@ -1,6 +1,8 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
 import {useJournal} from '../../../contexts/JournalContext';
+import {message} from "antd";
+import {getPostLikers} from "../../../api.js";
 import {
     JournalViewWrapper,
     ViewContainer,
@@ -26,11 +28,12 @@ import {
 } from '../../../styled_components/main/journal/JournalViewStyled';
 import {HiPencilAlt} from "react-icons/hi";
 import {MdDeleteForever} from "react-icons/md";
-import {ActionItem} from "../../../styled_components/main/post/PostListStyled.jsx";
+import {ActionItem, LikeCountSpan} from "../../../styled_components/main/post/PostListStyled.jsx";
 import {FaChevronLeft, FaChevronRight, FaRegHeart} from "react-icons/fa";
 import {useAuth} from "../../../AuthContext.jsx";
 import {BiSolidShareAlt} from "react-icons/bi";
 import {TbMessageCirclePlus} from "react-icons/tb";
+import PostLikersModal from "../post/PostLikersModal.jsx";
 
 const JournalView = () => {
     const {user} = useAuth();
@@ -48,6 +51,12 @@ const JournalView = () => {
     const [isCommentOpen, setIsCommentOpen] = useState(false); // ✅ [신규] 댓글 창 열림/닫힘 상태
     const [commentSortBy, setCommentSortBy] = useState('likes'); // ✅ [신규] 댓글 정렬 상태 (기본: 'likes')
 
+    // --- 좋아요 목록 모달 관련 상태 추가 ---
+    const [isLikersModalOpen, setLikersModalOpen] = useState(false);
+    const [likersList, setLikersList] = useState([]);
+    const [currentPostId, setCurrentPostId] = useState(null);
+    const [isLikersLoading, setIsLikersLoading] = useState(false);
+
 
     // ✅ [신규] 날짜를 'MONTH DAY, YEAR' 형식으로 포맷팅합니다. (예: JAN 01, 2024)
     const formattedDate = useMemo(() => {
@@ -61,25 +70,6 @@ const JournalView = () => {
         }
         return [];
     }, [journal]);
-
-    // ✅ [신규] 댓글 창이 열리거나 정렬 순서가 바뀔 때 댓글을 불러옵니다.
-    // useEffect(() => {
-    //     const fetchComments = async () => {
-    //         if (!journal?.id) return;
-    //         try {
-    //             const response = await api.get(`/api/ilogs/${journal.id}/comments?sortBy=${commentSortBy}`);
-    //             setComments(response.data);
-    //             console.log(`${commentSortBy} 순으로 댓글 로딩 완료:`, response.data);
-    //         } catch (error) {
-    //             console.error("댓글을 불러오는 중 오류가 발생했습니다.", error);
-    //             setComments([]); // 오류 발생 시 댓글 목록 초기화
-    //         }
-    //     };
-    //
-    //     if (isCommentOpen) {
-    //         fetchComments();
-    //     }
-    // }, [isCommentOpen, journal?.id, commentSortBy]);
 
     const handleDelete = async (journalId, pageDate) => {
         // 사용자가 정말 삭제할 것인지 확인
@@ -100,11 +90,12 @@ const JournalView = () => {
     const handleEdit = useCallback((journalToEdit) => {
         navigate('/journal/write', {
             state: {
-                journalToEdit: journalToEdit, // 수정할 일기 데이터를 전달합니다.
-                backgroundLocation: location, // 모달 뒤에 현재 페이지를 배경으로 유지합니다.
+                journalToEdit: journalToEdit,
+                // ✅ [수정] 현재 location이 아닌, 이전 페이지에서 전달받은 backgroundLocation을 다시 전달합니다.
+                backgroundLocation: location.state?.backgroundLocation,
             }
         });
-    }, [navigate, location]); // navigate와 location이 변경될 때만 함수를 재생성합니다.
+    }, [navigate, location.state?.backgroundLocation]);
 
     // ✅ [신규] 공유 버튼 클릭 핸들러
     const handleShare = useCallback(async () => {
@@ -146,6 +137,32 @@ const JournalView = () => {
         // 여기에 댓글을 서버로 전송하는 API 호출 로직을 추가합니다.
         setNewComment(''); // 입력창 초기화
     }, [newComment]);
+
+    // ✅ [추가] 좋아요 개수 클릭 시 모달을 여는 함수
+    const handleLikeCountClick = useCallback(async (postId) => {
+        if (!postId) return;
+        setCurrentPostId(postId);
+        setLikersModalOpen(true);
+        setIsLikersLoading(true);
+
+        try {
+            const response = await getPostLikers(postId);
+            setLikersList(response.data);
+        } catch (error) {
+            console.error("좋아요 목록을 불러오는 데 실패했습니다.", error);
+            message.error("좋아요 목록을 불러오는 데 실패했습니다.");
+            setLikersModalOpen(false);
+        } finally {
+            setIsLikersLoading(false);
+        }
+    }, []);
+
+    // ✅ [추가] 모달 내에서 팔로우/언팔로우 시 목록을 새로고침하는 함수
+    const refreshLikersList = useCallback(() => {
+        if (currentPostId) {
+            handleLikeCountClick(currentPostId);
+        }
+    }, [currentPostId, handleLikeCountClick]);
 
     // ✅ [리팩토링] 중복되는 댓글 UI를 별도의 함수로 추출합니다.
     const renderCommentSection = () => (
@@ -211,7 +228,12 @@ const JournalView = () => {
                             </AuthorInfo>
                         </div>
                         <ActionItem>
-                            {journal.likeCount > 0 && <span>{journal.likeCount}</span>}
+                            {journal.likeCount > 0 && (
+                                <LikeCountSpan onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleLikeCountClick(journal.id);
+                                }}>{journal.likeCount}</LikeCountSpan>
+                            )}
                             <button><FaRegHeart/></button>
                         </ActionItem>
                     </ProfileSection>
@@ -238,6 +260,15 @@ const JournalView = () => {
                         </>
                     )}
                 </SideActionTabsContainer>
+
+                {/* ✅ [추가] 좋아요 목록 모달 렌더링 */}
+                <PostLikersModal
+                    open={isLikersModalOpen}
+                    onClose={() => setLikersModalOpen(false)}
+                    users={likersList}
+                    loading={isLikersLoading}
+                    onUpdate={refreshLikersList}
+                />
             </JournalViewWrapper>
         );
     }
@@ -268,7 +299,12 @@ const JournalView = () => {
                                 </AuthorInfo>
                             </div>
                             <ActionItem>
-                                {journal.likeCount > 0 && <span>{journal.likeCount}</span>}
+                                {journal.likeCount > 0 && (
+                                    <LikeCountSpan onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleLikeCountClick(journal.id);
+                                    }}>{journal.likeCount}</LikeCountSpan>
+                                )}
                                 <button><FaRegHeart/></button>
                             </ActionItem>
                         </ProfileSection>
@@ -298,6 +334,15 @@ const JournalView = () => {
                     </>
                 )}
             </SideActionTabsContainer>
+
+            {/* ✅ [추가] 좋아요 목록 모달 렌더링 */}
+            <PostLikersModal
+                open={isLikersModalOpen}
+                onClose={() => setLikersModalOpen(false)}
+                users={likersList}
+                loading={isLikersLoading}
+                onUpdate={refreshLikersList}
+            />
         </JournalViewWrapper>
     );
 };

@@ -1,6 +1,8 @@
 import React, {useState, useEffect, useMemo, useRef, useCallback} from 'react';
 import {useJournal} from "../../../../contexts/JournalContext.jsx";
 import {useMyPage} from "../../../../contexts/MyPageContext.jsx"; // [수정] isOwner 상태를 가져오기 위해 추가
+import {message, Modal} from "antd";
+import {getPostLikers} from "../../../../api.js";
 import {useNavigate, useLocation} from "react-router-dom"; // ✅ 페이지 이동을 위해 추가
 import {
     FeedContainer,
@@ -16,10 +18,10 @@ import {
     EmptyFeedText,
     WriteJournalButton,
     ActionItem,
-    JournalItemLayoutContainer,
+    JournalItemLayoutContainer, LikeCountSpan,
     JournalItemContentContainer,
-    ImageSliderContainer,
-    ImageSlide, SliderArrow, JournalEntryDate, CommentPlaceholder,
+    ImageSliderContainer, OriginalImage, JournalDateHeading,
+    ImageSlide, SliderArrow, JournalEntryDate, CommentPlaceholder, SpringBinder, SpringBinder2,
 } from "../../../../styled_components/main/post/PostListStyled.jsx";
 import {FaChevronLeft, FaChevronRight, FaRegHeart} from "react-icons/fa"; // ✅ [추가] 화살표 아이콘
 import {HiPencilAlt} from "react-icons/hi";
@@ -27,6 +29,7 @@ import {MdDeleteForever} from "react-icons/md";
 import {RiQuillPenAiLine} from "react-icons/ri";
 import {formatRelativeTime} from "../../../../utils/timeFormatter.js";
 import {BiSolidShareAlt} from "react-icons/bi";
+import PostLikersModal from "../../post/PostLikersModal.jsx";
 import PostComment from "../../post/PostComment.jsx";
 
 // 한 번에 불러올 일기 개수
@@ -34,12 +37,13 @@ const JOURNALS_PER_PAGE = 10;
 
 // ✅ [신규] 각 일기 항목을 렌더링하는 컴포넌트
 // 각 아이템이 독립적인 이미지 슬라이더 상태를 갖도록 분리합니다.
-const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
+const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit, onImageClick, onLikeCountClick}) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     // ✅ [추가] 이미지가 가로로 긴지 여부를 저장하는 상태
     const [isLandscape, setIsLandscape] = useState(false);
     // ✅ [추가] 댓글 창의 열림/닫힘 상태를 부모에서 관리합니다.
     const [isCommentOpen, setIsCommentOpen] = useState(false);
+    const spring = "/images/spring_binder.png"
 
     const hasImages = journal.images && journal.images.length > 0;
     const imageUrls = journal.images || [];
@@ -102,13 +106,15 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
     if (hasImages) {
         return (
             <JournalItemWrapper ref={lastJournalElementRef}>
+                <SpringBinder src={spring} alt="Spring binder"/>
+                <SpringBinder2 src={spring} alt="Spring binder"/>
                 <PostContainer
                     className="has-image"
                     isCommentOpen={isCommentOpen}
                 >
                     <JournalItemLayoutContainer className={isLandscape ? 'landscape' : ''}>
                         {/* ✅ [수정] 이미지 슬라이더 로직 적용 */}
-                        <ImageSliderContainer>
+                        <ImageSliderContainer onClick={() => onImageClick(imageUrls[currentImageIndex])}>
                             <ImageSlide src={imageUrls[currentImageIndex]}
                                         alt={`journal image ${currentImageIndex + 1}`}/>
                             {imageUrls.length > 1 && (
@@ -135,14 +141,21 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
                                         </div>
 
                                         <ActionItem>
-                                            <button><FaRegHeart size={24}/></button>
-                                            {journal.likeCount > 0 && <span>{journal.likeCount}</span>}
+                                            {journal.likeCount > 0 && (
+                                                <LikeCountSpan onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onLikeCountClick(journal.id);
+                                                }}>
+                                                    {journal.likeCount}
+                                                </LikeCountSpan>
+                                            )}
+                                            <button><FaRegHeart size={24} /></button>
                                         </ActionItem>
                                     </div>
                                 </UserInfo>
                             </PostHeader>
                             <JournalEntryDate>
-                                <h3>{formattedDate}</h3>
+                                <JournalDateHeading>{formattedDate}</JournalDateHeading>
                             </JournalEntryDate>
                             <PostContent>
                                 {journal.content}
@@ -171,6 +184,8 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
     // 이미지가 없는 경우: 기존 레이아웃
     return (
         <JournalItemWrapper ref={lastJournalElementRef}>
+            <SpringBinder src={spring} alt="Spring binder"/>
+            <SpringBinder2 src={spring} alt="Spring binder"/>
             <PostContainer className="not-has-image" isCommentOpen={isCommentOpen}>
                 <PostHeader>
                     <ProfileImage src={journal.writerProfileImage || '/path/to/default/profile.png'}
@@ -184,14 +199,21 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit}) => {
                             </div>
 
                             <ActionItem>
-                                <button><FaRegHeart size={24}/></button>
-                                {journal.likeCount > 0 && <span>{journal.likeCount}</span>}
+                                <button><FaRegHeart size={24} /></button>
+                                {journal.likeCount > 0 && (
+                                    <LikeCountSpan onClick={(e) => {
+                                        e.stopPropagation();
+                                        onLikeCountClick(journal.id);
+                                    }}>
+                                        {journal.likeCount}
+                                    </LikeCountSpan>
+                                )}
                             </ActionItem>
                         </div>
                     </UserInfo>
                 </PostHeader>
                 <JournalEntryDate>
-                    <h3>{formattedDate}</h3>
+                    <JournalDateHeading>{formattedDate}</JournalDateHeading>
                 </JournalEntryDate>
                 <PostContent>
                     {journal.content}
@@ -227,6 +249,16 @@ const JournalList = () => {
     const [page, setPage] = useState(1);
     const [displayedJournals, setDisplayedJournals] = useState([]);
     const [hasMore, setHasMore] = useState(true); // 더 불러올 일기가 있는지 여부
+    // --- 이미지 모달 관련 상태 추가 ---
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const [selectedImageUrl, setSelectedImageUrl] = useState('');
+    // --- 좋아요 목록 모달 관련 상태 추가 ---
+    const [isLikersModalOpen, setLikersModalOpen] = useState(false);
+    const [likersList, setLikersList] = useState([]);
+    const [currentPostId, setCurrentPostId] = useState(null);
+    const [isLikersLoading, setIsLikersLoading] = useState(false);
+
+
 
     // 4. ✅ [수정] journals Map을 최신순으로 정렬된 '배열'로 변환합니다.
     const sortedJournals = useMemo(() => {
@@ -292,6 +324,38 @@ const JournalList = () => {
         });
     }, [navigate, location]); // navigate와 location이 변경될 때만 함수를 재생성합니다.
 
+    // ✅ [추가] 이미지 클릭 시 모달을 여는 함수
+    const handleImageClick = useCallback((imageUrl) => {
+        setSelectedImageUrl(imageUrl);
+        setIsImageModalOpen(true);
+    }, []);
+
+    // ✅ [추가] 좋아요 개수 클릭 시 모달을 여는 함수
+    const handleLikeCountClick = useCallback(async (postId) => {
+        if (!postId) return;
+        setCurrentPostId(postId);
+        setLikersModalOpen(true);
+        setIsLikersLoading(true);
+
+        try {
+            const response = await getPostLikers(postId);
+            setLikersList(response.data);
+        } catch (error) {
+            console.error("좋아요 목록을 불러오는 데 실패했습니다.", error);
+            message.error("좋아요 목록을 불러오는 데 실패했습니다.");
+            setLikersModalOpen(false);
+        } finally {
+            setIsLikersLoading(false);
+        }
+    }, []);
+
+    // ✅ [추가] 모달 내에서 팔로우/언팔로우 시 목록을 새로고침하는 함수
+    const refreshLikersList = useCallback(() => {
+        if (currentPostId) {
+            handleLikeCountClick(currentPostId);
+        }
+    }, [currentPostId, handleLikeCountClick]);
+
 
     // 초기 로딩 중이거나, 작성된 일기가 없을 때의 UI 처리
     if (journalLoading && sortedJournals.length === 0) {
@@ -301,14 +365,14 @@ const JournalList = () => {
         return (
             <EmptyFeedContainer>
                 <RiQuillPenAiLine size={64}/>
-                <h2>아직 작성된 일기가 없습니다</h2>
+                <h2>Nothing here yet...</h2>
                 <EmptyFeedText>
-                    오늘의 첫 일기를 작성해보세요!
+                    Be the first to share your story today!
                 </EmptyFeedText>
                 <WriteJournalButton onClick={() => navigate('/journal/write', {
                     state: {backgroundLocation: location}
                 })}>
-                    작성하기
+                    Write Now
                 </WriteJournalButton>
             </EmptyFeedContainer>
         );
@@ -327,6 +391,8 @@ const JournalList = () => {
                             lastJournalElementRef={isLastElement ? lastJournalElementRef : null}
                             onDelete={handleDelete}
                             onEdit={handleEdit}
+                            onImageClick={handleImageClick}
+                            onLikeCountClick={handleLikeCountClick}
                         />
                     );
                 })}
@@ -334,6 +400,27 @@ const JournalList = () => {
                 {!hasMore && sortedJournals.length > 0 &&
                     <div style={{textAlign: 'center', padding: '20px'}}></div>}
             </FeedContainer>
+
+            {/* ✅ [추가] 이미지 원본 보기 모달 */}
+            <Modal
+                open={isImageModalOpen}
+                onCancel={() => setIsImageModalOpen(false)}
+                footer={null}
+                centered
+                width="auto"
+                bodyStyle={{padding: 0, background: 'none'}}
+            >
+                <OriginalImage src={selectedImageUrl} alt="Original post image"/>
+            </Modal>
+
+            {/* ✅ [추가] 좋아요 목록 모달 렌더링 */}
+            <PostLikersModal
+                open={isLikersModalOpen}
+                onClose={() => setLikersModalOpen(false)}
+                users={likersList}
+                loading={isLikersLoading}
+                onUpdate={refreshLikersList}
+            />
         </div>
     );
 };
