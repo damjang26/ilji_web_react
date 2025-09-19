@@ -133,7 +133,7 @@ export function NotificationsProvider({ children }) {
     const markAllRead = useCallback(async () => {
         try {
             console.log("Attempting to mark all notifications as read...");
-            await apiNoti.post("/notifications/mark-all-read");
+            await apiNoti.post("/notifications/read-all");
             console.log("Mark all as read API call successful.");
             setNotifications(prev => prev.map(n => ({ ...n, status: "READ" })));
             setUnreadCount(0);
