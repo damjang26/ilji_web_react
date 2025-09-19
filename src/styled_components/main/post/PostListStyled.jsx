@@ -27,23 +27,42 @@ export const PostContainer = styled.article`
     position: relative;
     overflow: hidden; /* ✅ [수정] 자식 요소(이미지 등)가 컨테이너 밖으로 나가지 않도록 설정합니다. */
     background-color: #ffffff;
-    border: 1px solid #dbdbdb;
+    border: 1.5px solid #a3a3a3;
     border-radius: 8px;
     display: flex;
     flex-direction: column;
     z-index: 1;
-    transition: background-color 0.2s ease;
-    min-height: ${({$isCommentOpen}) => ($isCommentOpen ? '600px' : '250px')};
+    /* ✅ [수정] 실제로 변경되는 min-height와 max-height에 transition을 적용합니다. */
+    transition: min-height 0.4s ease-in-out, max-height 0.4s ease-in-out, background-color 0.2s ease;
+    min-height: ${({isCommentOpen}) => (isCommentOpen ? '600px' : '250px')};
 
     &.not-has-image,
     &.landscape {
-        /* ✅ [수정] 댓글 창 상태에 따라 최대 높이를 동적으로 조절합니다. */
-        max-height: ${({$isCommentOpen}) => ($isCommentOpen ? '600px' : '500px')};
-        transition: height 0.4s ease-in-out, background-color 0.4s ease-in-out, border-top 0.4s ease-in-out;
+        max-height: ${({isCommentOpen}) => (isCommentOpen ? '600px' : '500px')};
     }
 
     &:hover {
         //background-color: #f5f5f5; /* 연한 회색 배경 */
+`;
+
+export const SpringBinder = styled.img`
+    position: absolute;
+    left: -15px;
+    top: 28px;
+    width: 40px; /* 스프링 이미지의 너비 (이미지에 맞게 조절) */
+    object-fit: cover; /* 이미지가 잘리지 않고 채워지도록 설정 */
+    z-index: 2; /* 다른 콘텐츠보다 위에 보이도록 설정 */
+    pointer-events: none; /* 이미지가 클릭 등 다른 이벤트를 방해하지 않도록 설정 */
+`;
+
+export const SpringBinder2 = styled.img`
+    position: absolute;
+    left: -15px;
+    bottom: 28px;
+    width: 40px; /* 스프링 이미지의 너비 (이미지에 맞게 조절) */
+    object-fit: cover; /* 이미지가 잘리지 않고 채워지도록 설정 */
+    z-index: 2; /* 다른 콘텐츠보다 위에 보이도록 설정 */
+    pointer-events: none; /* 이미지가 클릭 등 다른 이벤트를 방해하지 않도록 설정 */
 `;
 
 // 포스트 헤더 (프로필 사진, 유저 아이디, 날짜)
@@ -97,6 +116,10 @@ export const ImageSliderContainer = styled.div`
 
     ${JournalItemLayoutContainer}.landscape & {
         max-height: 450px; /* 가로 이미지일 때 슬라이더의 최대 높이 제한 */
+    }
+
+    &:hover {
+        cursor: pointer;
     }
 `;
 
@@ -200,60 +223,6 @@ export const IndexTabActions = styled.div`
     }
 `;
 
-// ✅ [신규] 포스트 헤더의 액션 버튼 (수정, 삭제 등)
-export const PostHeaderActions = styled.div`
-    margin-left: auto; /* 헤더의 오른쪽 끝으로 밀어냄 */
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    button {
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 20px; /* 아이콘 크기 */
-        color: #8e8e8e; /* 아이콘 색상 */
-        padding: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        position: relative; /* 툴팁 기준 */
-        transition: background-color 0.2s, color 0.2s;
-
-        &:hover {
-            background-color: #f0f2f5;
-            color: #262626;
-        }
-
-        /* 툴팁 기본 숨김 */
-
-        &::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            top: 130%; /* 버튼 위쪽 */
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #333;
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s, transform 0.2s;
-            z-index: 10;
-        }
-
-        &:hover::after {
-            opacity: 1;
-            transform: translateX(-50%) translateY(-4px);
-        }
-    }
-`;
-
-
 // 프로필 이미지
 export const ProfileImage = styled.img`
     width: 40px;
@@ -267,6 +236,10 @@ export const ProfileImage = styled.img`
         font-weight: 600; /* bold 스타일 */
         background-color: #cccccc;
         cursor: pointer;
+    }
+
+    ${PostContainer}.not-has-image & {
+        margin-left: 10px;
     }
 `;
 
@@ -385,7 +358,7 @@ export const ImageWrapper = styled.div`
 
 // 포스트 본문 내용
 export const PostContent = styled.div`
-    margin: 15px 30px 25px;
+    margin: 15px 20px 25px 20px; /* ✅ [수정] 좌우 마진을 20px로 통일 */
     font-size: 14px;
     line-height: 1.5;
     color: #262626;
@@ -424,6 +397,14 @@ export const PostContent = styled.div`
         width: 0;
         height: 0;
         display: none;
+    }
+
+    ${PostContainer}.not-has-image & {
+        margin-left: 45px;
+    }
+
+    ${JournalItemLayoutContainer}.landscape & {
+        margin-left: 45px;
     }
 `;
 
@@ -539,6 +520,11 @@ export const WriteJournalButton = styled.button`
     }
 `;
 
+export const FindFriendsButton = styled(WriteJournalButton)`
+    /* WriteJournalButton 스타일을 그대로 상속받습니다. */
+    margin-top: 20px; /* 위쪽 텍스트와의 간격을 추가합니다. */
+`;
+
 // ✅ [신규] 일기 목록의 날짜 표시 스타일
 export const JournalEntryDate = styled.div`
     display: flex; /* 자식 요소들을 가로로 정렬 */
@@ -550,6 +536,19 @@ export const JournalEntryDate = styled.div`
     margin: 0;
     text-transform: none; /* 대문자 변환 제거 */
     letter-spacing: normal; /* 자간 기본값으로 복원 */
+`;
+
+// ✅ [신규] JournalEntryDate 내부에 사용될 날짜 텍스트(h3 대체)
+export const JournalDateHeading = styled.h3`
+    margin: 0;
+    padding: 0;
+    font-size: 1rem; /* 16px */
+    font-weight: 600;
+    color: #333;
+
+    ${PostContainer}.not-has-image & {
+        margin-left: 10px;
+    }
 `;
 
 // 댓글 관련 디자인
@@ -836,6 +835,13 @@ export const CommentLikeCount = styled.span`
     &:hover {
         text-decoration: underline;
     }
+`;
+
+// ✅ [신규] 이미지 모달에 사용될 원본 이미지 스타일
+export const OriginalImage = styled.img`
+    max-width: 90vw; /* 화면 너비의 90%를 넘지 않도록 설정 */
+    max-height: 90vh; /* 화면 높이의 90%를 넘지 않도록 설정 */
+    display: block; /* 이미지 아래의 불필요한 여백 제거 */
 `;
 
 

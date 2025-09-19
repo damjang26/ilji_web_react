@@ -92,7 +92,7 @@ const CommentItem = ({comment, onLike, onLikeCountClick, onDelete}) => {
                     </CommentMenuButton>
                     {isMenuOpen && (
                         <CommentDropdownMenu>
-                            <CommentDropdownItem onClick={handleDeleteClick}>삭제</CommentDropdownItem>
+                            <CommentDropdownItem onClick={handleDeleteClick}>delete</CommentDropdownItem>
                         </CommentDropdownMenu>
                     )}
                 </CommentMenuContainer>

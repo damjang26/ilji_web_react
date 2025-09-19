@@ -66,7 +66,7 @@ export const BookLayoutContainer = styled.div`
 export const ImageSliderContainer = styled.div`
     flex: 1;
     position: relative;
-    background-color: #000; /* 이미지 배경 및 레터박스 색상 */
+    background-color: #ffffff; /* 이미지 배경 및 레터박스 색상 */
     display: flex;
     align-items: center;
     justify-content: center;

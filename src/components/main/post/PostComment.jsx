@@ -179,7 +179,7 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
     // ---------------------------
 
     return (
-        <PostCommentContainer $isOpen={isOpen}
+        <PostCommentContainer isOpen={isOpen}
                               onClick={!isOpen ? onToggle : undefined}>
             {isOpen ? (
                 <PostCommentContentWrapper>
@@ -187,9 +187,9 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
                         <PostCommentTitleContainer>
                             <PostCommentTitle>comments({journal.commentCount || comments.length})</PostCommentTitle>
                             <PostSortOption active={commentSortBy === 'likes'}
-                                            onClick={() => setCommentSortBy('likes')}>인기순</PostSortOption>
+                                            onClick={() => setCommentSortBy('likes')}>Popular</PostSortOption>
                             <PostSortOption active={commentSortBy === 'recent'}
-                                            onClick={() => setCommentSortBy('recent')}>최신순</PostSortOption>
+                                            onClick={() => setCommentSortBy('recent')}>New</PostSortOption>
                         </PostCommentTitleContainer>
                         <PostHideButton onClick={onToggle}>Hide</PostHideButton>
                     </PostCommentHeader>
@@ -207,7 +207,8 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
                                         onDelete={handleDeleteComment}
                                     />
                                 ))
-                                : <EmptyComment>아직 댓글이 없습니다. 첫 댓글을 남겨보세요!</EmptyComment>}
+                                : <EmptyComment>💬 No comments yet. <br/>
+                                    Be the first to leave one!</EmptyComment>}
                         </PostCommentList>
                     )}
                     <PostCommentInputContainer>
