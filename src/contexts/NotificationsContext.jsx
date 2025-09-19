@@ -63,7 +63,7 @@ export function NotificationsProvider({ children }) {
             list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
             setNotifications(list.map(mapItem));
-            setUnreadCount(countRes.data?.unread || 0);
+            setUnreadCount(countRes.data?.count || 0);
         } catch (error) {
             console.error("Failed to load notifications:", error);
         } finally {
@@ -131,9 +131,16 @@ export function NotificationsProvider({ children }) {
 
     // 4. 사용자 액션 핸들러 (읽음/삭제 처리)
     const markAllRead = useCallback(async () => {
-        await apiNoti.post("/notifications/mark-all-read");
-        setNotifications(prev => prev.map(n => ({ ...n, status: "READ" })));
-        setUnreadCount(0);
+        try {
+            console.log("Attempting to mark all notifications as read...");
+            await apiNoti.post("/notifications/mark-all-read");
+            console.log("Mark all as read API call successful.");
+            setNotifications(prev => prev.map(n => ({ ...n, status: "READ" })));
+            setUnreadCount(0);
+        } catch (error) {
+            console.error("Failed to mark all notifications as read:", error);
+            alert("모든 알림을 읽음으로 표시하는 데 실패했습니다.");
+        }
     }, []);
 
     const deleteAll = useCallback(async () => {

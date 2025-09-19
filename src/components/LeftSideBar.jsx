@@ -9,10 +9,13 @@ import {
     SidebarContainer,
     NotiSidebarWrapper,
     Overlay,
+    NotificationIconButton, // 추가
+    Badge, // 추가
 } from "../styled_components/LeftSideBarStyled.jsx";
 import NotificationsPanel from "./left_side_bar/NotificationsPanel.jsx"; // 경로는 프로젝트 구조에 맞춰 조정
 import { useNotifications } from "../contexts/NotificationsContext.jsx"; // 경로 조정
 import { useNavigate, useLocation } from "react-router-dom";
+import { FaBell } from "react-icons/fa"; // 추가
 
 const LeftSideBar = () => {
     const [isNotiOpen, setNotiOpen] = useState(false);
@@ -95,17 +98,24 @@ const LeftSideBar = () => {
                         onMouseEnter={() => setIsTagAreaHovered(false)}
                     >
                         <Profile />
+                        {/* New Notification Button */}
+                        <NotificationIconButton
+                            ref={toggleButtonRef}
+                            onClick={() => setNotiOpen(!isNotiOpen)}
+                            aria-label="Notifications"
+                        >
+                            <FaBell />
+                            {unreadCount > 0 && (
+                                <Badge>{unreadCount}</Badge>
+                            )}
+                        </NotificationIconButton>
                     </MenuItemWrapper>
 
                     <MenuItemWrapper
                         style={{ flexShrink: 0 }}
                         $isCollapsed={isTagAreaHovered}
                     >
-                        <TabMenu
-                            unreadCount={unreadCount} // 뱃지에 표시할 개수 전달
-                            toggleButtonRef={toggleButtonRef}
-                            onToggle={() => setNotiOpen(!isNotiOpen)}
-                        />
+                        <TabMenu />
                     </MenuItemWrapper>
 
                     <MenuItemWrapper

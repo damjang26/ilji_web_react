@@ -28,6 +28,7 @@ export const MenuItemsContainer = styled.div`
 
 // 각 메뉴 아이템을 감싸서 동일한 공간을 차지, 내부 정렬을 제어
 export const MenuItemWrapper = styled.div`
+    position: relative; // 자식 absolute 요소의 기준점
     display: flex;
     width: 100%;
     align-items: flex-start;
@@ -44,6 +45,41 @@ export const MenuItemWrapper = styled.div`
         padding-top: ${({ $isCollapsed }) => ($isCollapsed ? '0' : 'undefined')};
         padding-bottom: ${({ $isCollapsed }) => ($isCollapsed ? '0' : 'undefined')};
     }
+`;
+
+// [신규] Profile 컴포넌트 우측 상단에 위치할 알림 아이콘 버튼
+export const NotificationIconButton = styled.button`
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: #868e96;
+
+    &:hover {
+        color: #343a40;
+    }
+`;
+
+// [신규] 읽지 않은 알림 개수를 표시할 뱃지
+export const Badge = styled.span`
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #fa5252; // 빨간색
+    color: white;
+    border-radius: 50%;
+    padding: 1px 4px;
+    font-size: 9px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    border: 1px solid white;
 `;
 
 
