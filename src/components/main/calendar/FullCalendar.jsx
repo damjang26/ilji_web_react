@@ -79,15 +79,18 @@ export default function FullCalendarExample() {
                     },
                 });
             } else if (action === 'openJournalViewModal') {
-                const {journalId} = restState;
+                const {journalId, openCommentSection} = restState; // openCommentSection 추가
                 if (journalId) {
                     try {
                         const journalData = await getJournalById(journalId);
                         if (journalData) {
                             navigate(`/journals/${journalId}`, {
                                 state: {
-                                    backgroundLocation: cleanBackgroundLocation, // 깨끗한 location 전달
-                                    journalData: journalData,
+                                    backgroundLocation: cleanBackgroundLocation,
+                                    journalData: {
+                                        ...journalData,
+                                        openCommentSection: openCommentSection, // openCommentSection 전달
+                                    },
                                 },
                             });
                         }

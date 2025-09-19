@@ -51,6 +51,23 @@ const JournalView = () => {
     const [isCommentOpen, setIsCommentOpen] = useState(false); // ✅ [신규] 댓글 창 열림/닫힘 상태
     const [commentSortBy, setCommentSortBy] = useState('likes'); // ✅ [신규] 댓글 정렬 상태 (기본: 'likes')
 
+    // ✅ [신규] openCommentSection 플래그를 확인하여 댓글 창 자동 열기
+    useEffect(() => {
+        if (journal?.openCommentSection) {
+            setIsCommentOpen(true);
+
+            // 플래그 사용 후 location.state에서 제거하여 재실행 방지
+            const { openCommentSection, ...restJournalData } = journal;
+            navigate(location.pathname, {
+                state: {
+                    ...location.state,
+                    journalData: restJournalData,
+                },
+                replace: true,
+            });
+        }
+    }, [journal, navigate, location]);
+
     // --- 좋아요 목록 모달 관련 상태 추가 ---
     const [isLikersModalOpen, setLikersModalOpen] = useState(false);
     const [likersList, setLikersList] = useState([]);
