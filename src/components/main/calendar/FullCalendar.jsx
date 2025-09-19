@@ -43,8 +43,9 @@ export default function FullCalendarExample() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // 일기 팝오버 상태 관리
-    const {hasJournal, getJournal, deleteJournal} = useJournal();
+    const {
+        hasJournal, getJournal, deleteJournal, getJournalById
+    } = useJournal();
     const [diaryPopover, setDiaryPopover] = useState({
         visible: false,
         date: null,
@@ -55,45 +56,52 @@ export default function FullCalendarExample() {
     const actionHandledRef = useRef(false); // New ref
 
     useEffect(() => {
-        if (location.state?.action === 'openJournalModal' && !actionHandledRef.current) {
-            actionHandledRef.current = true; // Set flag to prevent re-execution
+        if (!location.state?.action) return;
 
-            // 1. Clear the action from the state to prevent re-triggering
-            const { action, ...rest } = location.state;
-            navigate(location.pathname, { state: rest, replace: true });
+        const {action, ...restState} = location.state;
 
-            // 2. Open the journal write modal for today's date
-            const dateFromState = location.state?.date;
-            navigate("/journal/write", {
-                state: {
-                    backgroundLocation: location,
-                    selectedDate: dateFromState ? new Date(dateFromState) : new Date(),
-                },
-            });
-        }
-        // Reset the flag if location changes and action is no longer present
-        if (!location.state?.action && actionHandledRef.current) {
-            actionHandledRef.current = false;
-        }
-    }, [location, navigate]);
+        // 루프를 유발하는 action을 제거한 깨끗한 backgroundLocation을 생성합니다.
+        const cleanBackgroundLocation = {
+            ...location,
+            state: restState,
+        };
 
-    useEffect(() => {
-        if (location.state?.action === 'openJournalModal') {
-            // 1. 다른 페이지로 이동했다가 돌아왔을 때 다시 실행되는 것을 방지하기 위해 state를 정리합니다.
-            const { action, ...rest } = location.state;
-            navigate(location.pathname, { state: rest, replace: true });
+        // 현재 히스토리의 state를 깨끗한 버전으로 교체합니다.
+        navigate(location.pathname, {state: restState, replace: true});
 
-            const dateFromState = location.state?.date;
+        const handleAction = async () => {
+            if (action === 'openJournalModal') {
+                const dateFromState = restState?.date;
+                navigate("/journal/write", {
+                    state: {
+                        backgroundLocation: cleanBackgroundLocation, // 깨끗한 location 전달
+                        selectedDate: dateFromState ? new Date(dateFromState) : new Date(),
+                    },
+                });
+            } else if (action === 'openJournalViewModal') {
+                const {journalId} = restState;
+                if (journalId) {
+                    try {
+                        const journalData = await getJournalById(journalId);
+                        if (journalData) {
+                            navigate(`/journals/${journalId}`, {
+                                state: {
+                                    backgroundLocation: cleanBackgroundLocation, // 깨끗한 location 전달
+                                    journalData: journalData,
+                                },
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Error fetching journal by ID:", error);
+                        alert("일기 정보를 불러오는 데 실패했습니다.");
+                    }
+                }
+            }
+        };
 
-            // 2. 캘린더의 기존 로직을 그대로 사용하여 오늘 날짜의 일기 작성 모달을 엽니다.
-            navigate("/journal/write", {
-                state: {
-                    backgroundLocation: location,
-                    selectedDate: dateFromState ? new Date(dateFromState) : new Date(),
-                },
-            });
-        }
-    }, [location, navigate]);
+        handleAction();
+
+    }, [location, navigate, getJournalById]);
 
     // ✅ [수정] 타임존 문제 방지를 위해 Date 객체를 'YYYY-MM-DD'로 직접 변환합니다.
     const formatDate = (date) => {

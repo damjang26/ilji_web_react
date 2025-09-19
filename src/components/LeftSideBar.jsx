@@ -9,10 +9,13 @@ import {
     SidebarContainer,
     NotiSidebarWrapper,
     Overlay,
+    NotificationIconButton, // 추가
+    Badge, // 추가
 } from "../styled_components/LeftSideBarStyled.jsx";
 import NotificationsPanel from "./left_side_bar/NotificationsPanel.jsx"; // 경로는 프로젝트 구조에 맞춰 조정
 import { useNotifications } from "../contexts/NotificationsContext.jsx"; // 경로 조정
 import { useNavigate, useLocation } from "react-router-dom";
+import { FaBell } from "react-icons/fa"; // 추가
 
 const LeftSideBar = () => {
     const [isNotiOpen, setNotiOpen] = useState(false);
@@ -41,15 +44,23 @@ const LeftSideBar = () => {
 
         // 2. 타입에 따라 분기
         if (item.type === "DIARY_REMINDER") {
-            // 캘린더 페이지로 이동하면서 특별 지시와 날짜를 state에 담아 전달
+            // 캘린더 페이지로 이동하면서 글쓰기 모달을 열도록 지시
             navigate("/", { 
                 state: { 
                     action: 'openJournalModal',
                     date: item.createdAt, // 알림 생성 날짜를 전달
                 } 
             });
+        } else if (item.type === "LIKE_CREATED") {
+            // '좋아요' 알림은 캘린더 페이지로 이동하면서 조회 모달을 열도록 지시
+            navigate("/", {
+                state: {
+                    action: 'openJournalViewModal',
+                    journalId: item.entityId,
+                }
+            });
         } else {
-            // 다른 모든 알림은 기존 linkUrl을 사용
+            // 나머지 모든 알림은 기존 linkUrl을 사용
             if (item.linkUrl) {
                 navigate(item.linkUrl);
             }
@@ -87,17 +98,24 @@ const LeftSideBar = () => {
                         onMouseEnter={() => setIsTagAreaHovered(false)}
                     >
                         <Profile />
+                        {/* New Notification Button */}
+                        <NotificationIconButton
+                            ref={toggleButtonRef}
+                            onClick={() => setNotiOpen(!isNotiOpen)}
+                            aria-label="Notifications"
+                        >
+                            <FaBell />
+                            {unreadCount > 0 && (
+                                <Badge>{unreadCount}</Badge>
+                            )}
+                        </NotificationIconButton>
                     </MenuItemWrapper>
 
                     <MenuItemWrapper
                         style={{ flexShrink: 0 }}
                         $isCollapsed={isTagAreaHovered}
                     >
-                        <TabMenu
-                            unreadCount={unreadCount} // 뱃지에 표시할 개수 전달
-                            toggleButtonRef={toggleButtonRef}
-                            onToggle={() => setNotiOpen(!isNotiOpen)}
-                        />
+                        <TabMenu />
                     </MenuItemWrapper>
 
                     <MenuItemWrapper
