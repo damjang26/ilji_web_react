@@ -196,12 +196,6 @@ const MyPage = () => {
                         >
                             Liked i-log
                         </Tab>
-                        <Tab
-                            $active={activeTab === "feature3"}
-                            onClick={() => setActiveTab("feature3")}
-                        >
-                            구독
-                        </Tab>
                     </TabMenuContainer>
                     <FeatureContent>
                         {/* [수정] JournalList를 JournalProvider로 감싸고 userId를 전달합니다. */}
@@ -213,8 +207,6 @@ const MyPage = () => {
                         {activeTab === "feature2" && (
                             <LikeList/>
                         )}
-                        {activeTab === "feature3" && <FeatureBox>기능3</FeatureBox>}
-                        {activeTab === "feature4" && <FeatureBox>기능4</FeatureBox>}
                     </FeatureContent>
                 </MyPageMain>
             </ContentBox>
