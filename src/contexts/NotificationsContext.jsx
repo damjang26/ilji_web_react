@@ -131,16 +131,9 @@ export function NotificationsProvider({ children }) {
 
     // 4. 사용자 액션 핸들러 (읽음/삭제 처리)
     const markAllRead = useCallback(async () => {
-        try {
-            console.log("Attempting to mark all notifications as read...");
-            await apiNoti.post("/notifications/read-all");
-            console.log("Mark all as read API call successful.");
-            setNotifications(prev => prev.map(n => ({ ...n, status: "READ" })));
-            setUnreadCount(0);
-        } catch (error) {
-            console.error("Failed to mark all notifications as read:", error);
-            alert("모든 알림을 읽음으로 표시하는 데 실패했습니다.");
-        }
+        await apiNoti.post("/notifications/read-all");
+        setNotifications(prev => prev.map(n => ({ ...n, status: "READ" })));
+        setUnreadCount(0);
     }, []);
 
     const deleteAll = useCallback(async () => {
