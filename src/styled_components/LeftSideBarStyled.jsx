@@ -36,22 +36,22 @@ export const MenuItemWrapper = styled.div`
     transition: all 0.5s ease-in-out;
 
     // $isCollapsed 상태에 따라 스타일 변경
-    max-height: ${({ $isCollapsed }) => ($isCollapsed ? '0' : '500px')};
-    opacity: ${({ $isCollapsed }) => ($isCollapsed ? '0' : '1')};
+    max-height: ${({$isCollapsed}) => ($isCollapsed ? '0' : '500px')};
+    opacity: ${({$isCollapsed}) => ($isCollapsed ? '0' : '1')};
     overflow: hidden;
 
     &:not(:last-child) {
         border-bottom: 1px solid #e0e0e0;
-        padding-top: ${({ $isCollapsed }) => ($isCollapsed ? '0' : 'undefined')};
-        padding-bottom: ${({ $isCollapsed }) => ($isCollapsed ? '0' : 'undefined')};
+        padding-top: ${({$isCollapsed}) => ($isCollapsed ? '0' : 'undefined')};
+        padding-bottom: ${({$isCollapsed}) => ($isCollapsed ? '0' : 'undefined')};
     }
 `;
 
 // [신규] Profile 컴포넌트 우측 상단에 위치할 알림 아이콘 버튼
 export const NotificationIconButton = styled.button`
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 0;
+    right: 0;
     background: none;
     border: none;
     cursor: pointer;
@@ -81,7 +81,6 @@ export const Badge = styled.span`
     height: 16px;
     border: 1px solid white;
 `;
-
 
 
 // 알림 눌렀을 때 나오는 사이드바
