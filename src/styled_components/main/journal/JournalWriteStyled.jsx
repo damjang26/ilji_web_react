@@ -396,7 +396,28 @@ export const EditTabContent = styled.div`
 `;
 
 export const EditTabWrapper = styled.div`
-    width: 247px;
+    flex-grow: 1; /* 부모(EditContainer)의 남은 공간을 모두 차지합니다. */
+    overflow-y: auto; /* 내용이 이 영역을 벗어나면 세로 스크롤을 생성합니다. */
+    min-height: 0; /* flex 아이템의 높이가 부모를 초과하는 것을 방지합니다. */
+    width: 247px; /* 기존 너비는 유지합니다. */
+
+    /* 스크롤바 스타일 (선택 사항) */
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent; /* 트랙 배경 투명 */
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: #ccc; /* 스크롤바 핸들 색상 */
+        border-radius: 10px;
+    }
+
+    &:hover::-webkit-scrollbar-thumb {
+        background-color: #aaa; /* 호버 시 핸들 색상 변경 */
+    }
 `;
 
 export const EditDrawPenButton = styled.button`

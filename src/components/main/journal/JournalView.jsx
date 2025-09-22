@@ -19,7 +19,7 @@ import {
     SideActionTabsContainer,
     SideActionTab,
     CommentContainer, CommentTitleContainer,
-    CommentContentWrapper,
+    CommentContentWrapper, JournalDate,
     CommentHeader,
     CommentList,
     CommentInputContainer, CommentTitle, HideButton,
@@ -41,8 +41,8 @@ const JournalView = () => {
     const navigate = useNavigate(); // ✅ 페이지 이동을 위해 useNavigate 훅을 사용합니다.
     const location = useLocation(); // ✅ 모달 네비게이션의 배경 위치를 위해 추가합니다.
 
-    // ✅ [수정] API 호출 없이 location.state에서만 데이터를 가져옵니다.
-    const journal = location.state?.journalData;
+    // ✅ [수정] location.state의 데이터를 useState로 관리하여 업데이트가 가능하도록 합니다.
+    const [journal, setJournal] = useState(location.state?.journalData);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
 
@@ -58,6 +58,22 @@ const JournalView = () => {
     const [isLikersLoading, setIsLikersLoading] = useState(false);
 
     const spring = "/images/spring_binder.png";
+
+    // ✅ [추가] 'journal:updated' 이벤트를 감지하여 현재 뷰의 데이터를 업데이트합니다.
+    useEffect(() => {
+        const handleJournalUpdate = (event) => {
+            const { updatedJournal } = event.detail;
+            // 수정된 일기가 현재 보고 있는 일기와 동일한 경우에만 상태를 업데이트합니다.
+            if (updatedJournal && journal && updatedJournal.id === journal.id) {
+                // 기존 journal 데이터에 수정된 데이터를 덮어씁니다.
+                setJournal(prevJournal => ({ ...prevJournal, ...updatedJournal }));
+            }
+        };
+
+        window.addEventListener('journal:updated', handleJournalUpdate);
+        // 컴포넌트가 언마운트될 때 이벤트 리스너를 정리합니다.
+        return () => window.removeEventListener('journal:updated', handleJournalUpdate);
+    }, [journal]); // journal이 변경될 때마다 리스너를 재등록하여 최신 journal.id를 참조하도록 합니다.
 
     // ✅ [신규] 날짜를 'MONTH DAY, YEAR' 형식으로 포맷팅합니다. (예: JAN 01, 2024)
     const formattedDate = useMemo(() => {
@@ -94,8 +110,6 @@ const JournalView = () => {
                 journalToEdit: journalToEdit,
                 // ✅ [수정] 현재 location이 아닌, 이전 페이지에서 전달받은 backgroundLocation을 다시 전달합니다.
                 backgroundLocation: location.state?.backgroundLocation,
-                // ✅ [추가] 수정 성공 시 피드 새로고침 이벤트를 발생시키는 콜백을 전달합니다.
-                onSuccess: () => window.dispatchEvent(new CustomEvent('refreshFeed')),
             }
         });
     }, [navigate, location.state?.backgroundLocation]);
@@ -241,7 +255,7 @@ const JournalView = () => {
                             <button><FaRegHeart/></button>
                         </ActionItem>
                     </ProfileSection>
-                    <h3>{formattedDate}</h3>
+                    <JournalDate>{formattedDate}</JournalDate>
                     <ContentSection>
                         <p>{journal.content}</p>
                     </ContentSection>
@@ -312,7 +326,7 @@ const JournalView = () => {
                                 <button><FaRegHeart/></button>
                             </ActionItem>
                         </ProfileSection>
-                        <h3>{formattedDate}</h3>
+                        <JournalDate>{formattedDate}</JournalDate>
                         <ContentSection>
                             <p>{journal.content}</p>
                         </ContentSection>
