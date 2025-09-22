@@ -23,15 +23,15 @@ import {
     LuBookLock,
 } from "react-icons/lu"; // 날짜 옆 상태 아이콘
 import {useNavigate, useLocation} from "react-router-dom";
-import SchedulePopUp from "./popup/SchedulePopUp.jsx";
+
 import {RiQuillPenAiFill} from "react-icons/ri";
 
 export default function FullCalendarExample() {
     const {
         events,
         loading,
-        openSidebarForNew,
-        openSidebarForDate, // 사이드바에 특정 날짜의 리스트를 보여주기 위한 함수
+        openSchedulePanelForNew, // 사이드바 대신 패널을 여는 새 함수
+        openSchedulePanelForDate, // 사이드바 대신 패널을 여는 새 함수
         showEventDetails, // ✅ [신규] 상세보기를 위한 통합 함수
         updateEvent,
         popupState,
@@ -138,25 +138,10 @@ export default function FullCalendarExample() {
 
         if (diffInDays > 1) {
             // 여러 날을 선택한 경우: 사이드바에서 새 일정 생성
-            openSidebarForNew(selectInfo);
+            openSchedulePanelForNew(selectInfo);
         } else {
-            // 하루만 선택(클릭)한 경우: 팝업 열기.
-            // ✅ [수정] 기준점을 '날짜 셀'이 아닌 '마우스 클릭 좌표'로 변경합니다.
-            const rect = {
-                top: jsEvent.clientY,
-                bottom: jsEvent.clientY,
-                left: jsEvent.clientX,
-                right: jsEvent.clientX,
-            };
-
-            openPopup({
-                date: startStr,
-                // 팝업이 위치를 계산할 수 있도록 마우스 클릭 좌표를 전달합니다.
-                targetRect: rect,
-            });
-
-            // ✅ 동시에, 사이드바를 열고 해당 날짜의 일정 목록을 보여줍니다.
-            openSidebarForDate({startStr});
+            // 하루만 선택(클릭)한 경우, 사이드바를 열고 해당 날짜의 일정 목록을 보여줍니다.
+            openSchedulePanelForDate({startStr});
         }
 
         // 날짜 선택 후 파란색 배경을 즉시 제거합니다.
@@ -168,9 +153,6 @@ export default function FullCalendarExample() {
      * @param {object} clickInfo - FullCalendar가 제공하는 이벤트 클릭 정보 객체
      */
     const handleEventClick = (clickInfo) => {
-        // ✅ [수정] 클릭 이벤트가 부모 요소(CalendarWrapper)로 전파되는 것을 막습니다.
-        // 이렇게 하지 않으면, 팝업을 여는 동시에 팝업을 닫는 onClick 핸들러가 실행되어
-        // 팝업이 열리자마자 닫히는 문제가 발생합니다.
         clickInfo.jsEvent.stopPropagation();
         // ✅ [수정] 분산되어 있던 UI 로직을 `showEventDetails` 함수 하나로 통합하여 호출합니다.
         // 이제 컴포넌트는 '무엇을' 할지만 결정하고, '어떻게' 할지는 Context가 책임집니다.
@@ -383,7 +365,7 @@ export default function FullCalendarExample() {
                 document.body
             )}
 
-            {ReactDOM.createPortal(<SchedulePopUp/>, document.body)}
+
 
             <FullCalendar
                 plugins={[dayGridPlugin, interactionPlugin, timeGridPlugin, rrulePlugin]}

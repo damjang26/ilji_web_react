@@ -1,27 +1,34 @@
-import {useEffect, useState} from "react";
-import {api} from "../../api.js";
-import {useAuth} from "../../AuthContext.jsx";
+import { useEffect, useState } from "react";
+import { api, leaveChatRoom } from "../../api.js";
+import { useAuth } from "../../AuthContext.jsx";
 import CreateChatRoomModal from "./CreateChatRoomModal.jsx";
-import {Button} from "antd";
+import { Dropdown, Menu, message } from "antd";
+import {
+    AddButton,
+    BackButton,
+    ChatRoomListContainer,
+    Header,
+    MenuButton,
+    RoomItem,
+    RoomList,
+    RoomName,
+    UserInfo
+} from "../../styled_components/right_side_bar/ChatRoomListStyled.jsx";
+import { FaChevronLeft } from "react-icons/fa";
+import { BsThreeDotsVertical } from "react-icons/bs";
 
 const ChatRoomList = ({ onBack, chatRoom }) => {
-    const {user} = useAuth();
+    const { user } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
-
     const [roomList, setRoomList] = useState([]);
 
     const fetchRoomList = async () => {
         try {
             const res = await api.get("/api/chat/list");
-            if (Array.isArray(res.data)) {
-                setRoomList(res.data);
-            } else {
-                console.error("API did not return an array for chat list:", res.data);
-                setRoomList([]); // Ensure roomList is an array to prevent crash
-            }
+            setRoomList(Array.isArray(res.data) ? res.data : []);
         } catch (error) {
             console.error("채팅방 목록을 불러오는 데 실패했습니다.", error);
-            setRoomList([]); // Also ensure roomList is an array on error
+            setRoomList([]);
         }
     }
 
@@ -30,52 +37,79 @@ const ChatRoomList = ({ onBack, chatRoom }) => {
     }, []);
 
     const handleChatRoomCreated = (newRoom) => {
-        fetchRoomList(); // Refresh the list
-        chatRoom(newRoom.roomId); // Optionally, enter the new chat room immediately
+        fetchRoomList();
+        chatRoom(newRoom.roomId);
+    };
+
+    const handleLeaveRoom = async (roomId) => {
+        if (window.confirm("정말 채팅방을 나가시겠습니까? 나가시면 채팅방 목록에서 삭제됩니다.")) {
+            try {
+                await leaveChatRoom(roomId);
+                message.success("채팅방을 나갔습니다.");
+                fetchRoomList(); // Refresh the list
+            } catch (error) {
+                console.error("채팅방 나가기 실패:", error);
+                message.error("채팅방 나가기에 실패했습니다.");
+            }
+        }
     };
 
     const getRoomDisplayName = (room, currentUser) => {
-        if (room.roomName) {
-            return room.roomName;
-        }
-
-        if (room.participants && room.participants.length > 0) {
+        if (room.roomName) return room.roomName;
+        if (room.participants) {
             const otherParticipants = room.participants.filter(p => p.user && p.user.id !== currentUser.id);
-
-            if (otherParticipants.length === 0) {
-                // This can happen in a chat with only oneself.
-                return "나 자신과의 대화";
-            }
-            if (otherParticipants.length === 1) {
-                return `${otherParticipants[0].user.name}님과의 채팅방`;
-            }
+            if (otherParticipants.length === 0) return "나 자신과의 대화";
+            if (otherParticipants.length === 1) return `${otherParticipants[0].user.name}님과의 채팅방`;
             return otherParticipants.map(p => p.user.name).join(', ');
         }
-
-        return '채팅방'; // Fallback for rooms with no name and no participant info
+        return '채팅방';
     }
 
-    return (
-        <div>
-            <button onClick={onBack}>뒤로가기</button>
-            <Button onClick={() => setIsModalOpen(true)}>+</Button>
-            <hr/>
-            ({user.email}'s) room list
-            {roomList.map((room) => (
-                <li key={room.roomId} onClick={()=> chatRoom(room.roomId)}>
-                    {getRoomDisplayName(room, user)}
-                </li>
-            ))}
+    const getMenu = (roomId) => ({
+        items: [
+            {
+                key: 'leave',
+                label: '나가기',
+                danger: true,
+                onClick: () => handleLeaveRoom(roomId),
+            },
+        ],
+    });
 
-            <hr/>
+    return (
+        <ChatRoomListContainer>
+            {/*원래 뒤로가기 버튼이였는데 필요 없는거 같음*/}
+            {/*<Header>*/}
+            {/*    <BackButton onClick={onBack}>*/}
+            {/*        <FaChevronLeft />*/}
+            {/*    </BackButton>*/}
+            {/*    /!* AddButton is now outside the header *!/*/}
+            {/*</Header>*/}
+            <UserInfo>({user.email}) 님의 채팅 목록</UserInfo>
+            <RoomList>
+                {roomList.map((room) => (
+                    <RoomItem key={room.roomId}>
+                        <RoomName onClick={() => chatRoom(room.roomId)}>
+                            {getRoomDisplayName(room, user)}
+                        </RoomName>
+                        <Dropdown menu={getMenu(room.roomId)} trigger={['click']} placement="bottomRight">
+                            <MenuButton onClick={e => e.stopPropagation()}>
+                                <BsThreeDotsVertical />
+                            </MenuButton>
+                        </Dropdown>
+                    </RoomItem>
+                ))}
+            </RoomList>
+
+            <AddButton onClick={() => setIsModalOpen(true)}>+</AddButton>
+
             <CreateChatRoomModal
                 open={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onChatRoomCreated={handleChatRoomCreated}
             />
-        </div>
+        </ChatRoomListContainer>
     )
-
 }
 
 export default ChatRoomList;

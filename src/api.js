@@ -151,3 +151,12 @@ export const createChatRoom = (roomName, userIds) => {
     return api.post("/api/chat/create", { roomName, userIds });
 };
 
+/**
+ * 채팅방을 나갑니다.
+ * @param {string} roomId - 나갈 채팅방의 ID
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const leaveChatRoom = (roomId) => {
+    return api.post(`/api/chat/${roomId}/leave`);
+};
+

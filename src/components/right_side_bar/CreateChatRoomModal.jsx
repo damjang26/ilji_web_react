@@ -188,7 +188,6 @@ export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
                 style={{ marginBottom: 20 }}
-                disabled={selectedUsers.length < 2}
             />
             <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} centered />
         </Modal>
