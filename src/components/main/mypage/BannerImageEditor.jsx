@@ -12,14 +12,7 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
     const cropperRef = useRef(null);
     const fileInputRef = useRef(null);
 
-    //  모달이 열릴 때 파일 선택창을 자동 열기(임시 제거)
-    // useEffect(() => {
-    //     if (isOpen) {
-    //         // 이전 상태 초기화 후 파일 선택
-    //         setImageSrc(null);
-    //         fileInputRef.current?.click();
-    //     }
-    // }, [isOpen]);
+
 
     // 1. 사용자가 파일을 선택했을 때 처리
     const handleFileChange = (e) => {
