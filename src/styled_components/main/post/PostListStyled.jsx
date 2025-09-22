@@ -834,6 +834,8 @@ export const CommentLikeCount = styled.span`
 
     &:hover {
         text-decoration: underline;
+        font-weight: 600; /* bold 스타일 */
+        background-color: #cccccc; /* 연한 회색 배경 */
     }
 `;
 

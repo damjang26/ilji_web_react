@@ -200,9 +200,7 @@ const MyPage = () => {
                     <FeatureContent>
                         {/* [수정] JournalList를 JournalProvider로 감싸고 userId를 전달합니다. */}
                         {activeTab === "feature1" && (
-                            <JournalProvider userId={userId}>
-                                <JournalList/>
-                            </JournalProvider>
+                            <JournalList/>
                         )}
                         {activeTab === "feature2" && (
                             <LikeList/>
@@ -257,7 +255,9 @@ const MyPageWrapper = () => {
     return (
         // [수정] MyPageProvider에 userId를 전달합니다.
         <MyPageProvider userId={userId}>
-            <PageSwitcher/>
+            <JournalProvider userId={userId}>
+                <PageSwitcher/>
+            </JournalProvider>
         </MyPageProvider>
     );
 };

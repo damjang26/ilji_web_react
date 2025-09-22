@@ -1,5 +1,19 @@
 import styled from "styled-components";
 
+// ✅ [신규] 일기 작성 모달의 전체 컨테이너
+export const JournalWriteContainer = styled.div`
+    position: relative; /* 스프링 바인더의 기준점 */
+    padding: 20px 25px 20px 45px; /* 내부 여백 (스프링 공간 확보) */
+    background-color: #ffffff;
+    border: 1.5px solid #a3a3a3;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* 내부 요소 간의 간격 */
+    width: 600px; /* PostContainer와 너비 통일 */
+    box-sizing: border-box;
+`;
+
 export const FormContainer = styled.div`
     display: flex;
     gap: 16px;
@@ -7,11 +21,10 @@ export const FormContainer = styled.div`
 `;
 
 export const ProfilePicture = styled.img`
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     object-fit: cover;
-    margin-top: 10px;
 `;
 
 export const FormContent = styled.div`
@@ -32,7 +45,7 @@ export const StyledTextarea = styled.textarea`
     border-radius: 5px;
 
     transition: border-color 0.2s, background-color 0.2s;
-    background-color: ${props => props.$isDragging ? "#ede9ff" : "#fff"};
+    background-color: ${props => props.isDragging ? "#ede9ff" : "#fff"};
 
     &:focus {
         outline: none;
@@ -80,6 +93,31 @@ export const RemoveImageButton = styled.button`
     display: flex;
     align-items: center;
     justify-content: center;
+`;
+
+export const ImageEditorModalWrapper = styled.div`
+    background: white;
+    padding: 24px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+
+    /* 이미지 꾸미기 단계일 때만 최대 너비를 넓힙니다. */
+    max-width: ${({$isFabricStep}) => ($isFabricStep ? "900px" : "600px")};
+
+    /* max-width 값이 변경될 때 부드러운 애니메이션 효과를 적용합니다. */
+    transition: max-width 0.4s ease-in-out;
+`;
+
+export const ModalTitle = styled.h2`
+    flex-grow: 1; /* 양쪽 아이콘/버튼을 제외한 나머지 공간을 모두 차지 */
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    line-height: 1.5;
+    white-space: nowrap; /* 제목이 길어져도 줄바꿈 방지 */
 `;
 
 export const ImageEditorContainer = styled.div`
@@ -182,15 +220,15 @@ export const ActionButtonWrapper = styled.div`
 
 export const EmojiPickerWrapper = styled.div`
     position: absolute;
-    top: -500%;
-    left: 35px;
+    bottom: 0;
+    left: 37px;
     z-index: 1000; /* 다른 요소들 위에 오도록 z-index 설정 */
     margin-top: 8px; /* 아이콘과 약간의 간격을 줍니다. */
 `;
 
 export const CharCounter = styled.div`
     font-size: 13px;
-    color: ${({$error}) => ($error ? '#d93025' : '#888')};
+    color: ${({error}) => (error ? '#d93025' : '#888')};
 `;
 
 export const CheckboxLabel = styled.label`
@@ -254,6 +292,68 @@ export const PostButton = styled.button`
     &:disabled {
         background-color: #c3b3ff;
         cursor: not-allowed;
+    }
+`;
+
+export const VisibilitySelector = styled.div`
+    position: relative;
+    display: inline-block;
+    margin: 0 12px;
+`;
+
+export const VisibilityButton = styled.button`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #f0f2f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+
+    &:hover {
+        background-color: #e9ecef;
+        border-color: #d9d9d9;
+    }
+
+    svg {
+        font-size: 16px;
+        color: #555;
+    }
+`;
+
+export const VisibilityDropdown = styled.div`
+    position: absolute;
+    bottom: 100%; /* 버튼 바로 위에 위치 */
+    right: -12px;
+    margin-bottom: 8px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+    width: 120px;
+    padding: 8px 0;
+    overflow: hidden;
+`;
+
+export const VisibilityOption = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    font-size: 14px;
+    cursor: pointer;
+
+    &:hover {
+        background-color: #f0f2f5;
+    }
+
+    svg {
+        font-size: 16px;
     }
 `;
 
