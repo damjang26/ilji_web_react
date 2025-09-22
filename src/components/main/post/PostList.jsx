@@ -324,6 +324,25 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
         });
     };
 
+    // ✅ [추가] 'journal:updated' 전역 이벤트를 감지하여, 목록의 해당 항목을 즉시 업데이트합니다.
+    // 이렇게 하면 전체 목록을 다시 불러오는 API 호출 없이도 수정된 내용이 바로 반영됩니다.
+    useEffect(() => {
+        const handleJournalUpdate = (event) => {
+            const {updatedJournal} = event.detail;
+            if (updatedJournal) {
+                setPosts(prevPosts =>
+                    prevPosts.map(p =>
+                        p.id === updatedJournal.id ? updatedJournal : p
+                    )
+                );
+            }
+        };
+
+        window.addEventListener('journal:updated', handleJournalUpdate);
+        return () => window.removeEventListener('journal:updated', handleJournalUpdate);
+    }, []); // 의존성 배열이 비어있으므로, 컴포넌트가 마운트될 때 한 번만 리스너를 등록합니다.
+
+
     // ✅ [수정] handleDelete 함수를 useCallback으로 감싸 불필요한 재생성을 방지합니다.
     const handleDelete = useCallback(async (journalId, journalDate) => {
         // 사용자가 정말 삭제할 것인지 확인
@@ -430,10 +449,10 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
     // ------------------------------------
 
     // --- 댓글 개수 변경 관련 함수 추가 ---
-    const handleCommentCountChange = useCallback((postId, newCount) => {
+    const handleCommentCountChange = useCallback((postId, changeAmount) => {
         setPosts(currentPosts =>
             currentPosts.map(p =>
-                p.id === postId ? {...p, commentCount: newCount} : p
+                p.id === postId ? { ...p, commentCount: p.commentCount + changeAmount } : p
             )
         );
     }, [setPosts]);
@@ -482,7 +501,7 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
                             onLikeCountClick={handleLikeCountClick}
                             onProfileClick={handleProfileClick} // ✅ [추가] 프로필 클릭 핸들러 전달
                             onImageClick={handleImageClick} // ✅ [추가] 이미지 클릭 핸들러 전달
-                            onCommentCountChange={(newCount) => handleCommentCountChange(post.id, newCount)}
+                            onCommentCountChange={(changeAmount) => handleCommentCountChange(post.id, changeAmount)}
                         />
                     );
                 })}

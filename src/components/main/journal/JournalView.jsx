@@ -28,7 +28,7 @@ import {
 } from '../../../styled_components/main/journal/JournalViewStyled';
 import {HiPencilAlt} from "react-icons/hi";
 import {MdDeleteForever} from "react-icons/md";
-import {ActionItem, LikeCountSpan} from "../../../styled_components/main/post/PostListStyled.jsx";
+import {ActionItem, EmptyComment, LikeCountSpan} from "../../../styled_components/main/post/PostListStyled.jsx";
 import {FaChevronLeft, FaChevronRight, FaRegHeart} from "react-icons/fa";
 import {useAuth} from "../../../AuthContext.jsx";
 import {BiSolidShareAlt} from "react-icons/bi";
@@ -57,6 +57,7 @@ const JournalView = () => {
     const [currentPostId, setCurrentPostId] = useState(null);
     const [isLikersLoading, setIsLikersLoading] = useState(false);
 
+    const spring = "/images/spring_binder.png";
 
     // ✅ [신규] 날짜를 'MONTH DAY, YEAR' 형식으로 포맷팅합니다. (예: JAN 01, 2024)
     const formattedDate = useMemo(() => {
@@ -176,20 +177,21 @@ const JournalView = () => {
                         <CommentTitleContainer>
                             <CommentTitle>comments({comments.length})</CommentTitle>
                             <SortOption active={commentSortBy === 'likes'}
-                                        onClick={() => setCommentSortBy('likes')}>인기순</SortOption>
+                                        onClick={() => setCommentSortBy('likes')}>Popular</SortOption>
                             <SortOption active={commentSortBy === 'recent'}
-                                        onClick={() => setCommentSortBy('recent')}>최신순</SortOption>
+                                        onClick={() => setCommentSortBy('recent')}>New</SortOption>
                         </CommentTitleContainer>
                         <HideButton onClick={toggleCommentView}>Hide</HideButton>
                     </CommentHeader>
                     <CommentList>
                         {comments.length > 0 ?
                             comments.map(comment => <div key={comment.commentId}>{comment.content}</div>)
-                            : <p>아직 댓글이 없습니다.</p>}
+                            : <EmptyComment>💬 No comments yet. <br/>
+                                Be the first to leave one!</EmptyComment>}
                     </CommentList>
                     <CommentInputContainer>
                         <ProfilePicture
-                            src={user?.profileImage || 'https://via.placeholder.com/40'}
+                            src={user?.picture || 'https://via.placeholder.com/40'}
                             alt="내 프로필"
                             referrerPolicy="no-referrer"
                         />
@@ -314,7 +316,6 @@ const JournalView = () => {
                         <ContentSection>
                             <p>{journal.content}</p>
                         </ContentSection>
-                        {/* ✅ [수정] 클릭 시 댓글 창을 토글하고, 상태에 따라 다른 내용을 보여줍니다. */}
                         {renderCommentSection()}
                     </ContentContainer>
                 </BookLayoutContainer>

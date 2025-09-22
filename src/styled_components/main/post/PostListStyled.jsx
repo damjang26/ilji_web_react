@@ -694,7 +694,7 @@ export const PostCommentForm = styled.form`
         outline: none;
         background-color: transparent;
         font-size: 14px;
-        padding: 8px 0;
+        padding: 8px 8px;
 
         &::placeholder {
             color: #a8a8a8;
@@ -707,6 +707,7 @@ export const PostCommentForm = styled.form`
         color: #7b5fff;
         font-weight: 1000;
         padding: 5px;
+        margin-right: 5px;
         border-radius: 50%;
         font-size: 25px; /* ✅ [수정] 아이콘 크기를 키웁니다. */
         cursor: pointer;
@@ -819,7 +820,9 @@ export const CommentActionButton = styled.button`
     align-items: center;
     padding: 0;
     color: #65676b;
-    font-size: 16px;
+    font-size: 14px;
+    font-weight: 500;
+
 
     &:hover {
         color: #262626;
@@ -896,5 +899,53 @@ export const CommentDropdownItem = styled.button`
 
     &:hover {
         background-color: #f0f0f0;
+    }
+`;
+
+export const CommentItemWrapper = styled.div`
+    width: 100%;
+    padding-left: ${({isReply}) => isReply ? '50px' : '0'}; // ✅ 대댓글일 경우 들여쓰기
+    box-sizing: border-box;
+`;
+
+export const ReplyInputContainer = styled.div`
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 8px 0 8px 50px; // 댓글 프로필 이미지와 맞추기 위한 들여쓰기
+    box-sizing: border-box;
+`;
+
+/** 답글 토글 버튼을 감싸는 컨테이너 */
+export const ReplyToggleContainer = styled.div`
+    // 답글 들여쓰기와 맞추기 위해 왼쪽 마진을 줍니다.
+    // CommentAvatar(40px) + gap(10px) = 50px
+    margin-left: 50px;
+    margin-top: 12px;
+`;
+
+/** 답글 보기/숨기기 토글 버튼 */
+export const ReplyToggleButton = styled.button`
+    display: inline-flex;
+    align-items: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 16px;
+    font-size: 0.875rem; // 14px
+    font-weight: 600;
+    color: #555;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+        background-color: #f0f2f5; // 밝은 회색 배경
+    }
+
+    .line {
+        width: 24px;
+        height: 2px;
+        background-color: #ccc;
+        margin-right: 8px;
     }
 `;

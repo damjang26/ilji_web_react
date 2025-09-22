@@ -189,27 +189,25 @@ const JournalWrite = ({
 
     // ✅ File을 base64(dataURL)로 변환해서 preview에 저장
     const processFiles = (files) => {
-        if (images.length + files.length > MAX_IMAGE_LIMIT) {
+        // ✅ [추가] 허용할 이미지 파일의 MIME 타입 정의
+        const allowedTypes = ['image/jpeg', 'image/png'];
+        const allFiles = Array.from(files);
+
+        // 1. 허용되지 않는 파일 형식을 먼저 걸러냅니다.
+        const invalidFiles = allFiles.filter(file => !allowedTypes.includes(file.type));
+        if (invalidFiles.length > 0) {
+            alert(`지원하지 않는 파일 형식입니다. JPG, PNG 파일만 업로드할 수 있습니다.`);
+            return; // 유효하지 않은 파일이 있으면 함수를 중단합니다.
+        }
+
+        // 2. 허용된 파일들로만 개수 제한을 확인합니다.
+        if (images.length + allFiles.length > MAX_IMAGE_LIMIT) {
             alert(`사진은 최대 ${MAX_IMAGE_LIMIT}개까지 추가할 수 있습니다.`);
             return;
         }
 
-        // Array.from(files).forEach((file) => {
-        //     const reader = new FileReader();
-        //     reader.onloadend = () => {
-        //         const base64Data = reader.result; // ✅ dataURL (base64)
-        //         setImages((prevImages) => [
-        //             ...prevImages,
-        //             {
-        //                 file,                // 원본 File도 저장 (필요하면 서버 업로드용)
-        //                 preview: base64Data, // ✅ 이제 blobURL 대신 base64 저장
-        //             },
-        //         ]);
-        //     };
-        //     reader.readAsDataURL(file);
-        // });
-
-        Array.from(files).forEach((file) => {
+        // 3. 모든 검증을 통과한 파일들만 상태에 추가합니다.
+        allFiles.forEach((file) => {
             // ✅ base64 대신 blob URL 사용
             const blobUrl = URL.createObjectURL(file);
 
@@ -460,7 +458,7 @@ const JournalWrite = ({
                                 ref={fileInputRef}
                                 onChange={handleImageUpload}
                                 multiple
-                                accept="image/*"
+                                accept="image/jpeg, image/png"
                                 style={{display: 'none'}}
                             />
                             <IconButton data-tooltip="이미지 추가" onClick={handleImageButtonClick}

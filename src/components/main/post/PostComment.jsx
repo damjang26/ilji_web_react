@@ -60,12 +60,10 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
         }
     }, [isOpen, journal.id, commentSortBy]);
 
-    const handleCommentSubmit = useCallback(async (e) => {
-        e.preventDefault();
-        const content = newComment.trim();
+    // ✅ [수정] 대댓글 작성을 위해 parentId 파라미터를 받도록 수정
+    const handleCommentSubmit = useCallback(async (content, parentId = null) => {
         if (!content) return;
 
-        // 1. 낙관적 업데이트: 서버 응답을 기다리지 않고 UI에 새 댓글을 즉시 추가
         const tempId = Date.now(); // 임시 key로 사용
         const newCommentObj = {
             commentId: tempId,
@@ -80,24 +78,53 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
             likeCount: 0,
             replies: [],
         };
-        setComments(prev => [newCommentObj, ...prev]);
-        setNewComment(''); // 입력창 비우기
-        // ✅ [개선] 함수형 업데이트로 안정성 향상
-        onCommentCountChange(prevCount => prevCount + 1);
+
+        // 1. 낙관적 업데이트: UI에 새 댓글을 즉시 추가
+        if (parentId) {
+            // 답글인 경우: 부모 댓글의 replies 배열에 추가
+            setComments(prev => prev.map(c =>
+                c.commentId === parentId
+                    ? {...c, replies: [newCommentObj, ...(c.replies || [])]}
+                    : c
+            ));
+        } else {
+            // 최상위 댓글인 경우: 댓글 목록의 맨 앞에 추가
+            setComments(prev => [newCommentObj, ...prev]);
+            setNewComment(''); // 최상위 댓글 입력창만 비우기
+        }
 
         try {
-            // 2. 서버에 API 요청
-            const response = await addComment(journal.id, {content});
+            // 2. 서버에 API 요청 (✅ parent_comment_id를 명확하게 전달)
+            const response = await addComment(journal.id, {
+                content,
+                parentCommentId: parentId,
+            });
             // 3. 서버 응답으로 받은 실제 데이터로 교체
-            setComments(prev => prev.map(c => c.commentId === tempId ? response.data : c));
+            const realComment = response.data;
+            // ✅ [수정] API 호출 성공 후 댓글 개수 업데이트
+            // [안전장치] onCommentCountChange가 함수일 때만 호출합니다.
+            if (typeof onCommentCountChange === 'function') {
+                onCommentCountChange(1);
+            }
+            // 임시 댓글(tempId)을 서버에서 받은 실제 댓글(realComment)로 교체
+            setComments(prev => prev.map(c => {
+                if (c.commentId === parentId) { // 대댓글의 부모를 찾아서
+                    return {...c, replies: c.replies.map(r => r.commentId === tempId ? realComment : r)};
+                }
+                if (c.commentId === tempId) { // 최상위 댓글을 찾아서
+                    return realComment;
+                }
+                return c;
+            }));
         } catch (error) {
             console.error("댓글 등록에 실패했습니다.", error);
             message.error("댓글 등록에 실패했습니다.");
-            // 4. 실패 시 롤백
-            setComments(prev => prev.filter(c => c.commentId !== tempId));
-            onCommentCountChange(prevCount => prevCount - 1);
+            // 4. 실패 시 롤백: 추가했던 임시 댓글을 제거
+            setComments(prev => prev
+                .map(c => ({...c, replies: c.replies?.filter(r => r.commentId !== tempId)})) // 답글 롤백
+                .filter(c => c.commentId !== tempId)); // 최상위 댓글 롤백
         }
-    }, [newComment, journal.id, user, onCommentCountChange]); // 의존성 배열 최적화
+    }, [journal.id, user, onCommentCountChange]); // newComment 의존성 제거
 
     const handleCommentLike = useCallback(async (commentId) => {
         // 1. 낙관적 업데이트
@@ -136,7 +163,10 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
         // 1. 낙관적 업데이트: UI에서 댓글을 즉시 제거
         const originalComments = comments;
         setComments(currentComments => currentComments.filter(c => c.commentId !== commentId));
-        onCommentCountChange(prevCount => prevCount - 1); // 댓글 수 감소
+        // [안전장치] onCommentCountChange가 함수일 때만 호출합니다.
+        if (typeof onCommentCountChange === 'function') {
+            onCommentCountChange(-1); // -1을 전달하여 댓글이 삭제되었음을 알림
+        }
 
         try {
             // 2. API 요청
@@ -147,7 +177,10 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
             message.error("댓글 삭제에 실패했습니다.");
             // 3. 실패 시 롤백
             setComments(originalComments);
-            onCommentCountChange(prevCount => prevCount + 1);
+            // [안전장치] onCommentCountChange가 함수일 때만 호출합니다.
+            if (typeof onCommentCountChange === 'function') {
+                onCommentCountChange(1); // +1을 전달하여 롤백을 알림
+            }
         }
     }, [comments, onCommentCountChange]);
 
@@ -205,6 +238,7 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
                                         onLike={handleCommentLike}
                                         onLikeCountClick={handleLikeCountClick}
                                         onDelete={handleDeleteComment}
+                                        onSubmitReply={handleCommentSubmit} // ✅ [추가] 답글 제출 함수 전달
                                     />
                                 ))
                                 : <EmptyComment>💬 No comments yet. <br/>
@@ -217,7 +251,10 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
                             alt="내 프로필"
                             referrerPolicy="no-referrer"
                         />
-                        <PostCommentForm onSubmit={handleCommentSubmit}>
+                        <PostCommentForm onSubmit={(e) => {
+                            e.preventDefault();
+                            handleCommentSubmit(newComment.trim());
+                        }}>
                             <input type="text" placeholder="Add a comment..." value={newComment}
                                    onChange={(e) => setNewComment(e.target.value)}/>
                             <button type="submit" disabled={!newComment.trim()}><TbMessageCirclePlus/></button>
