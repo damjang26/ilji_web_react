@@ -59,6 +59,15 @@ const LeftSideBar = () => {
                     journalId: item.entityId,
                 }
             });
+        } else if (item.type === "COMMENT_CREATED") {
+            // '댓글' 알림은 캘린더 페이지로 이동하면서 조회 모달을 열고 댓글 창을 열도록 지시
+            navigate("/", {
+                state: {
+                    action: 'openJournalViewModal',
+                    journalId: item.entityId,
+                    openCommentSection: true, // 댓글 창을 열도록 추가 지시
+                }
+            });
         } else {
             // 나머지 모든 알림은 기존 linkUrl을 사용
             if (item.linkUrl) {
@@ -94,7 +103,6 @@ const LeftSideBar = () => {
                     onMouseLeave={() => setIsTagAreaHovered(false)}
                 >
                     <MenuItemWrapper
-                        style={{ flexShrink: 0 }}
                         onMouseEnter={() => setIsTagAreaHovered(false)}
                     >
                         <Profile />
@@ -105,9 +113,7 @@ const LeftSideBar = () => {
                             aria-label="Notifications"
                         >
                             <FaBell />
-                            {unreadCount > 0 && (
-                                <Badge>{unreadCount}</Badge>
-                            )}
+                            {unreadCount > 0 && <Badge>{unreadCount}</Badge>}
                         </NotificationIconButton>
                     </MenuItemWrapper>
 
