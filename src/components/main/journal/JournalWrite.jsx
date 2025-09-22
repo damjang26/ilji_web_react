@@ -75,7 +75,7 @@ const JournalWrite = ({
     // --- 상태 초기값 설정 ---
     const [content, setContent] = useState('');
     // ✅ [수정] isPrivate를 visibility로 변경 (0: 전체, 1: 친구, 2: 비공개)
-    const [visibility, setVisibility] = useState(0);
+    const [visibility, setVisibility] = useState('PUBLIC'); // ✅ [수정] 기본값을 문자열 'PUBLIC'으로 변경
     const [images, setImages] = useState([]);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [isVisibilityDropdownOpen, setIsVisibilityDropdownOpen] = useState(false);
@@ -95,7 +95,7 @@ const JournalWrite = ({
         if (isEditMode) {
             setContent(journalToEdit.content || '');
             // ✅ [수정] visibility 상태를 초기화합니다.
-            setVisibility(journalToEdit.visibility || 0);
+            setVisibility(journalToEdit.visibility || 'PUBLIC');
 
             // 이 필드는 이미지 URL 문자열의 배열입니다.
             if (journalToEdit.images && Array.isArray(journalToEdit.images)) {
@@ -156,9 +156,21 @@ const JournalWrite = ({
 
     // ✅ [신규] 현재 visibility 상태에 맞는 아이콘과 텍스트를 반환하는 객체
     const visibilityOptions = useMemo(() => ({
-        0: {icon: <LuGlobe/>, text: '전체 공개'},
-        1: {icon: <LuUsers/>, text: '친구 공개'},
-        2: {icon: <LuLock/>, text: '나만 보기'},
+        'PUBLIC': {
+            icon: <LuGlobe/>,
+            text: '전체 공개',
+            description: '모든 사람이 내 일기를 볼 수 있습니다.'
+        },
+        'FRIENDS_ONLY': {
+            icon: <LuUsers/>,
+            text: '친구 공개',
+            description: '나와 내 친구들만 볼 수 있습니다.'
+        },
+        'PRIVATE': {
+            icon: <LuLock/>,
+            text: '나만 보기',
+            description: '이 일기는 나만 볼 수 있습니다.'
+        }
     }), []);
 
     // ✅ [신규] 공개 범위 옵션 클릭 핸들러
@@ -345,15 +357,25 @@ const JournalWrite = ({
         setIsSubmitting(true);
         // console.log("onSubmit selectedDate:", selectedDate);
 
+        // ✅ [추가] 백엔드 Enum(int)에 맞게 문자열 visibility를 숫자로 변환합니다.
+        const visibilityMap = {
+            'PUBLIC': 0,
+            'FRIENDS_ONLY': 1,
+            'PRIVATE': 2
+        };
+
         // Context 함수에 전달할 데이터 묶음(payload)을 만듭니다.
         const journalPayload = {
-            images, content, visibility
+            images, content, visibility: visibilityMap[visibility]
         };
 
         try {
             if (isEditMode) {
                 // ✅ 수정 모드일 경우
-                await updateJournalEntry(journalToEdit.id, journalPayload);
+                const updatedJournal = await updateJournalEntry(journalToEdit.id, journalPayload);
+                // ✅ [수정] 수정이 성공하면, 전역 이벤트를 발생시켜 다른 컴포넌트에게 알립니다.
+                // 이벤트의 detail에 수정된 '전체 일기 객체'를 담아 보냅니다.
+                window.dispatchEvent(new CustomEvent('journal:updated', { detail: { updatedJournal } }));
                 alert('일기가 성공적으로 수정되었습니다!');
             } else {
                 // ✅ 생성 모드일 경우
@@ -367,7 +389,7 @@ const JournalWrite = ({
             alert(error.response?.data?.message || '일기 저장에 실패했습니다.');
         } finally {
             setIsSubmitting(false); // 제출 상태 해제
-            onClose(); // 저장 후 모달 닫기
+            onClose(); // 모든 작업 후 모달 닫기
         }
     };
 
@@ -466,8 +488,8 @@ const JournalWrite = ({
                             </VisibilityButton>
                             {isVisibilityDropdownOpen && (
                                 <VisibilityDropdown>
-                                    {Object.entries(visibilityOptions).map(([key, {icon, text}]) => (
-                                        <VisibilityOption key={key} onClick={() => handleVisibilityChange(Number(key))}>
+                                    {Object.entries(visibilityOptions).map(([key, { icon, text }]) => (
+                                        <VisibilityOption key={key} onClick={() => handleVisibilityChange(key)}>
                                             {icon}
                                             <span>{text}</span>
                                         </VisibilityOption>

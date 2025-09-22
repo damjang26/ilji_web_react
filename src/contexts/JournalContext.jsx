@@ -180,23 +180,32 @@ export const JournalProvider = ({children, userId}) => {
         return updatedJournalEntry;
     }, [user]);
 
-    const deleteJournal = useCallback(async (logId, date) => {
+    // ✅ [수정] onUpdate 콜백을 받아 다른 컴포넌트의 상태도 갱신할 수 있도록 수정
+    const deleteJournal = useCallback(async (logId, date, onUpdate) => {
         try {
             // 1. 백엔드에 삭제 요청을 보냅니다. (컨트롤러: @DeleteMapping("/{logId}"))
             await api.delete(`/api/i-log/${logId}`);
 
             // 2. 요청 성공 시, 로컬 상태(journals Map)에서도 해당 일기를 제거하여 UI를 즉시 업데이트합니다.
+            // (캘린더 뷰를 위한 업데이트)
             setJournals(prev => {
                 const newJournals = new Map(prev);
                 newJournals.delete(date);
                 return newJournals;
             });
+
+            // 3. (선택적) 외부 컴포넌트의 상태를 업데이트하기 위한 콜백 함수를 실행합니다.
+            // (PostList, JournalList를 위한 업데이트)
+            if (onUpdate) {
+                onUpdate(logId);
+            }
+
         } catch (err) {
             console.error("일기 삭제 실패:", err);
             // 컴포넌트에서 에러를 인지하고 후속 처리(예: alert)를 할 수 있도록 에러를 다시 던집니다.
             throw err;
         }
-    }, [setJournals]); // ✅ [수정] useCallback 의존성 배열에 setJournals를 추가하여 함수가 항상 최신 상태를 참조하도록 합니다.
+    }, [setJournals]);
 
     const hasJournal = useCallback((date) => journals.has(date), [journals]);
     // ✅ 특정 날짜의 일기 데이터를 가져오는 함수 추가

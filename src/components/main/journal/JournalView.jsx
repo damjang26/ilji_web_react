@@ -93,6 +93,8 @@ const JournalView = () => {
                 journalToEdit: journalToEdit,
                 // ✅ [수정] 현재 location이 아닌, 이전 페이지에서 전달받은 backgroundLocation을 다시 전달합니다.
                 backgroundLocation: location.state?.backgroundLocation,
+                // ✅ [추가] 수정 성공 시 피드 새로고침 이벤트를 발생시키는 콜백을 전달합니다.
+                onSuccess: () => window.dispatchEvent(new CustomEvent('refreshFeed')),
             }
         });
     }, [navigate, location.state?.backgroundLocation]);

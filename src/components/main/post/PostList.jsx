@@ -328,26 +328,29 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
     const handleDelete = useCallback(async (journalId, journalDate) => {
         // 사용자가 정말 삭제할 것인지 확인
         if (window.confirm("정말로 이 일기를 삭제하시겠습니까?")) {
-            try {
-                // Context의 deleteJournal 함수 호출
-                await deleteJournal(journalId, journalDate);
+            // ✅ [수정] 삭제 성공 시 실행될 콜백 함수 정의
+            const onUpdate = (deletedId) => {
+                setPosts(prev => prev.filter(p => p.id !== deletedId));
                 alert("일기가 삭제되었습니다.");
-                // 삭제 성공 후 특별한 페이지 이동은 필요 없으므로, 상태 업데이트에 따라 UI가 자동으로 갱신됩니다.
+            };
+
+            try {
+                // ✅ [수정] Context의 deleteJournal 함수에 콜백 전달
+                await deleteJournal(journalId, journalDate, onUpdate);
             } catch (error) {
                 alert("일기 삭제 중 오류가 발생했습니다.");
             }
         }
-    }, [deleteJournal]); // deleteJournal 함수가 변경될 때만 이 함수를 재생성합니다.
+    }, [deleteJournal, setPosts]);
 
     const handleEdit = useCallback((journalToEdit) => {
-        console.log("✏️ 수정할 일기 객체:", journalToEdit);
         navigate('/journal/write', {
             state: {
                 journalToEdit: journalToEdit, // 수정할 일기 데이터를 전달합니다.
                 backgroundLocation: location, // 모달 뒤에 현재 페이지를 배경으로 유지합니다.
             }
         });
-    }, [navigate, location]); // navigate와 location이 변경될 때만 함수를 재생성합니다.
+    }, [navigate, location]);
 
     // ✅ [추가] 프로필 이미지 또는 닉네임 클릭 시 해당 유저의 마이페이지로 이동하는 함수
     const handleProfileClick = useCallback((writerId) => {

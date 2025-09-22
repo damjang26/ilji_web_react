@@ -314,21 +314,42 @@ const JournalList = () => {
         }
     }, [inView, hasMore, loading, fetchJournals]);
 
+    // ✅ [수정] 'journal:updated' 전역 이벤트를 감지하여, 목록 전체를 다시 불러오는 대신 수정된 항목만 교체합니다.
+    useEffect(() => {
+        const handleJournalUpdate = (event) => {
+            const { updatedJournal } = event.detail;
+            if (updatedJournal) {
+                setJournals(prevJournals =>
+                    prevJournals.map(j =>
+                        j.id === updatedJournal.id ? updatedJournal : j
+                    )
+                );
+            }
+        };
+
+        window.addEventListener('journal:updated', handleJournalUpdate);
+        // 컴포넌트가 언마운트될 때 이벤트 리스너를 정리합니다.
+        return () => window.removeEventListener('journal:updated', handleJournalUpdate);
+    }, []); // 의존성 배열을 비워서 컴포넌트 마운트/언마운트 시에만 리스너를 등록/해제합니다.
+
     // ✅ [수정] handleDelete 함수를 useCallback으로 감싸 불필요한 재생성을 방지합니다.
     const handleDelete = useCallback(async (journalId, journalDate) => {
         // 사용자가 정말 삭제할 것인지 확인
         if (window.confirm("정말로 이 일기를 삭제하시겠습니까?")) {
-            try {
-                // Context의 deleteJournal 함수 호출
-                await deleteJournal(journalId, journalDate);
-                // ✅ [추가] 삭제 성공 시, 로컬 상태에서도 해당 일기를 제거
-                setJournals(prev => prev.filter(j => j.id !== journalId));
+            // ✅ [수정] 삭제 성공 시 실행될 콜백 함수 정의
+            const onUpdate = (deletedId) => {
+                setJournals(prev => prev.filter(j => j.id !== deletedId));
                 alert("일기가 삭제되었습니다.");
+            };
+
+            try {
+                // ✅ [수정] Context의 deleteJournal 함수에 콜백 전달
+                await deleteJournal(journalId, journalDate, onUpdate);
             } catch (error) {
                 alert("일기 삭제 중 오류가 발생했습니다.");
             }
         }
-    }, [deleteJournal]);
+    }, [deleteJournal]); // setJournals는 의존성에 필요 없습니다. onUpdate 콜백이 클로저를 통해 접근합니다.
 
     // ✅ [추가] 수정 버튼 클릭 핸들러
     const handleEdit = useCallback((journalToEdit) => {
@@ -338,7 +359,7 @@ const JournalList = () => {
                 backgroundLocation: location, // 모달 뒤에 현재 페이지를 배경으로 유지합니다.
             }
         });
-    }, [navigate, location]); // navigate와 location이 변경될 때만 함수를 재생성합니다.
+    }, [navigate, location]);
 
     // ✅ [추가] 이미지 클릭 시 모달을 여는 함수
     const handleImageClick = useCallback((imageUrl) => {
