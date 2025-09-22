@@ -1,4 +1,4 @@
-import React, {useState, useRef, useMemo} from "react";
+import React, {useState, useRef, useMemo, useEffect} from "react";
 import ReactDOM from "react-dom";
 import {
     CalendarWrapper,
@@ -43,8 +43,9 @@ export default function FullCalendarExample() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // 일기 팝오버 상태 관리
-    const {hasJournal, getJournal, deleteJournal} = useJournal();
+    const {
+        hasJournal, getJournal, deleteJournal, getJournalById
+    } = useJournal();
     const [diaryPopover, setDiaryPopover] = useState({
         visible: false,
         date: null,
@@ -52,6 +53,58 @@ export default function FullCalendarExample() {
         left: 0,
     });
     const popoverHideTimer = useRef(null);
+    const actionHandledRef = useRef(false); // New ref
+
+    useEffect(() => {
+        if (!location.state?.action) return;
+
+        const {action, ...restState} = location.state;
+
+        // 루프를 유발하는 action을 제거한 깨끗한 backgroundLocation을 생성합니다.
+        const cleanBackgroundLocation = {
+            ...location,
+            state: restState,
+        };
+
+        // 현재 히스토리의 state를 깨끗한 버전으로 교체합니다.
+        navigate(location.pathname, {state: restState, replace: true});
+
+        const handleAction = async () => {
+            if (action === 'openJournalModal') {
+                const dateFromState = restState?.date;
+                navigate("/journal/write", {
+                    state: {
+                        backgroundLocation: cleanBackgroundLocation, // 깨끗한 location 전달
+                        selectedDate: dateFromState ? new Date(dateFromState) : new Date(),
+                    },
+                });
+            } else if (action === 'openJournalViewModal') {
+                const {journalId, openCommentSection} = restState; // openCommentSection 추가
+                if (journalId) {
+                    try {
+                        const journalData = await getJournalById(journalId);
+                        if (journalData) {
+                            navigate(`/journals/${journalId}`, {
+                                state: {
+                                    backgroundLocation: cleanBackgroundLocation,
+                                    journalData: {
+                                        ...journalData,
+                                        openCommentSection: openCommentSection, // openCommentSection 전달
+                                    },
+                                },
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Error fetching journal by ID:", error);
+                        alert("일기 정보를 불러오는 데 실패했습니다.");
+                    }
+                }
+            }
+        };
+
+        handleAction();
+
+    }, [location, navigate, getJournalById]);
 
     // ✅ [수정] 타임존 문제 방지를 위해 Date 객체를 'YYYY-MM-DD'로 직접 변환합니다.
     const formatDate = (date) => {

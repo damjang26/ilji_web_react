@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { Modal, Tabs, List, Avatar, Button, message, Input } from "antd";
+import React, {useState, useEffect, useCallback} from "react";
+import {useNavigate} from "react-router-dom";
+import {Modal, Tabs, List, Avatar, Button, message, Input} from "antd";
 import {
     getFollowingList,
     getFollowersList,
@@ -8,14 +8,15 @@ import {
     unfollowUser,
     searchUsers,
 } from "../../api";
-import { useAuth } from "../../AuthContext";
-import { useDebounce } from "../../hooks/useDebounce";
+import {useAuth} from "../../AuthContext";
+import {useDebounce} from "../../hooks/useDebounce";
+import {useUserActions} from "../../hooks/useUserActions.js"; // ✅ [추가] 커스텀 훅 임포트
 
-const { Search } = Input;
+const {Search} = Input;
 
-export default function FriendManagementModal({ open, onClose, initialTab, targetUserId }) {
+export default function FriendManagementModal({open, onClose, initialTab, targetUserId}) {
     const navigate = useNavigate();
-    const { user: loggedInUser, following: myFollowing, fetchMyFollowing } = useAuth();
+    const {user: loggedInUser, following: myFollowing, fetchMyFollowing} = useAuth();
 
     const [activeTab, setActiveTab] = useState(initialTab);
     const [followingList, setFollowingList] = useState([]);
@@ -76,6 +77,11 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
         }
     }, [debouncedSearchTerm]);
 
+
+    // ✅ [수정] 커스텀 훅을 사용하여 액션 함수들을 가져옵니다.
+    // 액션 완료 후 `fetchLists`를 호출하여 현재 모달의 목록을 새로고침합니다.
+    // const { handleFollow, handleUnfollow, handleProfileClick } = useUserActions(() => fetchLists(targetUserId));
+
     const handleFollow = async (userToFollowId) => {
         try {
             await followUser(userToFollowId);
@@ -107,6 +113,7 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
         navigate(`/mypage/${userId}`);
     };
 
+
     const getUniqueUsers = (users) => {
         if (!Array.isArray(users)) return [];
         const seen = new Set();
@@ -122,7 +129,7 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
             loading={loading || isSearching}
             itemLayout="horizontal"
             dataSource={getUniqueUsers(users)}
-            locale={{ emptyText: "표시할 사용자가 없습니다." }}
+            locale={{emptyText: "표시할 사용자가 없습니다."}}
             renderItem={(item) => {
                 // Add a safeguard to prevent runtime errors if myFollowing is not yet an array
                 const isFollowing = Array.isArray(myFollowing)
@@ -133,10 +140,13 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
                     return (
                         <List.Item key={item.userId}>
                             <List.Item.Meta
-                                avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}
-                                                onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }} />
+                                avatar={<Avatar
+                                    src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}
+                                    onClick={() => handleProfileClick(item.userId, onClose)}
+                                    style={{cursor: 'pointer'}}/>
                                 }
-                                title={<a onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }}>{item.name} (나)</a>}
+                                title={<a onClick={() => handleProfileClick(item.userId, onClose)}
+                                          style={{cursor: 'pointer'}}>{item.name} (나)</a>}
                                 description={item.email}
                             />
                         </List.Item>
@@ -155,10 +165,12 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
                         ]}
                     >
                         <List.Item.Meta
-                            avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}
-                                            onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }}/>
+                            avatar={<Avatar
+                                src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}
+                                onClick={() => handleProfileClick(item.userId, onClose)} style={{cursor: 'pointer'}}/>
                             }
-                            title={<a onClick={() => handleProfileClick(item.userId)} style={{ cursor: 'pointer' }}>{item.name}</a>}
+                            title={<a onClick={() => handleProfileClick(item.userId, onClose)}
+                                      style={{cursor: 'pointer'}}>{item.name}</a>}
                             description={item.email}
                         />
                     </List.Item>
@@ -177,7 +189,7 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
                         placeholder="닉네임 또는 이메일로 검색"
                         onSearch={(value) => setSearchTerm(value)}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ marginBottom: 20 }}
+                        style={{marginBottom: 20}}
                         enterButton
                         loading={isSearching}
                     />
@@ -205,7 +217,7 @@ export default function FriendManagementModal({ open, onClose, initialTab, targe
             footer={null}
             width={400}
         >
-            <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} centered />
+            <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} centered/>
         </Modal>
     );
 }

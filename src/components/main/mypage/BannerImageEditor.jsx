@@ -12,16 +12,16 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
     const cropperRef = useRef(null);
     const fileInputRef = useRef(null);
 
-    // 1. 모달이 열릴 때 파일 선택창을 자동 열기
-    useEffect(() => {
-        if (isOpen) {
-            // 이전 상태 초기화 후 파일 선택
-            setImageSrc(null);
-            fileInputRef.current?.click();
-        }
-    }, [isOpen]);
+    //  모달이 열릴 때 파일 선택창을 자동 열기(임시 제거)
+    // useEffect(() => {
+    //     if (isOpen) {
+    //         // 이전 상태 초기화 후 파일 선택
+    //         setImageSrc(null);
+    //         fileInputRef.current?.click();
+    //     }
+    // }, [isOpen]);
 
-    // 2. 사용자가 파일을 선택했을 때 처리
+    // 1. 사용자가 파일을 선택했을 때 처리
     const handleFileChange = (e) => {
         const file = e.target.files?.[0];
         if (!file) {
@@ -40,7 +40,7 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
     // '이미지 선택' 버튼을 누르면 숨겨진 파일 입력을 다시 트리거
     const handleUploadButtonClick = () => fileInputRef.current?.click();
 
-    // 3. '적용' 버튼을 눌렀을 때 이미지를 잘라 부모에게 전달
+    // 2. '적용' 버튼을 눌렀을 때 이미지를 잘라 부모에게 전달
     const handleCrop = () => {
         const cropper = cropperRef.current?.cropper;
         if (typeof cropper === 'undefined') {

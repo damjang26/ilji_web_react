@@ -23,9 +23,9 @@ export const ModalContainer = styled.div`
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
     /* ✅ [수정] variant에 따라 width와 max-width를 동적으로 설정합니다. */
     width: ${(props) => (props.variant === 'journalView' ? 'auto' : '90%')};
-    max-width: ${(props) => {
+        max-width: ${(props) => {
         if (props.variant === 'journalView') return 'none'; // '책' 레이아웃일 때는 최대 너비 제한 없음
-        if (props.isFabricStep) return "900px";
+        if (props.$isFabricStep) return "900px";
         return "600px"; // 기본 모달의 최대 너비
     }};
     display: flex;

@@ -49,6 +49,8 @@ const iconByType = (type) => {
             return <CalendarOutlined />;
         case "DIARY_REMINDER":
             return <BellOutlined />;
+        case "FOLLOW_JOURNAL_CREATED": // Add this case
+            return <BookOutlined />;
         default:
             return <BellOutlined />;
     }
@@ -77,6 +79,7 @@ export default function NotificationsPanel({
    items = [],
    onMarkAllRead,
    onDeleteAll,
+   onItemClick, // ✅ 전체 아이템 클릭 핸들러
    onItemRead,
    onItemDelete,
 }) {
@@ -103,14 +106,9 @@ export default function NotificationsPanel({
                     {items.map((it) => {
                         const unread = it.status === "NEW";
                         return (
-                            <NotiItem key={it.id} unread={unread} role="listitem">
+                            <NotiItem key={it.id} $unread={unread} role="listitem">
                                 <ItemMain
-                                    href={it.linkUrl || "#"}
-                                    onClick={() => {
-                                        if (it.status === "NEW") {
-                                            onItemRead && onItemRead(it.id);
-                                        }
-                                    }}
+                                    onClick={() => onItemClick && onItemClick(it)}
                                 >
                                     <ItemIcon>
                                         {iconByType(it.type)}

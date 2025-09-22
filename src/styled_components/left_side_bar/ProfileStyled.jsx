@@ -19,8 +19,8 @@ export const ProfileImageArea = styled.div`
 // '검색', '...' 아이콘을 감싸는 컨테이너
 export const IconContainer = styled.div`
   position: absolute; /* 부모(ProfileContainer)를 기준으로 위치를 자유롭게 지정 */
-  top: -15px; /* ProfileContainer의 상단 padding과 동일하게 설정 */
-  right: -5px; /* 오른쪽 여백 */
+  top: 10px; /* ProfileContainer의 상단 padding과 동일하게 설정 */
+  left: 10px; /* 왼쪽 여백 */
   display: flex;
   align-items: center;  
   gap: 12px; /* 아이콘 사이의 간격 */

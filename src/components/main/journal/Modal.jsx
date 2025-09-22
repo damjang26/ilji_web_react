@@ -34,7 +34,7 @@ const Modal = ({isOpen, onClose, children, isFabricStep = false, variant}) => {
     return ReactDOM.createPortal(
         <ModalBackdrop onMouseDown={handleBackdropMouseDown}>
             {/* 이제 백드롭의 onMouseDown에서만 닫기 로직을 처리하므로, 컨테이너의 stopPropagation은 필요 없습니다. */}
-            <ModalContainer isFabricStep={isFabricStep} variant={variant}>{children}</ModalContainer>
+            <ModalContainer $isFabricStep={isFabricStep} variant={variant}>{children}</ModalContainer>
         </ModalBackdrop>,
         document.body
     );
