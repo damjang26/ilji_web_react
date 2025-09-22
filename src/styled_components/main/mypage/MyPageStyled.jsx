@@ -98,6 +98,24 @@ export const UserActions = styled.div`
     display: flex;
     align-items: center;
     gap: 20px; /* 액션 아이템들 사이의 간격 */
+    flex-wrap: wrap; /* 화면이 좁아지거나 버튼이 많아지면 줄바꿈 처리 */
+
+    /* UserActions 내부의 모든 button에 대한 공통 스타일 */
+    button {
+        display: flex; /* 버튼 안의 아이콘과 텍스트를 정렬하기 위함 */
+        align-items: center;
+        gap: 6px; /* 아이콘과 텍스트 사이의 간격 */
+        padding: 8px 16px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: #fff;
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        &:hover {
+            background-color: #f8f9fa;
+        }
+    }
 `;
 
 // 탭 메뉴를 감싸는 컨테이너

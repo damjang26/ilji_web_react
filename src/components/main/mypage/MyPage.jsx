@@ -195,12 +195,12 @@ const MyPage = () => {
             >
               좋아요
             </Tab>
-            {/*<Tab*/}
-            {/*  $active={activeTab === "feature3"}*/}
-            {/*  onClick={() => setActiveTab("feature3")}*/}
-            {/*>*/}
-            {/*  구독*/}
-            {/*</Tab>*/}
+            <Tab
+              $active={activeTab === "feature3"}
+              onClick={() => setActiveTab("feature3")}
+            >
+              구독
+            </Tab>
           </TabMenuContainer>
           <FeatureContent>
             {/* [수정] JournalList를 JournalProvider로 감싸고 userId를 전달합니다. */}
