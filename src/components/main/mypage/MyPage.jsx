@@ -9,6 +9,7 @@ import {
     FeatureContent,
     HeaderContent,
     ImgWrapper,
+    BannerImage, // [추가] BannerImage 컴포넌트를 import 합니다.
     MyPageContainer,
     MyPageHeader,
     MypageImg,
@@ -41,8 +42,16 @@ const MyPage = () => {
         loading,
         error,
         updateProfile,
-        handleEdit,
+        // [수정] handleEdit 함수를 MyPage.jsx에서 직접 구현합니다.
+        // handleEdit,
+        setIsEditing, // MyPageContext에서 isEditing 상태를 직접 제어하는 함수를 가져옵니다.
     } = useMyPage();
+
+    // [추가] 정보 수정 버튼 클릭 시 상태를 변경하고, 현재 프로필 정보를 localStorage에 저장합니다.
+    const handleEdit = () => {
+        localStorage.setItem('editingProfile', JSON.stringify(profile));
+        setIsEditing(true);
+    };
 
     // [수정] isOwner와 isFollowing을 AuthContext와 useParams를 기반으로 계산합니다.
     const isOwner = !userId || (loggedInUser && loggedInUser.id.toString() === userId);
@@ -109,9 +118,14 @@ const MyPage = () => {
 
     // BannerImageEditor에서 편집 완료 후
     const handleBannerCropComplete = useCallback(
-        async (croppedFile) => {
-            // updateProfile 호출 시 파일 정보만 전달합니다.
-            await updateProfile({}, {bannerImageFile: croppedFile});
+        async (croppedFile, yPosition) => {
+            // [수정] BannerImageEditor가 이제 완성된 이미지를 생성하므로,
+            // yPosition은 항상 0으로 고정하여 저장합니다.
+            // 파일 정보(두 번째 인자)에는 bannerImageFile을 전달합니다.
+            await updateProfile(
+                { bannerPositionY: 0 }, // 위치 조정값은 0
+                { bannerImageFile: croppedFile } // 완성된 이미지 파일
+            );
             setIsBannerEditorOpen(false);
         },
         [updateProfile]
@@ -123,15 +137,13 @@ const MyPage = () => {
     if (!loading && !profile) return <div>프로필 정보가 없습니다.</div>;
     return (
         <MyPageContainer>
-            {/* 클릭 가능한 배경 배너 */}
             <MypageImg
-                style={{
-                    backgroundImage: `url(${profile.bannerImage || ""})`,
-                }}
-                // [수정] isOwner일 때만 커서 포인터를 적용합니다.
                 onClick={isOwner ? () => handleImageClick("bannerImage") : undefined}
                 $isOwner={isOwner}
-            />
+            >
+                {/* [수정] MypageImg 내부에 BannerImage를 렌더링합니다. */}
+                {profile.bannerImage && <BannerImage src={profile.bannerImage} yPosition={profile.bannerPositionY} alt="배너 이미지" />}
+            </MypageImg>
             <ContentBox>
                 <MyPageHeader>
                     {/* 클릭 가능한 프로필 이미지 */}

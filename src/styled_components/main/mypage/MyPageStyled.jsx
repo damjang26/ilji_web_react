@@ -12,15 +12,25 @@ export const MyPageContainer = styled.div`
 export const MypageImg = styled.div`
     height: 250px; /* 헤더,메인 박스가 겹칠 수 있도록 높이 확보 */
     margin: -40px 0 0; /* 부모의 여백 무시, 좌우 채우기*/
-    width: 100%;
-    background-color: #e9ecef; /* 임시 배경색 */
+    width: 100%;    
     flex-shrink: 0; /* 컨테이너 크기 유지. */
-    z-index: 0; /* 가장 낮은 레이어에 위치 */
+    z-index: 0;
+    overflow: hidden; /* [추가] 컨테이너를 벗어나는 이미지를 숨깁니다. */
+    position: relative; /* [추가] 자식 img의 위치 기준점이 됩니다. */
+    background-color: #e9ecef; /* 이미지가 없을 때를 위한 배경색 */
+    cursor: ${props => (props.$isOwner ? 'pointer' : 'default')};
+`;
 
-    /* 나중에 사용자가 설정한 커버(배경) 이미지를 넣을 때 사용 */
-    /* background-image: url(이미지 주소); */
-    /* background-size: cover; */
-    /* background-position: center; */
+// [신규 추가] MypageImg 내부에 위치할 실제 이미지 태그
+export const BannerImage = styled.img`
+    width: 100%;
+    /* [수정] height를 100%보다 약간 크게 설정하여, 좌우 여백 없이 채우면서도 위아래 잘림을 최소화합니다. */
+    /* 110% ~ 130% 사이에서 가장 보기 좋은 값으로 조절해보세요. */
+    height: 110%;
+    /* [핵심] cover와 동일한 효과를 내지만, y축 위치 조정이 가능합니다. */
+    object-fit: cover; 
+    /* yPosition prop을 받아 이미지의 수직 위치를 정밀하게 조정합니다. */
+    object-position: center ${props => props.yPosition || 10}%;
 `;
 
 // 헤더, 메인을 감싸서 이미지 위에 띄울 박스 컨테이너
@@ -35,7 +45,6 @@ export const ContentBox = styled.div`
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 내부 컨텐츠(헤더, 메인) 배치 */
     display: flex;
     flex-direction: column;
-    ㄴ
     flex-grow: 1; /* 남은 세로 공간을 모두 차지 */
 `;
 
