@@ -47,6 +47,10 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
             return;
         }
 
+        // [해결책] '적용' 버튼을 누르는 순간, 크롭 박스를 아래로 1px 이동시켜
+        // CSS와 라이브러리 간의 미세한 계산 오차를 보정합니다.
+        cropper.move(0, 20); // X축(좌우)은 0, Y축(상하)은 1px 아래로 이동
+
         cropper.getCroppedCanvas().toBlob((blob) => {
             if (blob) {
                 // 잘린 이미지를 'banner.jpg'라는 이름의 File 객체로 제작

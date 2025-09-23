@@ -142,8 +142,11 @@ export const ImageEditorContainer = styled.div`
 
 export const CropArea = styled.div`
     width: 100%;
-    height: 450px; /* 자르기 UI의 높이를 고정합니다. */
+    /* height: 450px; */ /* aspect-ratio 사용 시 고정 높이는 불필요할 수 있습니다. */
     background-color: #2c2c2c; /* 어두운 배경색으로 이미지를 돋보이게 합니다. */
+
+    /* [복구] 컨테이너 자체의 비율을 3:1로 강제하여 크롭 정확도 향상 */
+    aspect-ratio: 3 / 1;
 
     /* react-cropper가 생성하는 컨테이너가 부모 영역을 꽉 채우도록 합니다. */
 
