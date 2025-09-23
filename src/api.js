@@ -149,6 +149,37 @@ export const getPostLikers = (ilogId) => api.get(`/api/ilogs/${ilogId}/like`);
  */
 export const getUserJournals = (userId) => api.get(`/api/i-log/user/${userId}`);
 
+/**
+ * [신규] 특정 사용자의 일기 목록을 페이지네이션과 정렬 옵션을 적용하여 조회합니다.
+ * @param {object} params - { userId, page, size, sortBy }
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const getPagedJournals = (params) => {
+    // 예: /api/i-log/user/123?page=0&size=10&sort=logDate,desc
+    const { userId, page, size, sortBy } = params;
+
+    let sortQuery;
+    switch (sortBy) {
+        case 'popular':
+            sortQuery = 'likeCount,desc';
+            break;
+        case 'oldest':
+            sortQuery = 'logDate,asc';
+            break;
+        case 'latest':
+        default:
+            sortQuery = 'logDate,desc';
+            break;
+    }
+
+    return api.get(`/api/i-log/user/${userId}`, {
+        params: {
+            page,
+            size,
+            sort: sortQuery,
+        },
+    });
+};
 
 /**
  * 특정 사용자가 '좋아요'를 누른 일기 목록을 조회합니다.

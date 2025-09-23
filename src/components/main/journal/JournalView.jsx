@@ -19,7 +19,7 @@ import {
     SideActionTabsContainer,
     SideActionTab,
     CommentContainer, CommentTitleContainer,
-    CommentContentWrapper,
+    CommentContentWrapper, JournalDate,
     CommentHeader,
     CommentList,
     CommentInputContainer, CommentTitle, HideButton,
@@ -28,7 +28,7 @@ import {
 } from '../../../styled_components/main/journal/JournalViewStyled';
 import {HiPencilAlt} from "react-icons/hi";
 import {MdDeleteForever} from "react-icons/md";
-import {ActionItem, LikeCountSpan} from "../../../styled_components/main/post/PostListStyled.jsx";
+import {ActionItem, EmptyComment, LikeCountSpan} from "../../../styled_components/main/post/PostListStyled.jsx";
 import {FaChevronLeft, FaChevronRight, FaRegHeart} from "react-icons/fa";
 import {useAuth} from "../../../AuthContext.jsx";
 import {BiSolidShareAlt} from "react-icons/bi";
@@ -41,8 +41,8 @@ const JournalView = () => {
     const navigate = useNavigate(); // ✅ 페이지 이동을 위해 useNavigate 훅을 사용합니다.
     const location = useLocation(); // ✅ 모달 네비게이션의 배경 위치를 위해 추가합니다.
 
-    // ✅ [수정] API 호출 없이 location.state에서만 데이터를 가져옵니다.
-    const journal = location.state?.journalData;
+    // ✅ [수정] location.state의 데이터를 useState로 관리하여 업데이트가 가능하도록 합니다.
+    const [journal, setJournal] = useState(location.state?.journalData);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
 
@@ -74,6 +74,23 @@ const JournalView = () => {
     const [currentPostId, setCurrentPostId] = useState(null);
     const [isLikersLoading, setIsLikersLoading] = useState(false);
 
+    const spring = "/images/spring_binder.png";
+
+    // ✅ [추가] 'journal:updated' 이벤트를 감지하여 현재 뷰의 데이터를 업데이트합니다.
+    useEffect(() => {
+        const handleJournalUpdate = (event) => {
+            const { updatedJournal } = event.detail;
+            // 수정된 일기가 현재 보고 있는 일기와 동일한 경우에만 상태를 업데이트합니다.
+            if (updatedJournal && journal && updatedJournal.id === journal.id) {
+                // 기존 journal 데이터에 수정된 데이터를 덮어씁니다.
+                setJournal(prevJournal => ({ ...prevJournal, ...updatedJournal }));
+            }
+        };
+
+        window.addEventListener('journal:updated', handleJournalUpdate);
+        // 컴포넌트가 언마운트될 때 이벤트 리스너를 정리합니다.
+        return () => window.removeEventListener('journal:updated', handleJournalUpdate);
+    }, [journal]); // journal이 변경될 때마다 리스너를 재등록하여 최신 journal.id를 참조하도록 합니다.
 
     // ✅ [신규] 날짜를 'MONTH DAY, YEAR' 형식으로 포맷팅합니다. (예: JAN 01, 2024)
     const formattedDate = useMemo(() => {
@@ -191,20 +208,21 @@ const JournalView = () => {
                         <CommentTitleContainer>
                             <CommentTitle>comments({comments.length})</CommentTitle>
                             <SortOption active={commentSortBy === 'likes'}
-                                        onClick={() => setCommentSortBy('likes')}>인기순</SortOption>
+                                        onClick={() => setCommentSortBy('likes')}>Popular</SortOption>
                             <SortOption active={commentSortBy === 'recent'}
-                                        onClick={() => setCommentSortBy('recent')}>최신순</SortOption>
+                                        onClick={() => setCommentSortBy('recent')}>New</SortOption>
                         </CommentTitleContainer>
                         <HideButton onClick={toggleCommentView}>Hide</HideButton>
                     </CommentHeader>
                     <CommentList>
                         {comments.length > 0 ?
                             comments.map(comment => <div key={comment.commentId}>{comment.content}</div>)
-                            : <p>아직 댓글이 없습니다.</p>}
+                            : <EmptyComment>💬 No comments yet. <br/>
+                                Be the first to leave one!</EmptyComment>}
                     </CommentList>
                     <CommentInputContainer>
                         <ProfilePicture
-                            src={user?.profileImage || 'https://via.placeholder.com/40'}
+                            src={user?.picture || 'https://via.placeholder.com/40'}
                             alt="내 프로필"
                             referrerPolicy="no-referrer"
                         />
@@ -254,7 +272,7 @@ const JournalView = () => {
                             <button><FaRegHeart/></button>
                         </ActionItem>
                     </ProfileSection>
-                    <h3>{formattedDate}</h3>
+                    <JournalDate>{formattedDate}</JournalDate>
                     <ContentSection>
                         <p>{journal.content}</p>
                     </ContentSection>
@@ -325,11 +343,10 @@ const JournalView = () => {
                                 <button><FaRegHeart/></button>
                             </ActionItem>
                         </ProfileSection>
-                        <h3>{formattedDate}</h3>
+                        <JournalDate>{formattedDate}</JournalDate>
                         <ContentSection>
                             <p>{journal.content}</p>
                         </ContentSection>
-                        {/* ✅ [수정] 클릭 시 댓글 창을 토글하고, 상태에 따라 다른 내용을 보여줍니다. */}
                         {renderCommentSection()}
                     </ContentContainer>
                 </BookLayoutContainer>

@@ -19,6 +19,10 @@ export const JournalProvider = ({children, userId}) => {
     // 나중에 조회 기능을 구현하면, 이 상태는 API를 통해 불러온 데이터로 채워집니다.
     const [journals, setJournals] = useState(new Map());
     const [loading, setLoading] = useState(true);
+    // ✅ [신규] 캘린더에 현재 보여지는 날짜 범위를 관리하는 상태
+    // { start: 'YYYY-MM-DD', end: 'YYYY-MM-DD' } 형태
+    const [visibleDateRange, setVisibleDateRange] = useState(null);
+
     const [error, setError] = useState(null);
     const {user} = useAuth(); // 인증 컨텍스트에서 사용자 정보를 가져옵니다.
 
@@ -26,8 +30,9 @@ export const JournalProvider = ({children, userId}) => {
     // [수정] user 또는 조회 대상 userId가 변경될 때 이 useEffect가 실행됩니다.
     useEffect(() => {
         const fetchJournals = async () => {
-            // [수정] 조회 대상이 '나'인데 로그인을 안했으면 데이터를 비우고 종료합니다.
-            if (!userId && !user) {
+            // ✅ [수정] 사용자 정보나, 조회할 날짜 범위가 없으면 API를 호출하지 않습니다.
+            // 조회 대상이 '나'인데 로그인을 안했거나, 날짜 범위가 설정되지 않았으면 종료합니다.
+            if ((!userId && !user) || !visibleDateRange) {
                 setJournals(new Map());
                 setLoading(false);
                 return;
@@ -36,20 +41,33 @@ export const JournalProvider = ({children, userId}) => {
             setLoading(true);
             setError(null);
             try {
+                // ✅ [신규] API 요청 시 보낼 쿼리 파라미터 설정
+                const params = {
+                    startDate: visibleDateRange.start,
+                    endDate: visibleDateRange.end,
+                };
+
                 let response;
-                // [수정] userId가 있으면 친구의 일기를, 없으면 내 일기를 조회합니다.
+                // ✅ [수정] userId 유무에 따라 다른 엔드포인트를 호출하고, 날짜 범위 파라미터를 함께 전달합니다.
                 if (userId) {
-                    response = await getUserJournals(userId);
+                    response = await getUserJournals(userId, { params });
                 } else {
-                    response = await api.get('/api/i-log');
+                    response = await api.get('/api/i-log', { params });
                 }
 
                 const userJournals = response.data; // [{...}, {...}] 형태의 배열
+                console.log("일기 데이터", userJournals);
 
                 // 배열을 Map으로 변환하여 상태를 업데이트합니다. key는 날짜, value는 일기 객체입니다.
                 // ✅ [수정] 백엔드 응답 필드명 변경에 따라 'ilogDate'를 'logDate'로 수정합니다.
                 const journalsMap = new Map(userJournals.map(j => [j.logDate.split('T')[0], j]));
-                setJournals(journalsMap);
+
+                // ✅ [개선] 기존 데이터를 덮어쓰지 않고, 새로 불러온 데이터를 '병합'합니다.
+                setJournals(prevJournals => {
+                    const newJournals = new Map(prevJournals);
+                    journalsMap.forEach((value, key) => newJournals.set(key, value));
+                    return newJournals;
+                });
             } catch (err) {
                 console.error("일기 목록 로딩 실패:", err);
                 setError(err);
@@ -60,7 +78,7 @@ export const JournalProvider = ({children, userId}) => {
         };
 
         fetchJournals();
-    }, [user, userId]); // [수정] user 또는 userId가 변경될 때마다 이 로직을 다시 실행합니다.
+    }, [user, userId, visibleDateRange]); // ✅ [수정] user, userId 또는 '날짜 범위'가 변경될 때마다 이 로직을 다시 실행합니다.
 
     /**
      * 서버에 새로운 일기를 생성하는 함수 (이미지 업로드 포함)
@@ -68,7 +86,7 @@ export const JournalProvider = ({children, userId}) => {
      */
         // ✅ [수정] 백엔드에서 이미지와 데이터를 한번에 처리하도록 로직 변경
     const createJournalEntry = useCallback(async (journalPayload) => {
-            const {images, content, logDate, isPrivate} = journalPayload;
+            const {images, content, logDate, visibility} = journalPayload;
 
             // --- 1단계: 서버에 보낼 FormData 객체 생성 ---
             const formData = new FormData();
@@ -87,7 +105,7 @@ export const JournalProvider = ({children, userId}) => {
                 writerId: user.id,
                 logDate: new Date(logDate).toISOString().split('T')[0], // ✅ [수정] DTO 필드명 'logDate'에 맞춤
                 content: content,
-                visibility: isPrivate ? 2 : 0,
+                visibility: visibility, // ✅ [수정] isPrivate 대신 visibility 값을 직접 사용
             };
 
             // JSON 객체를 Blob으로 변환하여 "request" 키로 추가합니다.
@@ -119,7 +137,7 @@ export const JournalProvider = ({children, userId}) => {
      * @param {object} journalPayload - { images, content, isPrivate, user }
      */
     const updateJournalEntry = useCallback(async (logId, journalPayload) => {
-        const {images, content, isPrivate} = journalPayload;
+        const {images, content, visibility} = journalPayload;
 
         const formData = new FormData();
 
@@ -138,7 +156,7 @@ export const JournalProvider = ({children, userId}) => {
 
         const requestData = {
             content: content,
-            visibility: isPrivate ? 2 : 0,
+            visibility: visibility, // ✅ [수정] isPrivate 대신 visibility 값을 직접 사용
             existingImageUrls: existingImageUrls, // ✅ 백엔드에 유지할 이미지 URL 목록 전달
         };
 
@@ -162,23 +180,32 @@ export const JournalProvider = ({children, userId}) => {
         return updatedJournalEntry;
     }, [user]);
 
-    const deleteJournal = useCallback(async (logId, date) => {
+    // ✅ [수정] onUpdate 콜백을 받아 다른 컴포넌트의 상태도 갱신할 수 있도록 수정
+    const deleteJournal = useCallback(async (logId, date, onUpdate) => {
         try {
             // 1. 백엔드에 삭제 요청을 보냅니다. (컨트롤러: @DeleteMapping("/{logId}"))
             await api.delete(`/api/i-log/${logId}`);
 
             // 2. 요청 성공 시, 로컬 상태(journals Map)에서도 해당 일기를 제거하여 UI를 즉시 업데이트합니다.
+            // (캘린더 뷰를 위한 업데이트)
             setJournals(prev => {
                 const newJournals = new Map(prev);
                 newJournals.delete(date);
                 return newJournals;
             });
+
+            // 3. (선택적) 외부 컴포넌트의 상태를 업데이트하기 위한 콜백 함수를 실행합니다.
+            // (PostList, JournalList를 위한 업데이트)
+            if (onUpdate) {
+                onUpdate(logId);
+            }
+
         } catch (err) {
             console.error("일기 삭제 실패:", err);
             // 컴포넌트에서 에러를 인지하고 후속 처리(예: alert)를 할 수 있도록 에러를 다시 던집니다.
             throw err;
         }
-    }, [setJournals]); // ✅ [수정] useCallback 의존성 배열에 setJournals를 추가하여 함수가 항상 최신 상태를 참조하도록 합니다.
+    }, [setJournals]);
 
     const hasJournal = useCallback((date) => journals.has(date), [journals]);
     // ✅ 특정 날짜의 일기 데이터를 가져오는 함수 추가
@@ -205,6 +232,7 @@ export const JournalProvider = ({children, userId}) => {
         hasJournal,
         getJournal,
         getJournalById, // ✅ 내보내는 값에 추가
+        setVisibleDateRange, // ✅ 캘린더 컴포넌트에서 날짜 범위를 설정할 수 있도록 함수를 내보냅니다.
     };
 
     return (

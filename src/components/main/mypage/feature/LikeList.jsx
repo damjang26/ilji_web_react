@@ -60,6 +60,24 @@ const LikeList = () => {
         }
     }, [inView, hasMore, loading, fetchPosts]);
 
+    // ✅ [추가] 'journal:updated' 전역 이벤트를 감지하여, 목록의 해당 항목을 즉시 업데이트합니다.
+    // 이렇게 하면 전체 목록을 다시 불러오는 API 호출 없이도 수정된 내용이 바로 반영됩니다.
+    useEffect(() => {
+        const handleJournalUpdate = (event) => {
+            const { updatedJournal } = event.detail;
+            if (updatedJournal) {
+                setPosts(prevPosts =>
+                    prevPosts.map(p =>
+                        p.id === updatedJournal.id ? updatedJournal : p
+                    )
+                );
+            }
+        };
+
+        window.addEventListener('journal:updated', handleJournalUpdate);
+        return () => window.removeEventListener('journal:updated', handleJournalUpdate);
+    }, []); // 의존성 배열이 비어있으므로, 컴포넌트가 마운트될 때 한 번만 리스너를 등록합니다.
+
     return (
         <div>
             <SortOptionsContainer>
