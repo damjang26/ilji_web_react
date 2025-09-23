@@ -1,5 +1,7 @@
 import {Link, useParams} from "react-router-dom"; // [추가] useParams import
 import React, {useState, useCallback, useEffect} from "react";
+import { EllipsisOutlined } from "@ant-design/icons"; // [추가] antd 아이콘
+import { Dropdown } from "antd"; // [추가] antd 드롭다운
 import ImageBox from "./ImageBox";
 import BannerImageEditor from "./BannerImageEditor.jsx";
 import {followUser, unfollowUser} from "../../../api"; // [추가]
@@ -10,6 +12,7 @@ import {
     HeaderContent,
     ImgWrapper,
     BannerImage, // [추가] BannerImage 컴포넌트를 import 합니다.
+    IconContainer, // [추가] 아이콘을 감싸는 컨테이너
     MyPageContainer,
     MyPageHeader,
     MypageImg,
@@ -17,6 +20,8 @@ import {
     ProfileImage,
     Tab,
     TabMenuContainer,
+    StatsGroup, // [추가]
+    ButtonGroup, // [추가]
     UserActions,
     ContentBox,
     UserInfo,
@@ -36,7 +41,7 @@ import LikeList from "./feature/LikeList.jsx"; // Import the component to switch
 const MyPage = () => {
     const {userId} = useParams(); // [추가] URL에서 userId를 가져옵니다.
     // [수정] AuthContext에서 전역 상태를 가져옵니다.
-    const {user: loggedInUser, following: myFollowing, fetchMyFollowing} = useAuth();
+    const {user: loggedInUser, following: myFollowing, fetchMyFollowing, logout} = useAuth(); // [수정] logout 함수 가져오기
     const {
         profile,
         loading,
@@ -46,6 +51,19 @@ const MyPage = () => {
         // handleEdit,
         setIsEditing, // MyPageContext에서 isEditing 상태를 직접 제어하는 함수를 가져옵니다.
     } = useMyPage();
+
+    // [추가] 드롭다운 메뉴 아이템 정의
+    const menuItems = [
+        { key: "logout", label: "로그아웃" },
+        // 다른 메뉴 아이템 추가 가능
+    ];
+
+    // [추가] 드롭다운 메뉴 클릭 핸들러
+    const handleMenuClick = ({ key }) => {
+        if (key === "logout") {
+            logout();
+        }
+    };
 
     // [추가] 정보 수정 버튼 클릭 시 상태를 변경하고, 현재 프로필 정보를 localStorage에 저장합니다.
     const handleEdit = () => {
@@ -167,30 +185,46 @@ const MyPage = () => {
                             )}
                             <div>{profile.bio || ""}</div>
                         </UserInfo>
+
                         <UserActions>
-                            <div>post</div>
-                            <div
-                                onClick={() => handleFriendModalOpen("following")}
-                                style={{cursor: "pointer"}}
-                            >
-                                follow
-                            </div>
-                            <div
-                                onClick={() => handleFriendModalOpen("followers")}
-                                style={{cursor: "pointer"}}
-                            >
-                                follower
-                            </div>
-                            {/* [수정] isOwner 값에 따라 다른 버튼을 렌더링합니다. */}
+                            {/* [수정] isOwner에 따라 다른 버튼 그룹을 렌더링 */}
                             {isOwner ? (
-                                // 내 페이지일 경우 '정보수정' 버튼을 보여줍니다.
-                                <button onClick={handleEdit}>정보수정</button>
+                                // 내 페이지일 경우
+                                <ButtonGroup>
+                                    <button onClick={handleEdit}>정보수정</button>
+                                    <IconContainer>
+                                        <Dropdown
+                                            menu={{ items: menuItems, onClick: handleMenuClick }}
+                                            trigger={["click"]}
+                                        >
+                                            <EllipsisOutlined style={{ fontSize: "20px", cursor: "pointer" }} />
+                                        </Dropdown>
+                                    </IconContainer>
+                                </ButtonGroup>
                             ) : (
                                 // 친구 페이지일 경우 '팔로우/언팔로우' 버튼을 보여줍니다.
-                                <button onClick={handleFollowToggle}>
-                                    {isFollowing ? 'following' : 'follow'}
-                                </button>
+                                <ButtonGroup>
+                                    <button onClick={handleFollowToggle}>
+                                        {isFollowing ? 'following' : 'follow'}
+                                    </button>
+                                </ButtonGroup>
                             )}
+
+                            <StatsGroup>
+                                <div>post</div>
+                                <div
+                                    onClick={() => handleFriendModalOpen("following")}
+                                    style={{cursor: "pointer"}}
+                                >
+                                    follow
+                                </div>
+                                <div
+                                    onClick={() => handleFriendModalOpen("followers")}
+                                    style={{cursor: "pointer"}}
+                                >
+                                    follower
+                                </div>
+                            </StatsGroup>
                         </UserActions>
                     </HeaderContent>
                 </MyPageHeader>

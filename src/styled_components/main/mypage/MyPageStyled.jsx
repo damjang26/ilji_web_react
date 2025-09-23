@@ -15,8 +15,8 @@ export const MypageImg = styled.div`
     width: 100%;    
     flex-shrink: 0; /* 컨테이너 크기 유지. */
     z-index: 0;
-    overflow: hidden; /* [추가] 컨테이너를 벗어나는 이미지를 숨깁니다. */
-    position: relative; /* [추가] 자식 img의 위치 기준점이 됩니다. */
+    overflow: hidden; /*  컨테이너를 벗어나는 이미지를 숨깁니다. */
+    position: relative; /*  자식 img의 위치 기준점이 됩니다. */
     background-color: #e9ecef; /* 이미지가 없을 때를 위한 배경색 */
     cursor: ${props => (props.$isOwner ? 'pointer' : 'default')};
 `;
@@ -24,13 +24,10 @@ export const MypageImg = styled.div`
 // [신규 추가] MypageImg 내부에 위치할 실제 이미지 태그
 export const BannerImage = styled.img`
     width: 100%;
-    /* [수정] height를 100%보다 약간 크게 설정하여, 좌우 여백 없이 채우면서도 위아래 잘림을 최소화합니다. */
-    /* 110% ~ 130% 사이에서 가장 보기 좋은 값으로 조절해보세요. */
     height: 110%;
-    /* [핵심] cover와 동일한 효과를 내지만, y축 위치 조정이 가능합니다. */
     object-fit: cover; 
-    /* yPosition prop을 받아 이미지의 수직 위치를 정밀하게 조정합니다. */
-    object-position: center ${props => props.yPosition || 10}%;
+    /* yPosition prop을 받아 이미지의 수직 위치를 정밀하게 조정 */
+    object-position: center ${props => props.yPosition || -5}%;
 `;
 
 // 헤더, 메인을 감싸서 이미지 위에 띄울 박스 컨테이너
@@ -63,7 +60,7 @@ export const ImageWrapper = styled.div`
     margin-left: 100px; /*이미지와 왼쪽 끝의 간격 */
     width: 90px; /* 이미지 크기를 변경 */
     height: 90px;
-    border-radius: 50%; /* 원형으로 만듭니다 */
+    border-radius: 50%; 
     overflow: hidden; /* 이미지가 컨테이너를 벗어나지 않도록 함 */
     display: flex; /* 이미지를 중앙에 배치하기 위해 */
     justify-content: center;
@@ -103,16 +100,24 @@ export const UserInfo = styled.div`
     }
 `;
 
-// 게시물, 팔로우, 정보수정 등을 묶는 컨테이너
+//  UserActions를 전체 액션 영역을 감싸는 컨테이너로 변경
 export const UserActions = styled.div`
     display: flex;
-    align-items: center;
-    gap: 20px; /* 액션 아이템들 사이의 간격 */
-    flex-wrap: wrap; /* 화면이 좁아지거나 버튼이 많아지면 줄바꿈 처리 */
+    flex-direction: column; /* 그룹들을 수직으로 쌓기 위함 */
+    align-items: flex-end; /* 그룹들을 오른쪽으로 정렬. 'flex-start'로 바꾸면 왼쪽, 'center'는 중앙 정렬. */
+    gap: 15px; /* 아래 StatsGroup과 위 ButtonGroup 사이의 수직 간격 조정 */
+`;
 
+//  '정보수정' 버튼과 '...' 아이콘을 묶는 그룹
+export const ButtonGroup = styled.div`
+    display: flex;
+    position: relative;
+    top: -50px;
+    align-items: center;
+    gap: 20px; /* '정보수정' 버튼과 '...' 아이콘 사이의 간격 조정 */
     /* UserActions 내부의 모든 button에 대한 공통 스타일 */
     button {
-        display: flex; /* 버튼 안의 아이콘과 텍스트를 정렬하기 위함 */
+        display: flex; 
         align-items: center;
         gap: 6px; /* 아이콘과 텍스트 사이의 간격 */
         padding: 8px 16px;
@@ -126,6 +131,24 @@ export const UserActions = styled.div`
             background-color: #f8f9fa;
         }
     }
+`;
+
+//  'post', 'follow', 'follower'를 묶는 그룹
+export const StatsGroup = styled.div`
+    display: flex;
+    position: relative;
+    top: -30px;
+    right: 100px; 
+    align-items: center;
+    gap: 50px; /* 'post', 'follow', 'follower' 사이의 간격 조정 */
+    font-size: 0.9rem;
+`;
+
+//  드롭다운 아이콘을 감싸는 컨테이너
+export const IconContainer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
 `;
 
 // 탭 메뉴를 감싸는 컨테이너
@@ -207,9 +230,8 @@ export const Contents = styled.div`
 `;
 
 
-// =================================
-// LikeList 정렬 옵션 관련 스타일 (신규 추가)
-// =================================
+
+// LikeList 정렬 옵션 관련 스타일
 
 export const SortOptionsContainer = styled.div`
     display: flex;

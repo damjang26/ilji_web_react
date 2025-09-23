@@ -36,12 +36,7 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
         if (typeof cropper === 'undefined') {
             return;
         }
-        
-        // [최종 해결책]
-        // 1. yPosition 계산을 모두 제거합니다.
-        // 2. getCroppedCanvas에 옵션을 주어, 실제 배너 크기에 맞는 고해상도 결과물을 만듭니다.
-        //    - width: 1200 -> 최종 배너 이미지의 너비를 1200px로 고정합니다.
-        //    - height는 aspectRatio(3/1)에 따라 자동으로 400px이 됩니다.
+
         const croppedCanvas = cropper.getCroppedCanvas({
             width: 1200, 
             imageSmoothingEnabled: true,
@@ -88,13 +83,11 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
                             autoCropArea={1}
                         />
                     ) : (
-                        // 이미지가 선택되지 않았을 때 안내 메시지를 표시
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#888' }}>
                             배너로 사용할 이미지를 선택해주세요.
                         </div>
                     )}
                 </CropArea>
-                {/* 이미지가 없을 때만 '이미지 선택' 버튼을 표시 */}
                 {!imageSrc && (
                     <ActionButtonGroup><SubmitButton onClick={handleUploadButtonClick}>이미지 선택</SubmitButton></ActionButtonGroup>
                 )}
