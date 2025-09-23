@@ -362,6 +362,7 @@ export const PostContent = styled.div`
     font-size: 14px;
     line-height: 1.5;
     color: #262626;
+    max-height: 400px; /* ✅ [추가] 내용의 최대 높이를 600px로 제한합니다. */
     flex-grow: 1; // 남은 공간을 모두 채우도록 설정
     overflow-y: auto; // 내용이 넘칠 경우 세로 스크롤 생성
     // ✅ [ 추가 ] 텍스트의 공백(스페이스) 과 줄바꿈(\\n) 을 HTML에 그대로 렌더링합니다. 
