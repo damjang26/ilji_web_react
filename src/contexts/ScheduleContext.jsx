@@ -41,18 +41,18 @@ export const useSchedule = () => {
  */
 const transformInitialDataToFormState = (initialData, user) => {
     if (!initialData) return null;
-    const startDateStr = (initialData.startStr || new Date().toISOString()).split(
-        "T"
-    )[0];
-    let endDateStr = startDateStr;
 
-    if (initialData.endStr) {
-        const inclusiveEndDate = new Date(initialData.endStr);
-        // 여러 날을 선택한 경우, FullCalendar의 종료일은 다음 날 0시이므로 하루를 빼줍니다.
-        if (initialData.startStr !== initialData.endStr) {
-            inclusiveEndDate.setDate(inclusiveEndDate.getDate() - 1);
-        }
-        endDateStr = inclusiveEndDate.toISOString().split("T")[0];
+    const isAllDay = initialData.allDay;
+    const start = new Date(initialData.startStr);
+    const end = new Date(initialData.endStr);
+
+    const toYYYYMMDD = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const toHHMM = (d) => d.toTimeString().substring(0, 5);
+
+    let endDateForInput = end;
+    // allDay:true 이면서 여러 날을 드래그한 경우, FullCalendar의 종료일은 exclusive이므로 하루를 빼줍니다.
+    if (isAllDay && initialData.startStr.split('T')[0] !== initialData.endStr.split('T')[0]) {
+        endDateForInput = new Date(end.getTime() - (1000 * 3600 * 24));
     }
 
     return {
@@ -60,11 +60,11 @@ const transformInitialDataToFormState = (initialData, user) => {
         location: "",
         tagId: null,
         description: "",
-        allDay: initialData.allDay !== undefined ? initialData.allDay : true,
-        startDate: startDateStr,
-        startTime: "09:00",
-        endDate: endDateStr,
-        endTime: "10:00",
+        allDay: isAllDay,
+        startDate: toYYYYMMDD(start),
+        startTime: isAllDay ? "09:00" : toHHMM(start),
+        endDate: toYYYYMMDD(endDateForInput),
+        endTime: isAllDay ? "10:00" : toHHMM(end),
         calendarId: user ? user.id : 1, // ✅ 반복 규칙 필드 초기화
     };
 };
@@ -470,7 +470,7 @@ export function ScheduleProvider({children}) {
 
     // 스케줄 모달 관련 함수들
     const openScheduleModal = useCallback((selectInfo, event = null) => {
-        const { startStr, endStr, jsEvent } = selectInfo;
+        const { startStr, endStr, jsEvent, allDay } = selectInfo;
         const start = new Date(startStr);
         const end = new Date(endStr);
         const diffInMs = end.getTime() - start.getTime();
@@ -479,13 +479,16 @@ export function ScheduleProvider({children}) {
         let title;
         let view;
 
-        if (event) { // Case 1: 이벤트 클릭 시
+        if (event) { // Case 1: 이벤트 클릭
             title = '일정 상세 정보';
-            view = 'list'; // ScheduleTab이 상세보기를 포함하므로, list view를 띄움
-        } else if (diffInDays > 1) { // Case 2: 여러 날 드래그
+            view = 'list';
+        } else if (allDay === false) { // Case 2: 주/일별 뷰에서 시간 선택
+            title = '새 일정';
+            view = 'form';
+        } else if (diffInDays > 1) { // Case 3: 월별 뷰에서 여러 날 드래그
             title = `새 일정`;
             view = 'form';
-        } else { // Case 3: 하루 클릭
+        } else { // Case 4: 월별 뷰에서 하루 클릭
             title = `${start.getMonth() + 1}월 ${start.getDate()}일`;
             view = 'list';
         }
