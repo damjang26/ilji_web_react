@@ -5,7 +5,7 @@ export const ChatRoomListContainer = styled.div`
     display: flex;
     flex-direction: column;
     height: 100%;
-    font-family: 'Inter', sans-serif;
+    font-family: 'GowoonDodum', sans-serif;
     position: relative; // For the FAB
 `;
 
