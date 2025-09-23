@@ -86,21 +86,24 @@ const ImageEditor = ({imageInfo, onSave, onCancel, onFabricModeChange}) => {
                         <h2>image crop</h2>
                         <PostButton onClick={handleNextStep}>next</PostButton>
                     </ModalHeader>
-                    <CropArea>
-                        <Cropper
-                            ref={cropperRef}
-                            src={imageInfo.image.preview}
-                            style={{height: '100%', width: '100%'}}
-                            viewMode={1}
-                            guides={true}
-                            background={false}
-                            responsive={true}
-                            checkOrientation={false}
-                            minCropBoxHeight={100}
-                            minCropBoxWidth={100}
-                            autoCropArea={1}
-                        />
-                    </CropArea>
+                    {/* ✅ [수정] CropArea를 ImageEditorContainer로 감싸서 비율을 유지하도록 합니다. */}
+                    <ImageEditorContainer>
+                        <CropArea>
+                            <Cropper
+                                ref={cropperRef}
+                                src={imageInfo.image.preview}
+                                style={{height: '100%', width: '100%'}}
+                                viewMode={1}
+                                guides={true}
+                                background={false}
+                                responsive={true}
+                                checkOrientation={false}
+                                minCropBoxHeight={100}
+                                minCropBoxWidth={100}
+                                autoCropArea={1}
+                            />
+                        </CropArea>
+                    </ImageEditorContainer>
                 </ImageEditorModalWrapper>
             </div>
 

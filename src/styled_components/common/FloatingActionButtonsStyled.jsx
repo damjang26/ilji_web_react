@@ -65,5 +65,31 @@ export const ActionButton = styled.button`
         transform: translateY(-${props => props.$order * 66}px) scale(1.05); /* translateY와 scale을 함께 적용 */
         /* opacity는 이미 1이므로 변경 불필요 */
     }
-`;
 
+    /* ✅ [추가] 툴팁 스타일 */
+    &::after {
+        content: attr(data-title); /* data-title 속성에서 텍스트 가져오기 */
+        position: absolute;
+        right: 115%; /* 버튼 왼쪽에 위치 */
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 4px;
+        white-space: nowrap; /* 텍스트가 줄바꿈되지 않도록 */
+        font-size: 14px;
+        font-weight: 500;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 1001; /* 다른 요소 위에 보이도록 */
+    }
+
+    /* ✅ [추가] 버튼에 마우스를 올렸을 때 툴팁 표시 */
+    &:hover::after {
+        /* $isOpen이 true일 때만 (즉, 버튼이 보일 때만) 툴팁 표시 */
+        opacity: ${props => props.$isOpen ? 1 : 0};
+        transition-delay: 0.3s; /* 툴팁이 약간 늦게 나타나도록 */
+    }
+`;

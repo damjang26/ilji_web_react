@@ -1,18 +1,17 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Modal, Tabs, List, Avatar, message, Input, Checkbox } from "antd";
+import React, {useState, useEffect, useCallback} from "react";
+import {Modal, Tabs, List, Avatar, message, Input, Checkbox} from "antd";
 import {
     getFollowingList,
     getFollowersList,
     searchUsers,
-    createChatRoom,
 } from "../../api";
-import { useAuth } from "../../AuthContext";
-import { useDebounce } from "../../hooks/useDebounce";
+import {useAuth} from "../../AuthContext";
+import {useDebounce} from "../../hooks/useDebounce";
 
-const { Search } = Input;
+const {Search} = Input;
 
-export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }) {
-    const { user: loggedInUser } = useAuth();
+export default function CreateChatRoomModal({open, onClose, onChatRoomCreated}) {
+    const {user: loggedInUser} = useAuth();
 
     const [activeTab, setActiveTab] = useState("following");
     const [followingList, setFollowingList] = useState([]);
@@ -114,7 +113,7 @@ export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }
             loading={loading || isSearching}
             itemLayout="horizontal"
             dataSource={getUniqueUsers(users)}
-            locale={{ emptyText: "표시할 사용자가 없습니다." }}
+            locale={{emptyText: "표시할 사용자가 없습니다."}}
             renderItem={(item) => {
                 if (loggedInUser && item.userId === loggedInUser.id) {
                     return null;
@@ -133,7 +132,8 @@ export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }
                         ]}
                     >
                         <List.Item.Meta
-                            avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`} />}
+                            avatar={<Avatar
+                                src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}/>}
                             title={item.name}
                             description={item.email}
                         />
@@ -163,7 +163,7 @@ export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }
                         placeholder="닉네임 또는 이메일로 검색"
                         onSearch={(value) => setSearchTerm(value)}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ marginBottom: 20 }}
+                        style={{marginBottom: 20}}
                         enterButton
                         loading={isSearching}
                     />
@@ -187,9 +187,9 @@ export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }
                 placeholder="채팅방 이름 (선택)"
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
-                style={{ marginBottom: 20 }}
+                style={{marginBottom: 20}}
             />
-            <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} centered />
+            <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} centered/>
         </Modal>
     );
 }

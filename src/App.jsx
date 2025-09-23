@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { BrowserRouter, useLocation, Routes, Route } from "react-router-dom";
-import { Spin } from "antd";
+import React, {useState, useEffect} from "react";
+import {BrowserRouter, useLocation, Routes, Route, useNavigate} from "react-router-dom";
+import {Spin} from "antd";
 import styled from "styled-components";
 
 // --- Providers ---
-import { useAuth } from "./AuthContext.jsx";
-import { JournalProvider } from "./contexts/JournalContext.jsx";
-import { MyPageProvider } from "./contexts/MyPageContext.jsx";
-import { ScheduleProvider, useSchedule } from "./contexts/ScheduleContext.jsx";
-import { TagProvider } from "./contexts/TagContext.jsx";
-import { NotificationsProvider } from "./contexts/NotificationsContext.jsx";
+import {useAuth} from "./AuthContext.jsx";
+import {JournalProvider} from "./contexts/JournalContext.jsx";
+import {MyPageProvider} from "./contexts/MyPageContext.jsx";
+import {ScheduleProvider, useSchedule} from "./contexts/ScheduleContext.jsx";
+import {TagProvider} from "./contexts/TagContext.jsx";
+import {NotificationsProvider} from "./contexts/NotificationsContext.jsx";
 
 // --- Page & Layout Components ---
 import LeftSideBar from "./components/LeftSideBar.jsx";
@@ -28,6 +28,7 @@ import SchedulePanelContent from "./components/main/calendar/SchedulePanelConten
 import ScheduleTab from "./components/right_side_bar/ScheduleTab.jsx";
 import ChatRoomList from "./components/right_side_bar/ChatRoomList.jsx";
 import Chat from "./components/right_side_bar/Chat.jsx";
+import JournalDatePicker from "./components/right_side_bar/JournalDatePicker.jsx"; // ✅ [추가]
 
 const AppWrapper = styled.div`
     display: flex;
@@ -70,12 +71,13 @@ const getSchedulePanelTitle = (type) => {
 }
 
 const AppContent = () => {
-    const { user, loading } = useAuth();
+    const {user, loading} = useAuth();
     const location = useLocation();
+    const navigate = useNavigate(); // ✅ [추가] navigate 함수를 가져옵니다.
 
     const [activePanel, setActivePanel] = useState(null);
     const [floatingChatRoomId, setFloatingChatRoomId] = useState(null);
-    const { selectedInfo, clearScheduleSelection } = useSchedule();
+    const {selectedInfo, clearScheduleSelection} = useSchedule();
 
     // ✅ selectedInfo에 값이 생기면 (상세/수정/추가 패널이 열리면)
     //    기존에 열려있던 목록 패널(activePanel)은 닫아줍니다.
@@ -99,6 +101,19 @@ const AppContent = () => {
         setActivePanel(null); // 메시지 목록 패널은 닫음
     };
 
+    // ✅ [추가] 날짜 선택 패널에서 날짜 선택 시 실행될 함수
+    const handleDateSelectForJournal = (date) => {
+        // 패널을 닫고, 일기 작성 모달로 이동
+        setActivePanel(null);
+        navigate("/journal/write", {
+            state: {
+                backgroundLocation: location,
+                selectedDate: date,
+            },
+        });
+    };
+
+
     const background = location.state && location.state.backgroundLocation;
 
     if (loading) {
@@ -111,11 +126,11 @@ const AppContent = () => {
 
     return user ? (
         <AppWrapper>
-            <LeftSideBar />
+            <LeftSideBar/>
             <ContentWrapper>
                 <Routes location={background || location}>
-                    <Route path="/set-nickname" element={<SetNicknamePage />} />
-                    <Route path="/*" element={<Main />} />
+                    <Route path="/set-nickname" element={<SetNicknamePage/>}/>
+                    <Route path="/*" element={<Main/>}/>
                 </Routes>
 
                 {background && (
@@ -127,17 +142,24 @@ const AppContent = () => {
             </ContentWrapper>
 
             {/* === 새로운 플로팅 UI === */}
-            <FloatingActionButtons onButtonClick={handlePanelButtonClick} />
+            <FloatingActionButtons onButtonClick={handlePanelButtonClick}/>
 
             {activePanel === 'schedule' && (
-                <FloatingPanel title="일정 목록" onClose={() => setActivePanel(null)}>
-                    <ScheduleTab />
+                <FloatingPanel title="schedule list" onClose={() => setActivePanel(null)}>
+                    <ScheduleTab/>
                 </FloatingPanel>
             )}
 
             {activePanel === 'messages' && (
-                <FloatingPanel title="메시지" onClose={() => setActivePanel(null)}>
-                    <ChatRoomList chatRoom={handleChatRoomSelect} onBack={() => setActivePanel(null)} />
+                <FloatingPanel title="message" onClose={() => setActivePanel(null)}>
+                    <ChatRoomList chatRoom={handleChatRoomSelect} onBack={() => setActivePanel(null)}/>
+                </FloatingPanel>
+            )}
+
+            {/* ✅ [추가] '일기 작성' 패널 */}
+            {activePanel === 'writeJournal' && (
+                <FloatingPanel title="Write i-log" onClose={() => setActivePanel(null)}>
+                    <JournalDatePicker onDateSelect={handleDateSelectForJournal}/>
                 </FloatingPanel>
             )}
 
@@ -147,7 +169,7 @@ const AppContent = () => {
                     title={getSchedulePanelTitle(selectedInfo.type)}
                     onClose={clearScheduleSelection}
                 >
-                    <SchedulePanelContent />
+                    <SchedulePanelContent/>
                 </FloatingPanel>
             )}
 
@@ -168,7 +190,7 @@ const AppContent = () => {
 
         </AppWrapper>
     ) : (
-        <LoginPage />
+        <LoginPage/>
     );
 };
 
@@ -181,7 +203,7 @@ export default function App() {
                         <ScheduleProvider>
                             <TagProvider>
                                 <NotificationsProvider>
-                                    <AppContent />
+                                    <AppContent/>
                                 </NotificationsProvider>
                             </TagProvider>
                         </ScheduleProvider>
