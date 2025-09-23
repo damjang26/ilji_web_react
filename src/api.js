@@ -211,13 +211,10 @@ export const getCommentLikers = (commentId) => api.get(`/api/comments/${commentI
 // =================================
 
 /**
- * 새로운 채팅방을 생성합니다.
- * @param {string} roomName - 채팅방 이름
- * @param {number[]} userIds - 참여할 사용자들의 ID 배열
+ * 채팅방을 나갑니다.
+ * @param {string} roomId - 나갈 채팅방의 ID
  * @returns {Promise<axios.AxiosResponse<any>>}
  */
-export const createChatRoom = (roomName, userIds) => {
-    return api.post("/api/chat/create", { roomName, userIds });
+export const leaveChatRoom = (roomId) => {
+    return api.post(`/api/chat/${roomId}/leave`);
 };
-
-

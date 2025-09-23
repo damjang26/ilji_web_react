@@ -136,8 +136,6 @@ export function ScheduleProvider({children}) {
     const {user} = useAuth(); // AuthContext에서 사용자 정보 가져오기
 
     // --- UI 상태 관리 ---
-    // 1. 사이드바 상태
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [selectedInfo, setSelectedInfo] = useState(null); // 사이드바에 표시될 데이터
 
     // 2. 팝업 상태
@@ -418,44 +416,37 @@ export function ScheduleProvider({children}) {
     }, [events, user]);
     // --- UI 제어 함수 ---
 
-    // 사이드바 관련 함수들
-    const openSidebarForDate = useCallback((dateInfo) => {
+    const openSchedulePanelForDate = useCallback((dateInfo) => {
         setSelectedInfo({type: "list_for_date", data: dateInfo});
-        setIsSidebarOpen(true);
         setFormData(null); // ✅ 폼 데이터 비우기
     }, []);
 
-    const openSidebarForNew = useCallback((dateInfo) => {
+    const openSchedulePanelForNew = useCallback((dateInfo) => {
         setSelectedInfo({type: "new", data: dateInfo});
-        setIsSidebarOpen(true);
         setFormData(transformInitialDataToFormState(dateInfo, user)); // ✅ 새 일정 폼 데이터 설정
     }, [user]);
 
-    const openSidebarForDetail = useCallback((event) => {
-        setSelectedInfo({type: "detail", data: event});
-        setIsSidebarOpen(true);
+    const openSchedulePanelForDetail = useCallback((event) => {
+        // FullCalendar의 EventApi 객체일 경우에만 toPlainObject()를 사용하고,
+        // 이미 일반 JavaScript 객체일 경우 그대로 사용합니다.
+        const plainEvent = typeof event.toPlainObject === 'function' ? event.toPlainObject() : event;
+        setSelectedInfo({type: "detail", data: plainEvent});
         setFormData(null); // ✅ 폼 데이터 비우기
     }, []);
 
-    const openSidebarForEdit = useCallback((event) => {
+    const openSchedulePanelForEdit = useCallback((event) => {
         setSelectedInfo({type: "edit", data: event});
-        setIsSidebarOpen(true);
         setFormData(transformEventToFormState(event)); // ✅ 수정 폼 데이터 설정
     }, []);
 
-    const openSidebarForRRule = useCallback(() => {
+    const openSchedulePanelForRRule = useCallback(() => {
         // 현재 폼 데이터를 유지하면서, 뷰 타입만 변경합니다.
         setSelectedInfo(prev => ({ ...prev, type: 'rrule_form' }));
     }, []);
 
-    const closeSidebar = useCallback(() => {
-        setIsSidebarOpen(false);
+    const clearScheduleSelection = useCallback(() => {
         setSelectedInfo(null);
-        setFormData(null); // ✅ 사이드바 닫을 때 폼 데이터 비우기
-    }, []);
-
-    const toggleSidebar = useCallback(() => {
-        setIsSidebarOpen((prev) => !prev);
+        setFormData(null);
     }, []);
 
     // 팝업 관련 함수들
@@ -470,9 +461,9 @@ export function ScheduleProvider({children}) {
     /**
      * ✅ [신규] 사이드바에서 '뒤로 가기' 동작을 처리하는 통합 함수
      */
-    const goBackInSidebar = useCallback(() => {
+    const goBackInSchedulePanel = useCallback(() => {
         if (!selectedInfo) {
-            closeSidebar();
+            clearScheduleSelection();
             return;
         }
         const {type, data} = selectedInfo;
@@ -487,10 +478,10 @@ export function ScheduleProvider({children}) {
                 }
                 break;
             case "edit":
-                openSidebarForDetail(data);
+                openSchedulePanelForDetail(data);
                 break;
             case "new":
-                openSidebarForDate({startStr: data.startStr});
+                openSchedulePanelForDate({startStr: data.startStr});
                 break;
             case "detail":
                 let dateStr = null;
@@ -512,29 +503,29 @@ export function ScheduleProvider({children}) {
                 }
 
                 if (dateStr) {
-                    openSidebarForDate({startStr: dateStr});
+                    openSchedulePanelForDate({startStr: dateStr});
                 } else {
-                    closeSidebar();
+                    clearScheduleSelection();
                 }
                 break;
             default:
-                closeSidebar();
+                clearScheduleSelection();
         }
-    }, [selectedInfo, formData, openSidebarForDetail, openSidebarForDate, closeSidebar]);
+    }, [selectedInfo, formData, openSchedulePanelForDetail, openSchedulePanelForDate, clearScheduleSelection]);
 
     /**
      * ✅ [신규] 이벤트 상세보기를 위한 통합 함수
      */
     const showEventDetails = useCallback(
         (event, clickInfo) => {
-            openSidebarForDetail(event);
+            openSchedulePanelForDetail(event);
             const rect = clickInfo.el.getBoundingClientRect();
             openPopup({
                 event: event,
                 targetRect: rect,
             });
         },
-        [openSidebarForDetail, openPopup]
+        [openSchedulePanelForDetail, openPopup]
     );
 
     // --- 삭제 관련 함수 ---
@@ -552,12 +543,12 @@ export function ScheduleProvider({children}) {
             await deleteEvent(deleteModalState.eventId);
             // 삭제 후, 사이드바가 상세/수정 화면이었다면 목록으로 되돌립니다.
             if (selectedInfo?.type === "detail" || selectedInfo?.type === "edit") {
-                goBackInSidebar();
+                goBackInSchedulePanel();
             }
         }
         // 모달을 닫고 상태를 초기화합니다.
         setDeleteModalState({isOpen: false, eventId: null});
-    }, [deleteModalState.eventId, deleteEvent, selectedInfo, goBackInSidebar]);
+    }, [deleteModalState.eventId, deleteEvent, selectedInfo, goBackInSchedulePanel]);
 
     const restoreCachedEvents = useCallback(() => {
         setEvents(cachedEvents);
@@ -571,22 +562,20 @@ export function ScheduleProvider({children}) {
             error,
             formData, //  공유
             setFormData, //  공유
-            // 사이드바 상태 및 함수
-            isSidebarOpen,
+            // 패널 상태 및 함수
             selectedInfo,
-            openSidebarForDate,
-            openSidebarForNew,
-            openSidebarForDetail,
-            openSidebarForEdit, // 추가
-            openSidebarForRRule,
-            closeSidebar,
-            toggleSidebar,
+            openSchedulePanelForDate,
+            openSchedulePanelForNew,
+            openSchedulePanelForDetail,
+            openSchedulePanelForEdit,
+            openSchedulePanelForRRule,
+            clearScheduleSelection,
             // 팝업 상태 및 함수
             popupState,
             openPopup,
             closePopup,
             showEventDetails,
-            goBackInSidebar,
+            goBackInSchedulePanel,
             // CRUD 함수 (deleteEvent는 confirmDelete 내부에서 사용됩니다)
             addEvent,
             updateEvent,
@@ -599,23 +588,21 @@ export function ScheduleProvider({children}) {
             loading,
             error,
             formData,
-            isSidebarOpen,
             selectedInfo,
             popupState,
             addEvent,
             updateEvent,
             requestDeleteConfirmation, // deleteEvent -> requestDeleteConfirmation
-            openSidebarForDate,
-            openSidebarForNew,
-            openSidebarForDetail,
-            openSidebarForEdit,
-            openSidebarForRRule,
-            closeSidebar,
-            toggleSidebar,
+            openSchedulePanelForDate,
+            openSchedulePanelForNew,
+            openSchedulePanelForDetail,
+            openSchedulePanelForEdit,
+            openSchedulePanelForRRule,
+            clearScheduleSelection,
             openPopup,
             closePopup,
             showEventDetails,
-            goBackInSidebar,
+            goBackInSchedulePanel,
             confirmDelete,
             cancelDeleteConfirmation,
             fetchSchedulesByTags,

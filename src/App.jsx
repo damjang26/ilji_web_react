@@ -1,22 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter, useLocation, Routes, Route } from "react-router-dom";
 import { Spin } from "antd";
-
-
-import LeftSideBar from "./components/LeftSideBar.jsx";
-import RightSideBar from "./components/RightSideBar.jsx";
 import styled from "styled-components";
+
+// --- Providers ---
 import { useAuth } from "./AuthContext.jsx";
-import LoginPage from "./components/login/LoginPage.jsx";
-import Main from "./components/Main.jsx";
-import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
 import { JournalProvider } from "./contexts/JournalContext.jsx";
-import JournalViewModal from "./components/main/journal/JournalViewModal.jsx";
-import { ScheduleProvider } from "./contexts/ScheduleContext.jsx";
 import { MyPageProvider } from "./contexts/MyPageContext.jsx";
+import { ScheduleProvider, useSchedule } from "./contexts/ScheduleContext.jsx";
 import { TagProvider } from "./contexts/TagContext.jsx";
 import { NotificationsProvider } from "./contexts/NotificationsContext.jsx";
+
+// --- Page & Layout Components ---
+import LeftSideBar from "./components/LeftSideBar.jsx";
+import Main from "./components/Main.jsx";
+import LoginPage from "./components/login/LoginPage.jsx";
 import SetNicknamePage from "./components/nickname_set/SetNickNamePage.jsx";
+
+// --- Modal Components ---
+import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
+import JournalViewModal from "./components/main/journal/JournalViewModal.jsx";
+
+// --- New Floating UI System Components ---
+import FloatingActionButtons from "./components/common/FloatingActionButtons.jsx";
+import FloatingPanel from "./components/common/FloatingPanel.jsx";
+import SchedulePanelContent from "./components/main/calendar/SchedulePanelContent.jsx";
+import ScheduleTab from "./components/right_side_bar/ScheduleTab.jsx";
+import ChatRoomList from "./components/right_side_bar/ChatRoomList.jsx";
+import Chat from "./components/right_side_bar/Chat.jsx";
 
 const AppWrapper = styled.div`
     display: flex;
@@ -41,12 +52,53 @@ const ContentWrapper = styled.div`
     position: relative; /* 모달을 위한 position 기준점 */
 `;
 
+const getSchedulePanelTitle = (type) => {
+    switch (type) {
+        case 'new':
+            return '새 일정 추가';
+        case 'edit':
+            return '일정 수정';
+        case 'detail':
+            return '일정 상세 정보';
+        // case 'list_for_date':
+        //     return '선택한 날짜의 일정';
+        case 'rrule_form':
+            return '반복 설정';
+        default:
+            return '일정';
+    }
+}
+
 const AppContent = () => {
     const { user, loading } = useAuth();
     const location = useLocation();
 
-    // navigate로 전달받은 state에 backgroundLocation이 있는지 확인합니다.
-    // 이것이 모달을 띄울지, 일반 페이지를 띄울지 결정하는 키입니다.
+    const [activePanel, setActivePanel] = useState(null);
+    const [floatingChatRoomId, setFloatingChatRoomId] = useState(null);
+    const { selectedInfo, clearScheduleSelection } = useSchedule();
+
+    // ✅ selectedInfo에 값이 생기면 (상세/수정/추가 패널이 열리면)
+    //    기존에 열려있던 목록 패널(activePanel)은 닫아줍니다.
+    useEffect(() => {
+        if (selectedInfo) {
+            setActivePanel(null);
+        }
+    }, [selectedInfo]);
+
+    const handlePanelButtonClick = (panel) => {
+        console.log("handlePanelButtonClick called with:", panel);
+        setActivePanel(prev => {
+            const newState = prev === panel ? null : panel;
+            console.log("activePanel changing from", prev, "to", newState);
+            return newState;
+        });
+    };
+
+    const handleChatRoomSelect = (roomId) => {
+        setFloatingChatRoomId(roomId);
+        setActivePanel(null); // 메시지 목록 패널은 닫음
+    };
+
     const background = location.state && location.state.backgroundLocation;
 
     if (loading) {
@@ -61,15 +113,11 @@ const AppContent = () => {
         <AppWrapper>
             <LeftSideBar />
             <ContentWrapper>
-                {/* 1. 배경이 될 메인 라우트를 항상 렌더링합니다. */}
                 <Routes location={background || location}>
-                    {/* 닉네임이 없는 사용자를 위한 별도 라우트 */}
                     <Route path="/set-nickname" element={<SetNicknamePage />} />
-                    {/* 닉네임이 있는 사용자를 위한 메인 라우트 */}
                     <Route path="/*" element={<Main />} />
                 </Routes>
 
-                {/* 2. background state가 있을 경우에만 모달 라우트를 추가로 렌더링합니다. */}
                 {background && (
                     <Routes>
                         <Route path="/journal/write" element={<JournalWriteModal/>}/>
@@ -77,7 +125,47 @@ const AppContent = () => {
                     </Routes>
                 )}
             </ContentWrapper>
-            <RightSideBar />
+
+            {/* === 새로운 플로팅 UI === */}
+            <FloatingActionButtons onButtonClick={handlePanelButtonClick} />
+
+            {activePanel === 'schedule' && (
+                <FloatingPanel title="일정 목록" onClose={() => setActivePanel(null)}>
+                    <ScheduleTab />
+                </FloatingPanel>
+            )}
+
+            {activePanel === 'messages' && (
+                <FloatingPanel title="메시지" onClose={() => setActivePanel(null)}>
+                    <ChatRoomList chatRoom={handleChatRoomSelect} onBack={() => setActivePanel(null)} />
+                </FloatingPanel>
+            )}
+
+            {/* 캘린더 빈 공간 눌렀을 때 패널 나오게 하는 코드였는데 병주가 다른걸로 한다고 했으니까 일단 주석 처리해두겠음 */}
+            {selectedInfo && selectedInfo.type !== 'list_for_date' && (
+                <FloatingPanel
+                    title={getSchedulePanelTitle(selectedInfo.type)}
+                    onClose={clearScheduleSelection}
+                >
+                    <SchedulePanelContent />
+                </FloatingPanel>
+            )}
+
+            {floatingChatRoomId && (
+                <FloatingPanel
+                    title="채팅"
+                    onClose={() => {
+                        setFloatingChatRoomId(null);
+                        setActivePanel('messages');
+                    }}
+                >
+                    <Chat
+                        roomId={floatingChatRoomId}
+                    />
+                </FloatingPanel>
+            )}
+            {/* ============================ */}
+
         </AppWrapper>
     ) : (
         <LoginPage />
