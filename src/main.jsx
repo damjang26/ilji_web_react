@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "antd/dist/reset.css";
 import App from "./App.jsx";
+import "./index.css";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import AuthProvider from "./AuthContext.jsx";
 import { ScheduleProvider } from "./contexts/ScheduleContext.jsx";

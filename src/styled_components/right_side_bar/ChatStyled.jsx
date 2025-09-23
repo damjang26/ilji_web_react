@@ -32,7 +32,7 @@ export const ChatContainer = styled.div`
     display: flex;
     flex-direction: column;
     height: 100%;
-    font-family: 'Inter', sans-serif;
+    font-family: 'GowoonDodum', sans-serif;
 `;
 
 export const Header = styled.div`

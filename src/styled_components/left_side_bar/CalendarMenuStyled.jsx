@@ -6,6 +6,11 @@ export const MenuContainer = styled.div`
   display: flex;
   flex-direction: column;
   overflow-y: auto; // 이제 이 컨테이너가 전체 스크롤을 담당
+
+  // Ant Design의 Collapse 컴포넌트 폰트를 전역 폰트로 덮어쓰기
+  .ant-collapse {
+    font-family: inherit;
+  }
 `;
 
 // Collapse 컴포넌트 내부에 있는 태그 목록을 감싸는 컨테이너

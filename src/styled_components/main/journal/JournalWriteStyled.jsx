@@ -512,7 +512,7 @@ export const FilterContainer = styled.div`
     display: flex;
     flex-direction: column;
     gap: 20px;
-    font-family: sans-serif;
+    font-family: 'GowoonDodum';
 `;
 
 export const FilterLabel = styled.p`
@@ -598,7 +598,7 @@ export const TextContainer = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    font-family: sans-serif;
+    font-family: 'GowoonDodum';
 `;
 
 export const AddButton = styled.button`
