@@ -542,13 +542,22 @@ export function ScheduleProvider({children}) {
         setFormData(null);
     }, []);
 
+    const switchToModalRRuleView = useCallback(() => {
+        setScheduleModalData(prev => ({ ...prev, view: 'rrule_form' }));
+    }, []);
+
     /**
      * ✅ [신규] 사이드바에서 '뒤로 가기' 동작을 처리하는 통합 함수
      */
     const goBackInSchedulePanel = useCallback(() => {
-        // 만약 모달이 열려있다면, 모달의 뷰를 리스트로 변경하는 것이 최우선.
+        // 만약 모달이 열려있다면, 모달의 내부 뷰를 전환합니다.
         if (scheduleModalData.isOpen) {
-            switchToModalListView();
+            // RRule 폼에서는 일반 폼으로, 그 외(폼, 상세)에서는 리스트 뷰로 돌아갑니다.
+            if (scheduleModalData.view === 'rrule_form') {
+                setScheduleModalData(prev => ({ ...prev, view: 'form' }));
+            } else {
+                switchToModalListView();
+            }
             return;
         }
 
@@ -601,7 +610,7 @@ export function ScheduleProvider({children}) {
             default:
                 clearScheduleSelection();
         }
-    }, [selectedInfo, formData, scheduleModalData.isOpen, switchToModalListView, openSchedulePanelForDetail, openSchedulePanelForDate, clearScheduleSelection]);
+    }, [selectedInfo, formData, scheduleModalData.isOpen, scheduleModalData.view, switchToModalListView, openSchedulePanelForDetail, openSchedulePanelForDate, clearScheduleSelection]);
 
     /**
      * ✅ [신규] 이벤트 상세보기를 위한 통합 함수
@@ -671,6 +680,7 @@ export function ScheduleProvider({children}) {
             closeScheduleModal,
             switchToModalFormView, // 모달 뷰 전환 함수
             switchToModalListView, // 모달 뷰 전환 함수
+            switchToModalRRuleView, // 모달 뷰 전환 함수
             showEventDetails,
             goBackInSchedulePanel,
             // CRUD 함수 (deleteEvent는 confirmDelete 내부에서 사용됩니다)
