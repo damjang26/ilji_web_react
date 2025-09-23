@@ -20,6 +20,7 @@ import SetNicknamePage from "./components/nickname_set/SetNickNamePage.jsx";
 // --- Modal Components ---
 import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
 import JournalViewModal from "./components/main/journal/JournalViewModal.jsx";
+import ScheduleModal from "./components/common/ScheduleModal.jsx";
 
 // --- New Floating UI System Components ---
 import FloatingActionButtons from "./components/common/FloatingActionButtons.jsx";
@@ -165,6 +166,9 @@ const AppContent = () => {
                 </FloatingPanel>
             )}
             {/* ============================ */}
+
+            {/* 일정 관리를 위한 동적 위치 모달 */}
+            <ScheduleModal />
 
         </AppWrapper>
     ) : (

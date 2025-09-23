@@ -17,7 +17,7 @@ import {
 } from "../../../styled_components/right_side_bar/schedule_tab/ScheduleFormStyled.jsx";
 import { ActionButtons, Button } from "../../../styled_components/common/FormElementsStyled.jsx";
 
-const ScheduleForm = ({ onBack, onShowRRuleForm }) => {
+const ScheduleForm = ({ onBack, onShowRRuleForm, isInsideModal = false }) => {
     const formRef = useRef(null);
     // ✅ Context에서는 데이터(form)와 데이터 조작 함수(addEvent, updateEvent)만 가져옵니다.
     //    UI 제어 함수(onBack, onShowRRuleForm)는 props를 통해 전달받습니다.
@@ -84,7 +84,7 @@ const ScheduleForm = ({ onBack, onShowRRuleForm }) => {
     if (!form) return null;
 
     return (
-        <FormWrapper ref={formRef}>
+        <FormWrapper ref={formRef} isInsideModal={isInsideModal}>
             <FormBody>
                 {/* ... 다른 FieldSet들 ... */}
                 <FieldSet>

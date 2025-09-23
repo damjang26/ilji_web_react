@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
 /** ScheduleList.jsx의 스타일을 정의합니다. (일정 목록) */
 
@@ -27,6 +27,10 @@ export const DateTitle = styled.h2`
     font-weight: 600;
     color: #343a40;
     margin: 0;
+
+    ${props => props.isInsideModal && css`
+        font-size: 16px;
+    `}
 `;
 
 /* ✅ [신규] 필터 아이콘 버튼들을 감싸는 컨테이너입니다. */
@@ -76,6 +80,11 @@ export const EventItem = styled.li`
         background-color: #f1f3f5;
         transform: translateY(-2px);
     }
+
+    ${props => props.isInsideModal && css`
+        font-size: 13px;
+        padding: 10px;
+    `}
 `;
 
 /** 등록된 일정이 없을 때 표시되는 메시지 */

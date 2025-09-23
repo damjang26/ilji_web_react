@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 
 /** ScheduleForm.jsx & ScheduleEdit.jsx의 스타일을 정의합니다. (일정 추가/수정 폼) */
 
@@ -10,6 +10,10 @@ export const FormWrapper = styled.div`
 export const FormBody = styled.div`
     display: grid;
     gap: 16px;
+
+    ${props => props.isInsideModal && css`
+        gap: 12px;
+    `}
 `;
 
 /** 라벨과 입력 필드를 묶는 컨테이너 */
@@ -23,6 +27,10 @@ export const Label = styled.label`
     font-size: 13px;
     font-weight: 500;
     color: #495057;
+
+    ${props => props.isInsideModal && css`
+        font-size: 12px;
+    `}
 `;
 
 /** input, textarea의 기본 스타일 */
@@ -41,6 +49,11 @@ export const Input = styled.input`
         border-color: #3498db;
         background-color: white;
     }
+
+    ${props => props.isInsideModal && css`
+        font-size: 13px;
+        padding: 7px 10px;
+    `}
 `;
 
 /** '하루 종일' 체크박스를 위한 스타일 */
