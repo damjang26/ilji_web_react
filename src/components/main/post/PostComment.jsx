@@ -127,17 +127,25 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
     }, [journal.id, user, onCommentCountChange]); // newComment 의존성 제거
 
     const handleCommentLike = useCallback(async (commentId) => {
-        // 1. 낙관적 업데이트
-        setComments(currentComments =>
-            currentComments.map(c => {
-                if (c.commentId === commentId) {
-                    const newIsLiked = !c.isLiked;
-                    const newLikeCount = newIsLiked ? (c.likeCount || 0) + 1 : (c.likeCount || 0) - 1;
-                    return {...c, isLiked: newIsLiked, likeCount: newLikeCount};
+        // ✅ [추가] 댓글 트리(답글 포함)를 순회하며 특정 댓글을 업데이트하는 헬퍼 함수
+        const updateCommentInTree = (comments, targetId, updateFn) => {
+            return comments.map(comment => {
+                if (comment.commentId === targetId) {
+                    return updateFn(comment);
                 }
-                return c;
-            })
-        );
+                if (comment.replies && comment.replies.length > 0) {
+                    return {...comment, replies: updateCommentInTree(comment.replies, targetId, updateFn)};
+                }
+                return comment;
+            });
+        };
+
+        // 1. 낙관적 업데이트
+        setComments(currentComments => updateCommentInTree(currentComments, commentId, (c) => {
+            const newIsLiked = !c.isLiked;
+            const newLikeCount = newIsLiked ? (c.likeCount || 0) + 1 : (c.likeCount || 0) - 1;
+            return {...c, isLiked: newIsLiked, likeCount: newLikeCount};
+        }));
 
         try {
             // 2. API 요청
@@ -146,23 +154,34 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
             console.error("댓글 좋아요 처리에 실패했습니다.", error);
             message.error("좋아요 처리에 실패했습니다.");
             // 3. 실패 시 롤백
-            setComments(currentComments =>
-                currentComments.map(c => {
-                    if (c.commentId === commentId) {
-                        const originalIsLiked = !c.isLiked;
-                        const originalLikeCount = originalIsLiked ? (c.likeCount || 0) + 1 : (c.likeCount || 0) - 1;
-                        return {...c, isLiked: originalIsLiked, likeCount: originalLikeCount};
-                    }
-                    return c;
-                })
-            );
+            setComments(currentComments => updateCommentInTree(currentComments, commentId, (c) => {
+                // isLiked 상태를 다시 반전시켜 원래대로 되돌립니다.
+                const originalIsLiked = !c.isLiked;
+                const originalLikeCount = originalIsLiked ? (c.likeCount || 0) + 1 : (c.likeCount || 0) - 1;
+                return {...c, isLiked: originalIsLiked, likeCount: originalLikeCount};
+            }));
         }
     }, []);
 
     const handleDeleteComment = useCallback(async (commentId) => {
+        // ✅ [추가] 댓글 트리(답글 포함)를 순회하며 특정 댓글을 제거하는 헬퍼 함수
+        const removeCommentFromTree = (comments, targetId) => {
+            // 최상위 댓글에서 제거
+            const filtered = comments.filter(c => c.commentId !== targetId);
+            if (filtered.length !== comments.length) return filtered;
+
+            // 답글에서 재귀적으로 제거
+            return comments.map(c => {
+                if (c.replies && c.replies.length > 0) {
+                    return {...c, replies: removeCommentFromTree(c.replies, targetId)};
+                }
+                return c;
+            });
+        };
+
         // 1. 낙관적 업데이트: UI에서 댓글을 즉시 제거
         const originalComments = comments;
-        setComments(currentComments => currentComments.filter(c => c.commentId !== commentId));
+        setComments(currentComments => removeCommentFromTree(currentComments, commentId));
         // [안전장치] onCommentCountChange가 함수일 때만 호출합니다.
         if (typeof onCommentCountChange === 'function') {
             onCommentCountChange(-1); // -1을 전달하여 댓글이 삭제되었음을 알림
