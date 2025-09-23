@@ -15,7 +15,6 @@ import {
   ActionButtons,
   Button,
 } from "../../../styled_components/common/FormElementsStyled.jsx";
-import axios from "axios";
 import { api } from "../../../api.js";
 
 const FILTERS = {
@@ -28,7 +27,9 @@ const FILTERS = {
 const ScheduleEventItem = React.memo(({ event, onDetail }) => {
   return (
     <Tooltip title="클릭하면 상세 보기" placement="left">
-      <EventItem onClick={() => onDetail(event)}>{event.title}</EventItem>
+      <EventItem onClick={() => {
+        onDetail(event);
+      }}>{event.title}</EventItem>
     </Tooltip>
   );
 });
@@ -47,7 +48,8 @@ const ScheduleList = ({
   const filteredEvents = useMemo(() => {
     // 1. 캘린더에서 특정 날짜가 선택된 경우, 해당 날짜의 일정만 보여줍니다.
     if (selectedDate) {
-      return allEvents.filter((e) => e.start?.startsWith(selectedDate));
+      const result = allEvents.filter((e) => e.start?.startsWith(selectedDate));
+      return result;
     }
 
     // 2. 특정 날짜가 선택되지 않은 경우, '오늘' 또는 '이번 달' 필터를 적용합니다.
@@ -55,13 +57,15 @@ const ScheduleList = ({
     switch (filterMode) {
       case "today": {
         const todayStr = now.toISOString().split("T")[0];
-        return allEvents.filter((e) => e.start?.startsWith(todayStr));
+        const result = allEvents.filter((e) => e.start?.startsWith(todayStr));
+        return result;
       }
       case "month": {
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, "0");
         const monthPrefix = `${year}-${month}`;
-        return allEvents.filter((e) => e.start?.startsWith(monthPrefix));
+        const result = allEvents.filter((e) => e.start?.startsWith(monthPrefix));
+        return result;
       }
       case "all":
         return allEvents;

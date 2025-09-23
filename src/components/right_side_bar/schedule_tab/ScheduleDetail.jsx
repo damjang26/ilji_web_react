@@ -12,30 +12,36 @@ import {
 import { Button, ActionButtons } from "../../../styled_components/common/FormElementsStyled.jsx";
 import { useAuth } from "../../../AuthContext.jsx";
 
-const ScheduleDetail = ({item, displayDate, onCancel, onEdit, onDelete}) => {
+const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete}) => {
+    console.log("ScheduleDetail: Component rendering started.");
+    console.log("ScheduleDetail received event:", event);
     const { tags } = useTags();
     const { user } = useAuth();
+    console.log("ScheduleDetail - tags from useTags():", tags);
+    console.log("ScheduleDetail - user from useAuth():", user);
 
-    if (!item) {
+    if (!event) {
         return <div>일정을 선택해주세요.</div>;
     }
 
-    // 현재 일정의 tagId에 해당하는 태그 객체를 찾습니다.
+    // 현재 일정의 tagId에 해당하는 태그 객체를 찾습니다。
     const currentTag = useMemo(() => {
-        const tagId = item.extendedProps?.tagId;
+        const tagId = event.extendedProps?.tagId;
         if (!tagId) return null;
+        if (!Array.isArray(tags)) return null; // tags가 배열이 아닐 경우 방어 코드
         return tags.find(t => t.id === tagId);
-    }, [item, tags]);
+    }, [event, tags]);
+    console.log("ScheduleDetail - currentTag:", currentTag);
 
     // 날짜와 시간을 상황에 맞게 표시하는 함수
     const formatDateRange = () => {
-        if (!item.start) return "날짜 정보 없음";
+        if (!event.start) return "날짜 정보 없음";
 
-        const start = new Date(item.start);
-        const end = item.end ? new Date(item.end) : start; // end가 없으면 start로 대체
+        const start = new Date(event.start);
+        const end = event.end ? new Date(event.end) : start; // end가 없으면 start로 대체
 
         // Case 1: '하루 종일' 일정
-        if (item.allDay) {
+        if (event.allDay) {
             // FullCalendar의 end는 exclusive(포함 안됨)이므로,
             // 화면 표시는 inclusive(포함됨)으로 바꿔야 합니다. (하루 빼기)
             const inclusiveEnd = new Date(end.getTime());
@@ -66,8 +72,10 @@ const ScheduleDetail = ({item, displayDate, onCancel, onEdit, onDelete}) => {
         // 여러 날에 걸쳐 진행되는 경우
         return `${startDateStr} ${startTimeStr} - ${endDateStr} ${endTimeStr}`;
     };
+    console.log("ScheduleDetail - formatDateRange result:", formatDateRange());
     
-    const isOwner = user && user.id === item.extendedProps.calendarId;
+    const isOwner = user && user.id === event.extendedProps.calendarId; // user가 null일 수 있으므로 방어 코드 필요
+    console.log("ScheduleDetail - isOwner:", isOwner);
 
     return (
         <DetailWrapper>
@@ -77,31 +85,31 @@ const ScheduleDetail = ({item, displayDate, onCancel, onEdit, onDelete}) => {
                 {displayDate && <HeaderDate>{displayDate}</HeaderDate>}
             </DetailHeader>
 
-            <Title>{item.title}</Title>
+            <Title>{event.title}</Title>
 
             <InfoSection>
                 <div>
                     <InfoLabel>날짜</InfoLabel>
                     <InfoValue>{formatDateRange()}</InfoValue>
                 </div>
-                {item.extendedProps?.location && <div>
+                {event.extendedProps?.location && <div>
                     <InfoLabel>장소</InfoLabel>
-                    <InfoValue>{item.extendedProps.location}</InfoValue>
+                    <InfoValue>{event.extendedProps.location}</InfoValue>
                 </div>}
                 {currentTag && <div>
                     <InfoLabel>태그</InfoLabel>
                     <InfoValue>{currentTag.label}</InfoValue>
                 </div>}
-                {item.extendedProps?.description && <div>
+                {event.extendedProps?.description && <div>
                     <InfoLabel>설명</InfoLabel>
-                    <InfoValue>{item.extendedProps.description}</InfoValue>
+                    <InfoValue>{event.extendedProps.description}</InfoValue>
                 </div>}
             </InfoSection>
 
             {isOwner && (
                 <ActionButtons>
-                    <Button className="secondary" onClick={() => onDelete(item.id)}>삭제</Button>
-                    <Button className="primary" onClick={() => onEdit(item)}>수정</Button>
+                    <Button className="secondary" onClick={() => onDelete(event.id)}>삭제</Button>
+                    <Button className="primary" onClick={() => onEdit(event)}>수정</Button>
                 </ActionButtons>
             )}
         </DetailWrapper>

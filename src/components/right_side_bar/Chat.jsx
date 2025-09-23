@@ -1,35 +1,42 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import io from 'socket.io-client';
-import axios from 'axios';
-import { useAuth } from "../../AuthContext.jsx";
+import {api} from '../../api.js';
+import {useAuth} from "../../AuthContext.jsx";
+// leaveChatRoom is no longer needed here
+import {
+    ChatContainer,
+    Message,
+    MessageBubble,
+    MessageForm,
+    MessageInput,
+    MessagesContainer,
+    SendButton,
+    Sender,
+    SystemMessage
+} from "../../styled_components/right_side_bar/ChatStyled.jsx";
+import { FaPaperPlane } from "react-icons/fa";
 
-const Chat = ({ roomId, onBack }) => {
+const Chat = ({roomId}) => {
     const [username, setUsername] = useState('');
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
     const socketRef = useRef(null);
     const messagesEndRef = useRef(null);
-    const { user } = useAuth();
+    const {user} = useAuth();
 
     useEffect(() => {
         setUsername(user.name);
 
-        // ✅ 1. 기존 메시지 불러오기
-        axios.get(`/api/chat/messages/${roomId}`)
-            .then(res => {
-                setMessages(res.data);
-            })
+        api.get(`/api/chat/messages/${roomId}`)
+            .then(res => setMessages(res.data))
             .catch(err => console.error("기존 메시지 로드 실패:", err));
 
-        // ✅ 2. 소켓 연결
-        socketRef.current = io('http://localhost:9092', { withCredentials: false });
+        socketRef.current = io('http://localhost:9092', {withCredentials: false});
 
         socketRef.current.on('connect', () => {
-            // console.log('Socket connected:', socketRef.current.id);
-            socketRef.current.emit('joinRoom', roomId); // 선택된 방에 join
+            socketRef.current.emit('joinRoom', roomId);
         });
 
-        // ✅ 3. 실시간 메시지 수신
         socketRef.current.on('chatMessage', (msg) => {
             setMessages((prev) => [...prev, msg]);
         });
@@ -37,41 +44,53 @@ const Chat = ({ roomId, onBack }) => {
         return () => {
             socketRef.current.disconnect();
         };
-    }, [roomId]);
+    }, [roomId, user.name]);
 
     useEffect(() => {
-        // ✅ 4. 메시지 추가 시 자동 스크롤
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        messagesEndRef.current?.scrollIntoView({behavior: "smooth"});
     }, [messages]);
 
     const handleMessageSubmit = (e) => {
         e.preventDefault();
         if (message.trim() && username.trim()) {
-            const chatMessage = { roomId, sender: username, receiver: user.name, message };
+            const chatMessage = {
+                roomId,
+                sender: username,
+                receiver: user.name, // 이 부분은 백엔드에서 해석해서 사용될 수 있습니다.
+                message,
+                messageType: 'NORMAL'
+            };
             socketRef.current.emit('chatMessage', chatMessage);
             setMessage('');
         }
     };
 
     return (
-        <div>
-            <button onClick={onBack}>뒤로가기</button>
-            <div style={{ height: '80vh', overflowY: 'auto' }}>
-                {messages.map((msg, i) => (
-                    <div key={i}>
-                        <strong>{msg.sender}:</strong> {msg.message}
-                    </div>
-                ))}
-                <div ref={messagesEndRef} />
-            </div>
-            <form onSubmit={handleMessageSubmit}>
-                <input
+        <ChatContainer>
+            <MessagesContainer>
+                {messages.map((msg, i) => {
+                    if (msg.messageType === 'SYSTEM') {
+                        return <SystemMessage key={i}>{msg.message}</SystemMessage>;
+                    }
+                    const isMine = msg.sender === username;
+                    return (
+                        <Message key={i} $isMine={isMine}>
+                            {!isMine && <Sender>{msg.sender}</Sender>}
+                            <MessageBubble $isMine={isMine}>{msg.message}</MessageBubble>
+                        </Message>
+                    );
+                })}
+                <div ref={messagesEndRef}/>
+            </MessagesContainer>
+            <MessageForm onSubmit={handleMessageSubmit}>
+                <MessageInput
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
+                    placeholder="메시지를 입력하세요"
                 />
-                <button type="submit">전송</button>
-            </form>
-        </div>
+                <SendButton type="submit"><FaPaperPlane/></SendButton>
+            </MessageForm>
+        </ChatContainer>
     );
 };
 

@@ -125,6 +125,16 @@ export const ContentContainer = styled.div`
     position: relative; /* 자식 요소(CommentContainer)의 absolute 포지셔닝 기준점 */
 `;
 
+/** JournalView에 표시될 날짜 스타일 */
+export const JournalDate = styled.h3`
+    margin-top: 12px;
+    margin-bottom: 0;
+    padding: 0;
+    font-size: 1rem; /* 16px */
+    font-weight: 600;
+    color: #333;
+`;
+
 export const ProfileSection = styled.div`
     display: flex;
     align-items: center;
