@@ -413,7 +413,7 @@ export const EditTabWrapper = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    padding: 20px; /* 기존 패딩을 이곳으로 이동 */
+    padding: 10px; /* 기존 패딩을 이곳으로 이동 */
     overflow-y: auto; /* 내용이 넘칠 때만 세로 스크롤 표시 */
 
     /* 스크롤바 스타일 (선택 사항) */

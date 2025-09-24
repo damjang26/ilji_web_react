@@ -373,7 +373,7 @@ const JournalWrite = ({
                 const updatedJournal = await updateJournalEntry(journalToEdit.id, journalPayload);
                 // ✅ [수정] 수정이 성공하면, 전역 이벤트를 발생시켜 다른 컴포넌트에게 알립니다.
                 // 이벤트의 detail에 수정된 '전체 일기 객체'를 담아 보냅니다.
-                window.dispatchEvent(new CustomEvent('journal:updated', { detail: { updatedJournal } }));
+                window.dispatchEvent(new CustomEvent('journal:updated', {detail: {updatedJournal}}));
                 alert('일기가 성공적으로 수정되었습니다!');
             } else {
                 // ✅ 생성 모드일 경우
@@ -430,7 +430,7 @@ const JournalWrite = ({
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
                         $isDragging={isDragging} // ✅ 스타일링을 위해 isDragging 상태 전달
-                        placeholder="오늘은 무슨 일이 있었나요?"
+                        placeholder="Share what happened today📝"
                     />
 
                     {images.length > 0 && (
@@ -486,7 +486,7 @@ const JournalWrite = ({
                             </VisibilityButton>
                             {isVisibilityDropdownOpen && (
                                 <VisibilityDropdown>
-                                    {Object.entries(visibilityOptions).map(([key, { icon, text }]) => (
+                                    {Object.entries(visibilityOptions).map(([key, {icon, text}]) => (
                                         <VisibilityOption key={key} onClick={() => handleVisibilityChange(key)}>
                                             {icon}
                                             <span>{text}</span>

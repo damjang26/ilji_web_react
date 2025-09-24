@@ -271,7 +271,6 @@ const JournalList = () => {
         if (!targetUserId) return; // 조회할 ID가 없으면 중단
 
         const currentPage = isNewSort ? 0 : page;
-        console.log("마이페이지 일기")
 
         try {
             const response = await getPagedJournals({
@@ -317,7 +316,7 @@ const JournalList = () => {
     // ✅ [수정] 'journal:updated' 전역 이벤트를 감지하여, 목록 전체를 다시 불러오는 대신 수정된 항목만 교체합니다.
     useEffect(() => {
         const handleJournalUpdate = (event) => {
-            const { updatedJournal } = event.detail;
+            const {updatedJournal} = event.detail;
             if (updatedJournal) {
                 setJournals(prevJournals =>
                     prevJournals.map(j =>
@@ -451,7 +450,7 @@ const JournalList = () => {
                 footer={null}
                 centered
                 width="auto"
-                styles={{ body: { padding: 0, background: 'none' } }}
+                styles={{body: {padding: 0, background: 'none'}}}
             >
                 <OriginalImage src={selectedImageUrl} alt="Original post image"/>
             </Modal>

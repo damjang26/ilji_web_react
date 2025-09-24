@@ -23,7 +23,6 @@ export const MenuItemsContainer = styled.div`
     flex-direction: column;
     flex-grow: 1;
     width: 100%;
-    overflow: hidden; // 자식 요소가 넘칠 경우 숨김
 `;
 
 // 각 메뉴 아이템을 감싸서 동일한 공간을 차지, 내부 정렬을 제어
@@ -38,7 +37,6 @@ export const MenuItemWrapper = styled.div`
     // $isCollapsed 상태에 따라 스타일 변경
     max-height: ${({$isCollapsed}) => ($isCollapsed ? '0' : '500px')};
     opacity: ${({$isCollapsed}) => ($isCollapsed ? '0' : '1')};
-    overflow: hidden;
 
     &:not(:last-child) {
         border-bottom: 1px solid #e0e0e0;
