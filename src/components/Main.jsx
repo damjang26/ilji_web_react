@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { Route, Routes, useNavigate } from "react-router-dom";
+import React, {useEffect, useState} from 'react';
+import {Route, Routes, useNavigate} from "react-router-dom";
 import styled from "styled-components";
-import { Spin } from 'antd';
-import { api } from '../api';
+import {Spin} from 'antd';
+import {api} from '../api';
 import FullCalendarExample from "./main/calendar/FullCalendar.jsx";
-import Post from "./main/post/Post.jsx"; 
+import Post from "./main/post/Post.jsx";
 import MyPageSet from "./main/mypage/MyPageSet.jsx"; // [추가]
 import MyPageWrapper from "./main/mypage/MyPage.jsx"; // [수정] MyPageWrapper를 import합니다.
 
@@ -40,7 +40,7 @@ const Main = () => {
                 if (!userProfile.nickname) {
                     // 닉네임이 없으면 닉네임 설정 페이지로 강제 이동시킵니다.
                     // { replace: true } 옵션으로 뒤로가기를 막습니다.
-                    navigate('/set-nickname', { replace: true });
+                    navigate('/set-nickname', {replace: true});
                 }
             } catch (error) {
                 console.error("프로필 정보 확인 실패:", error);
@@ -60,7 +60,7 @@ const Main = () => {
         return (
             <MainContent>
                 <LoadingWrapper>
-                    <Spin size="large" />
+                    <Spin size="large"/>
                 </LoadingWrapper>
             </MainContent>
         );
@@ -70,9 +70,9 @@ const Main = () => {
         <MainContent>
             <Routes>
                 <Route path="/" element={<FullCalendarExample/>}/>
-                <Route path="/mypage/:userId?" element={<MyPageWrapper />} />
-                <Route path="/mypageset" element={<MyPageSet />} />
-                <Route path="/post/*" element={<Post/>}/>
+                <Route path="/mypage/:userId?" element={<MyPageWrapper/>}/>
+                <Route path="/mypageset" element={<MyPageSet/>}/>
+                <Route path="/posts/*" element={<Post/>}/>
             </Routes>
         </MainContent>
     );

@@ -80,10 +80,12 @@ export const CloseButton = styled.button`
         background-color: #efefef;
         color: #7b5fff;
     }
+    
+
 `;
 
 export const PanelBody = styled.div`
     flex-grow: 1;
     overflow-y: auto;
-    padding: 0; // Let children control their own padding
+    padding: 16px; // 일관된 여백 적용
 `;

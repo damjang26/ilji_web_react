@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { FaComments, FaCalendarAlt, FaPlus, FaTimes } from 'react-icons/fa';
+import {FaComments, FaCalendarAlt, FaPlus, FaTimes} from 'react-icons/fa';
 import {
     ButtonsContainer,
     ActionButton,
     MainActionButton
 } from '../../styled_components/common/FloatingActionButtonsStyled';
+import {RiQuillPenAiFill} from "react-icons/ri";
 
-const FloatingActionButtons = ({ onButtonClick }) => {
+const FloatingActionButtons = ({onButtonClick}) => {
     const [isOpen, setIsOpen] = useState(false);
 
     const handleMainButtonClick = () => {
@@ -16,31 +17,32 @@ const FloatingActionButtons = ({ onButtonClick }) => {
     return (
         <ButtonsContainer>
             <ActionButton
-                title="메시지"
+                data-title="메시지"
                 onClick={() => onButtonClick('messages')}
                 $isOpen={isOpen}
                 $order={2} // 메시지 버튼이 아래에 위치
             >
-                <FaComments />
+                <FaComments/>
             </ActionButton>
             <ActionButton
-                title="일정 목록"
+                data-title="일정 목록"
                 onClick={() => onButtonClick('schedule')}
                 $isOpen={isOpen}
                 $order={1} // 일정 목록 버튼이 위에 위치
             >
-                <FaCalendarAlt />
+                <FaCalendarAlt/>
             </ActionButton>
             <ActionButton
-                title="추가 메뉴"
-                onClick={() => {}}
+                data-title="일기 작성"
+                // ✅ [수정] 'writeJournal' 패널을 열도록 onButtonClick 호출
+                onClick={() => onButtonClick('writeJournal')}
                 $isOpen={isOpen}
                 $order={3}
             >
-                <FaPlus />
+                <RiQuillPenAiFill/>
             </ActionButton>
-            <MainActionButton title="메뉴 열기/닫기" onClick={handleMainButtonClick} $isOpen={isOpen}>
-                {isOpen ? <FaTimes /> : <FaPlus />}
+            <MainActionButton data-title="메뉴 열기/닫기" onClick={handleMainButtonClick} $isOpen={isOpen}>
+                {isOpen ? <FaTimes/> : <FaPlus/>}
             </MainActionButton>
         </ButtonsContainer>
     );

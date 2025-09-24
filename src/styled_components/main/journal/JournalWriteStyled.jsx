@@ -1,5 +1,19 @@
 import styled from "styled-components";
 
+// ✅ [신규] 일기 작성 모달의 전체 컨테이너
+export const JournalWriteContainer = styled.div`
+    position: relative; /* 스프링 바인더의 기준점 */
+    padding: 20px 25px 20px 45px; /* 내부 여백 (스프링 공간 확보) */
+    background-color: #ffffff;
+    border: 1.5px solid #a3a3a3;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* 내부 요소 간의 간격 */
+    width: 600px; /* PostContainer와 너비 통일 */
+    box-sizing: border-box;
+`;
+
 export const FormContainer = styled.div`
     display: flex;
     gap: 16px;
@@ -7,11 +21,10 @@ export const FormContainer = styled.div`
 `;
 
 export const ProfilePicture = styled.img`
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     object-fit: cover;
-    margin-top: 10px;
 `;
 
 export const FormContent = styled.div`
@@ -82,6 +95,31 @@ export const RemoveImageButton = styled.button`
     justify-content: center;
 `;
 
+export const ImageEditorModalWrapper = styled.div`
+    background: white;
+    padding: 24px;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+
+    /* 이미지 꾸미기 단계일 때만 최대 너비를 넓힙니다. */
+    max-width: ${({$isFabricStep}) => ($isFabricStep ? "900px" : "600px")};
+
+    /* max-width 값이 변경될 때 부드러운 애니메이션 효과를 적용합니다. */
+    transition: max-width 0.4s ease-in-out;
+`;
+
+export const ModalTitle = styled.h2`
+    flex-grow: 1; /* 양쪽 아이콘/버튼을 제외한 나머지 공간을 모두 차지 */
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    line-height: 1.5;
+    white-space: nowrap; /* 제목이 길어져도 줄바꿈 방지 */
+`;
+
 export const ImageEditorContainer = styled.div`
     display: flex;
     flex-direction: row;
@@ -104,8 +142,10 @@ export const ImageEditorContainer = styled.div`
 
 export const CropArea = styled.div`
     width: 100%;
-    height: 450px; /* 자르기 UI의 높이를 고정합니다. */
+    /* height: 450px; */ /* aspect-ratio 사용 시 고정 높이는 불필요할 수 있습니다. */
     background-color: #2c2c2c; /* 어두운 배경색으로 이미지를 돋보이게 합니다. */
+
+    aspect-ratio: 1 / 1;
 
     /* react-cropper가 생성하는 컨테이너가 부모 영역을 꽉 채우도록 합니다. */
 
@@ -182,8 +222,8 @@ export const ActionButtonWrapper = styled.div`
 
 export const EmojiPickerWrapper = styled.div`
     position: absolute;
-    top: -500%;
-    left: 35px;
+    bottom: 0;
+    left: 37px;
     z-index: 1000; /* 다른 요소들 위에 오도록 z-index 설정 */
     margin-top: 8px; /* 아이콘과 약간의 간격을 줍니다. */
 `;
@@ -257,18 +297,84 @@ export const PostButton = styled.button`
     }
 `;
 
+export const VisibilitySelector = styled.div`
+    position: relative;
+    display: inline-block;
+    margin: 0 12px;
+`;
+
+export const VisibilityButton = styled.button`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #f0f2f5;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+
+    &:hover {
+        background-color: #e9ecef;
+        border-color: #d9d9d9;
+    }
+
+    svg {
+        font-size: 16px;
+        color: #555;
+    }
+`;
+
+export const VisibilityDropdown = styled.div`
+    position: absolute;
+    bottom: 100%; /* 버튼 바로 위에 위치 */
+    right: -12px;
+    margin-bottom: 8px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+    width: 120px;
+    padding: 8px 0;
+    overflow: hidden;
+`;
+
+export const VisibilityOption = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    font-size: 14px;
+    cursor: pointer;
+
+    &:hover {
+        background-color: #f0f2f5;
+    }
+
+    svg {
+        font-size: 16px;
+    }
+`;
+
 export const CanvasContainer = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
+    /* ✅ [수정] width: 100% 대신 flex-grow를 사용하여 남은 공간을 모두 차지하도록 합니다. */
+    flex-grow: 1;
+    /* ✅ [추가] flex 아이템이 줄어들 수 있도록 설정하여 오버플로우를 방지합니다. */
+    flex-shrink: 1;
+    min-width: 0; /* flex 아이템의 최소 너비 제한을 풀어줍니다. */
     min-height: 400px;
 `;
 
 export const EditContainer = styled.div`
     display: flex;
     flex-direction: column;
-    width: 40%;
+    width: 280px; /* ✅ [수정] 이전 요청에 따라 너비를 247px로 유지합니다. */
     height: ${(props) => props.canvasHeight}px;
     min-height: 400px;
     background-color: #ffffff;
@@ -292,11 +398,42 @@ export const EditTab = styled.div`
 `;
 
 export const EditTabContent = styled.div`
-    padding: 10px;
+    /* ✅ [수정] 부모(EditContainer)의 남은 공간을 모두 차지하도록 설정합니다. */
+    flex-grow: 1;
+    /* ✅ [수정] 자식(EditTabWrapper)이 높이 100%를 올바르게 계산하도록 position 설정 */
+    position: relative;
+    /* ✅ [수정] 자식의 스크롤 영역이 패딩 안쪽으로 제한되도록 overflow를 여기로 이동 */
+    overflow: hidden;
 `;
 
 export const EditTabWrapper = styled.div`
-    width: 247px;
+    /* ✅ [수정] 부모(EditTabContent)를 기준으로 절대 위치를 잡아 꽉 채웁니다. */
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 20px; /* 기존 패딩을 이곳으로 이동 */
+    overflow-y: auto; /* 내용이 넘칠 때만 세로 스크롤 표시 */
+
+    /* 스크롤바 스타일 (선택 사항) */
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent; /* 트랙 배경 투명 */
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: #ccc; /* 스크롤바 핸들 색상 */
+        border-radius: 10px;
+    }
+
+    &:hover::-webkit-scrollbar-thumb {
+        background-color: #aaa; /* 호버 시 핸들 색상 변경 */
+    }
 `;
 
 export const EditDrawPenButton = styled.button`
@@ -388,7 +525,7 @@ export const FilterContainer = styled.div`
     display: flex;
     flex-direction: column;
     gap: 20px;
-    font-family: sans-serif;
+    font-family: 'GowoonDodum';
 `;
 
 export const FilterLabel = styled.p`
@@ -474,7 +611,7 @@ export const TextContainer = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;
-    font-family: sans-serif;
+    font-family: 'GowoonDodum';
 `;
 
 export const AddButton = styled.button`

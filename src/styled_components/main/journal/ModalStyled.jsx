@@ -16,17 +16,24 @@ export const ModalBackdrop = styled.div`
 
 // 모달의 흰색 컨테이너 박스
 export const ModalContainer = styled.div`
-    background: white;
-    /* ✅ [수정] variant prop에 따라 padding을 동적으로 설정합니다. */
-    padding: ${(props) => (props.variant === 'journalView' ? '0' : '24px')};
-    border-radius: 10px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-    /* ✅ [수정] variant에 따라 width와 max-width를 동적으로 설정합니다. */
-    width: ${(props) => (props.variant === 'journalView' ? 'auto' : '90%')};
-    max-width: ${(props) => {
-        if (props.variant === 'journalView') return 'none'; // '책' 레이아웃일 때는 최대 너비 제한 없음
-        if (props.isFabricStep) return "900px";
-        return "600px"; // 기본 모달의 최대 너비
+    /* ✅ [수정] variant에 따라 스타일을 동적으로 적용합니다. */
+    ${({variant}) => variant === 'journalWrite' ? `
+        background: transparent;
+        padding: 0;
+        box-shadow: none;
+        border-radius: 0;
+    ` : `
+        background: white;
+        padding: ${variant === 'journalView' ? '0' : '24px'};
+        border-radius: 10px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    `}
+
+    width: ${({variant}) => (variant === 'journalView' ? 'auto' : '90%')};
+    max-width: ${({variant, $isFabricStep}) => {
+        if (variant === 'journalView') return 'none';
+        if ($isFabricStep) return "900px";
+        return "600px";
     }};
     display: flex;
     flex-direction: column;
@@ -52,7 +59,7 @@ export const ModalHeader = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    padding-bottom: 20px;
 
     h2 {
         margin: 0;

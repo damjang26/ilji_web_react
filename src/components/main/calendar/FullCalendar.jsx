@@ -1,4 +1,4 @@
-import React, {useState, useRef, useMemo} from "react";
+import React, {useState, useRef, useMemo, useEffect} from "react";
 import ReactDOM from "react-dom";
 import {
     CalendarWrapper,
@@ -21,6 +21,7 @@ import {
     LuBookPlus,
     LuBookCheck,
     LuBookLock,
+    LuBookUser,
 } from "react-icons/lu"; // 날짜 옆 상태 아이콘
 import {useNavigate, useLocation} from "react-router-dom";
 
@@ -32,6 +33,7 @@ export default function FullCalendarExample() {
         loading,
         openSchedulePanelForNew, // 사이드바 대신 패널을 여는 새 함수
         openSchedulePanelForDate, // 사이드바 대신 패널을 여는 새 함수
+        openScheduleModal, // 모달을 여는 새 함수
         showEventDetails, // ✅ [신규] 상세보기를 위한 통합 함수
         updateEvent,
         popupState,
@@ -43,8 +45,9 @@ export default function FullCalendarExample() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // 일기 팝오버 상태 관리
-    const {hasJournal, getJournal, deleteJournal} = useJournal();
+    const {
+        hasJournal, getJournal, deleteJournal, getJournalById, setVisibleDateRange
+    } = useJournal();
     const [diaryPopover, setDiaryPopover] = useState({
         visible: false,
         date: null,
@@ -52,6 +55,58 @@ export default function FullCalendarExample() {
         left: 0,
     });
     const popoverHideTimer = useRef(null);
+    const actionHandledRef = useRef(false); // New ref
+
+    useEffect(() => {
+        if (!location.state?.action) return;
+
+        const {action, ...restState} = location.state;
+
+        // 루프를 유발하는 action을 제거한 깨끗한 backgroundLocation을 생성합니다.
+        const cleanBackgroundLocation = {
+            ...location,
+            state: restState,
+        };
+
+        // 현재 히스토리의 state를 깨끗한 버전으로 교체합니다.
+        navigate(location.pathname, {state: restState, replace: true});
+
+        const handleAction = async () => {
+            if (action === 'openJournalModal') {
+                const dateFromState = restState?.date;
+                navigate("/journal/write", {
+                    state: {
+                        backgroundLocation: cleanBackgroundLocation, // 깨끗한 location 전달
+                        selectedDate: dateFromState ? new Date(dateFromState) : new Date(),
+                    },
+                });
+            } else if (action === 'openJournalViewModal') {
+                const {journalId, openCommentSection} = restState; // openCommentSection 추가
+                if (journalId) {
+                    try {
+                        const journalData = await getJournalById(journalId);
+                        if (journalData) {
+                            navigate(`/journals/${journalId}`, {
+                                state: {
+                                    backgroundLocation: cleanBackgroundLocation,
+                                    journalData: {
+                                        ...journalData,
+                                        openCommentSection: openCommentSection, // openCommentSection 전달
+                                    },
+                                },
+                            });
+                        }
+                    } catch (error) {
+                        console.error("Error fetching journal by ID:", error);
+                        alert("일기 정보를 불러오는 데 실패했습니다.");
+                    }
+                }
+            }
+        };
+
+        handleAction();
+
+    }, [location, navigate, getJournalById]);
 
     // ✅ [수정] 타임존 문제 방지를 위해 Date 객체를 'YYYY-MM-DD'로 직접 변환합니다.
     const formatDate = (date) => {
@@ -84,7 +139,7 @@ export default function FullCalendarExample() {
         }
     };
 
-    const { user } = useAuth();
+    const {user} = useAuth();
 
     const coloredEvents = useMemo(() => {
         if (tags.length === 0) return events.map(event => ({
@@ -97,7 +152,7 @@ export default function FullCalendarExample() {
 
         return events.map((event) => {
             const tagId = event.extendedProps?.tagId;
-            
+
             // 태그가 존재하지 않는 경우(tagId가 null 또는 undefined) 기본 색상 적용
             const color = tagId ? tagColorMap.get(tagId) || DEFAULT_COLOR : DEFAULT_COLOR;
 
@@ -128,24 +183,10 @@ export default function FullCalendarExample() {
      * @param {object} selectInfo - FullCalendar가 제공하는 선택 정보 객체
      */
     const handleDateSelect = (selectInfo) => {
-        const {startStr, endStr, jsEvent, view} = selectInfo;
-
-        // 여러 날을 드래그했는지 확인 (종료일은 exclusive이므로 +1일 되어 들어옴)
-        const start = new Date(startStr);
-        const end = new Date(endStr);
-        const diffInMs = end.getTime() - start.getTime();
-        const diffInDays = diffInMs / (1000 * 3600 * 24);
-
-        if (diffInDays > 1) {
-            // 여러 날을 선택한 경우: 사이드바에서 새 일정 생성
-            openSchedulePanelForNew(selectInfo);
-        } else {
-            // 하루만 선택(클릭)한 경우, 사이드바를 열고 해당 날짜의 일정 목록을 보여줍니다.
-            openSchedulePanelForDate({startStr});
-        }
-
+        // 새로 추가된 모달 열기 함수를 호출합니다.
+        openScheduleModal(selectInfo);
         // 날짜 선택 후 파란색 배경을 즉시 제거합니다.
-        view.calendar.unselect();
+        selectInfo.view.calendar.unselect();
     };
 
     /**
@@ -154,19 +195,30 @@ export default function FullCalendarExample() {
      */
     const handleEventClick = (clickInfo) => {
         clickInfo.jsEvent.stopPropagation();
-        // ✅ [수정] 분산되어 있던 UI 로직을 `showEventDetails` 함수 하나로 통합하여 호출합니다.
-        // 이제 컴포넌트는 '무엇을' 할지만 결정하고, '어떻게' 할지는 Context가 책임집니다.
-        showEventDetails(clickInfo.event, clickInfo);
+        // 모달을 열기 위해 selectInfo와 유사한 객체를 만들어 전달합니다.
+        const selectInfo = {
+            startStr: clickInfo.event.startStr,
+            endStr: clickInfo.event.endStr || clickInfo.event.startStr, // endStr이 없을 경우 startStr 사용
+            jsEvent: clickInfo.jsEvent,
+            view: clickInfo.view,
+        }
+        openScheduleModal(selectInfo, clickInfo.event);
     };
 
     /**
      * ✅ 캘린더의 뷰(월/주/일)가 변경되거나, 월을 이동할 때 호출됩니다.
      *    이때 열려있는 팝업을 닫아 사용자 혼란을 방지합니다.
      */
-    const handleDatesSet = () => {
+    const handleDatesSet = (dateInfo) => {
         if (popupState.isOpen) {
             closePopup();
         }
+
+        // ✅ [신규] 캘린더에 보이는 날짜 범위를 JournalContext에 설정합니다.
+        // 이로 인해 Context에서 해당 범위의 일기 데이터만 가져오는 API 요청이 트리거됩니다.
+        const start = formatDate(dateInfo.view.activeStart);
+        const end = formatDate(dateInfo.view.activeEnd);
+        setVisibleDateRange({ start, end });
     };
 
     const handleEventDrop = (dropInfo) => {
@@ -234,26 +286,26 @@ export default function FullCalendarExample() {
         }
 
         const dateStr = formatDate(dayCellInfo.date); // ✅ [수정] 타임존 안전한 함수 사용
-        const journal = getJournal(dateStr); // isPrivate 속성을 포함한 일기 객체
+        const journal = getJournal(dateStr);
         const isToday = dayCellInfo.isToday;
         const dayNumber = dayCellInfo.dayNumberText.replace("일", "");
 
         // --- 조건부 아이콘 렌더링 로직 ---
+        // ✅ [수정] isPrivate 대신 visibility 값에 따라 아이콘을 분기합니다.
+        // 로직을 단순화하여 일기 유무를 먼저 확인하고, 그 다음 visibility 값에 따라 아이콘을 결정합니다.
         let icon = null;
-        if (isToday) {
-            if (!journal) {
-                icon = <LuBookPlus className="journal-icon plus"/>;
-            } else if (journal?.isPrivate) {
+        if (journal) {
+            // 일기가 있을 경우: visibility 값에 따라 아이콘 분기
+            if (journal.visibility === "PRIVATE") { // 2: 나만 보기
                 icon = <LuBookLock className="journal-icon lock"/>;
-            } else {
+            } else if (journal.visibility === "FRIENDS_ONLY") { // 1: 친구 공개
+                icon = <LuBookUser className="journal-icon user"/>;
+            } else { // 0: 전체 공개 및 기타
                 icon = <LuBookCheck className="journal-icon check"/>;
             }
-        } else if (journal) {
-            if (journal.isPrivate) {
-                icon = <LuBookLock className="journal-icon lock"/>;
-            } else {
-                icon = <LuBookCheck className="journal-icon check"/>;
-            }
+        } else if (isToday) {
+            // 일기가 없고 오늘 날짜인 경우: 작성 아이콘 표시
+            icon = <LuBookPlus className="journal-icon plus"/>;
         }
 
         // --- 팝오버 이벤트 핸들러 ---

@@ -40,6 +40,7 @@ const ScheduleList = ({
   onDetail,
   selectedDate,
   onClearSelectedDate,
+  isInsideModal = false, // 모달 안에 있는지 여부를 prop으로 받음
 }) => {
   // ✅ [수정] '오늘', '이번 달', '전체'를 전환하는 필터 상태. 기본값은 'today'.
   const [filterMode, setFilterMode] = useState("today");
@@ -155,10 +156,11 @@ const ScheduleList = ({
     }
   };
   return (
-    <ListWrapper>
+    <ListWrapper isInsideModal={isInsideModal}>
       <ListHeader>
         <DateTitle>{title}</DateTitle>
-        <FilterButtons>{renderFilterButtons()}</FilterButtons>
+        {/* 모달 안에서는 필터 버튼을 숨깁니다. */}
+        {!isInsideModal && <FilterButtons>{renderFilterButtons()}</FilterButtons>}
       </ListHeader>
 
       {filteredEvents.length > 0 ? (

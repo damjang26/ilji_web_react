@@ -1,6 +1,8 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
 import {useJournal} from '../../../contexts/JournalContext';
+import {message} from "antd";
+import {getPostLikers} from "../../../api.js";
 import {
     JournalViewWrapper,
     ViewContainer,
@@ -13,24 +15,16 @@ import {
     ImageSliderContainer,
     ImageSlide,
     SliderArrow,
-    ContentContainer,
-    SideActionTabsContainer,
-    SideActionTab,
-    CommentContainer, CommentTitleContainer,
-    CommentContentWrapper,
-    CommentHeader,
-    CommentList,
-    CommentInputContainer, CommentTitle, HideButton,
-    CommentForm,
-    SortOption
+    ContentContainer, SideActionTabsContainer, SideActionTab, JournalDate
 } from '../../../styled_components/main/journal/JournalViewStyled';
 import {HiPencilAlt} from "react-icons/hi";
 import {MdDeleteForever} from "react-icons/md";
-import {ActionItem} from "../../../styled_components/main/post/PostListStyled.jsx";
+import {ActionItem, LikeCountSpan} from "../../../styled_components/main/post/PostListStyled.jsx";
 import {FaChevronLeft, FaChevronRight, FaRegHeart} from "react-icons/fa";
 import {useAuth} from "../../../AuthContext.jsx";
 import {BiSolidShareAlt} from "react-icons/bi";
-import {TbMessageCirclePlus} from "react-icons/tb";
+import PostLikersModal from "../post/PostLikersModal.jsx";
+import PostComment from "../post/PostComment.jsx"; // ✅ [추가] PostComment 컴포넌트 임포트
 
 const JournalView = () => {
     const {user} = useAuth();
@@ -38,16 +32,53 @@ const JournalView = () => {
     const navigate = useNavigate(); // ✅ 페이지 이동을 위해 useNavigate 훅을 사용합니다.
     const location = useLocation(); // ✅ 모달 네비게이션의 배경 위치를 위해 추가합니다.
 
-    // ✅ [수정] API 호출 없이 location.state에서만 데이터를 가져옵니다.
-    const journal = location.state?.journalData;
+    // ✅ [수정] location.state의 데이터를 useState로 관리하여 업데이트가 가능하도록 합니다.
+    const [journal, setJournal] = useState(location.state?.journalData);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-
-    const [comments, setComments] = useState([]); // ✅ [신규] 댓글 목록 상태
-    const [newComment, setNewComment] = useState(''); // ✅ [신규] 댓글 입력 상태
     const [isCommentOpen, setIsCommentOpen] = useState(false); // ✅ [신규] 댓글 창 열림/닫힘 상태
-    const [commentSortBy, setCommentSortBy] = useState('likes'); // ✅ [신규] 댓글 정렬 상태 (기본: 'likes')
 
+    // ✅ [신규] openCommentSection 플래그를 확인하여 댓글 창 자동 열기
+    useEffect(() => {
+        if (journal?.openCommentSection) {
+            setIsCommentOpen(true);
+
+            // 플래그 사용 후 location.state에서 제거하여 재실행 방지
+            const { openCommentSection, ...restJournalData } = journal;
+            navigate(location.pathname, {
+                state: {
+                    ...location.state,
+                    journalData: restJournalData,
+                },
+                replace: true,
+            });
+        }
+    }, [journal, navigate, location]);
+
+
+    // --- 좋아요 목록 모달 관련 상태 추가 ---
+    const [isLikersModalOpen, setLikersModalOpen] = useState(false);
+    const [likersList, setLikersList] = useState([]);
+    const [currentPostId, setCurrentPostId] = useState(null);
+    const [isLikersLoading, setIsLikersLoading] = useState(false);
+
+    const spring = "/images/spring_binder.png";
+
+    // ✅ [추가] 'journal:updated' 이벤트를 감지하여 현재 뷰의 데이터를 업데이트합니다.
+    useEffect(() => {
+        const handleJournalUpdate = (event) => {
+            const { updatedJournal } = event.detail;
+            // 수정된 일기가 현재 보고 있는 일기와 동일한 경우에만 상태를 업데이트합니다.
+            if (updatedJournal && journal && updatedJournal.id === journal.id) {
+                // 기존 journal 데이터에 수정된 데이터를 덮어씁니다.
+                setJournal(prevJournal => ({ ...prevJournal, ...updatedJournal }));
+            }
+        };
+
+        window.addEventListener('journal:updated', handleJournalUpdate);
+        // 컴포넌트가 언마운트될 때 이벤트 리스너를 정리합니다.
+        return () => window.removeEventListener('journal:updated', handleJournalUpdate);
+    }, [journal]); // journal이 변경될 때마다 리스너를 재등록하여 최신 journal.id를 참조하도록 합니다.
 
     // ✅ [신규] 날짜를 'MONTH DAY, YEAR' 형식으로 포맷팅합니다. (예: JAN 01, 2024)
     const formattedDate = useMemo(() => {
@@ -61,25 +92,6 @@ const JournalView = () => {
         }
         return [];
     }, [journal]);
-
-    // ✅ [신규] 댓글 창이 열리거나 정렬 순서가 바뀔 때 댓글을 불러옵니다.
-    // useEffect(() => {
-    //     const fetchComments = async () => {
-    //         if (!journal?.id) return;
-    //         try {
-    //             const response = await api.get(`/api/ilogs/${journal.id}/comments?sortBy=${commentSortBy}`);
-    //             setComments(response.data);
-    //             console.log(`${commentSortBy} 순으로 댓글 로딩 완료:`, response.data);
-    //         } catch (error) {
-    //             console.error("댓글을 불러오는 중 오류가 발생했습니다.", error);
-    //             setComments([]); // 오류 발생 시 댓글 목록 초기화
-    //         }
-    //     };
-    //
-    //     if (isCommentOpen) {
-    //         fetchComments();
-    //     }
-    // }, [isCommentOpen, journal?.id, commentSortBy]);
 
     const handleDelete = async (journalId, pageDate) => {
         // 사용자가 정말 삭제할 것인지 확인
@@ -100,11 +112,12 @@ const JournalView = () => {
     const handleEdit = useCallback((journalToEdit) => {
         navigate('/journal/write', {
             state: {
-                journalToEdit: journalToEdit, // 수정할 일기 데이터를 전달합니다.
-                backgroundLocation: location, // 모달 뒤에 현재 페이지를 배경으로 유지합니다.
+                journalToEdit: journalToEdit,
+                // ✅ [수정] 현재 location이 아닌, 이전 페이지에서 전달받은 backgroundLocation을 다시 전달합니다.
+                backgroundLocation: location.state?.backgroundLocation,
             }
         });
-    }, [navigate, location]); // navigate와 location이 변경될 때만 함수를 재생성합니다.
+    }, [navigate, location.state?.backgroundLocation]);
 
     // ✅ [신규] 공유 버튼 클릭 핸들러
     const handleShare = useCallback(async () => {
@@ -137,55 +150,36 @@ const JournalView = () => {
         setIsCommentOpen(prev => !prev);
     }, []);
 
-    // ✅ [신규] 댓글 제출 핸들러
-    const handleCommentSubmit = useCallback((e) => {
-        e.preventDefault();
-        if (!newComment.trim()) return; // 내용이 없으면 제출 방지
+    // ✅ [신규] 댓글 개수가 변경될 때 journal 상태를 업데이트하는 함수
+    const handleCommentCountChange = useCallback((changeAmount) => {
+        setJournal(prev => ({...prev, commentCount: (prev.commentCount || 0) + changeAmount}));
+    }, []);
 
-        console.log('새 댓글:', newComment);
-        // 여기에 댓글을 서버로 전송하는 API 호출 로직을 추가합니다.
-        setNewComment(''); // 입력창 초기화
-    }, [newComment]);
 
-    // ✅ [리팩토링] 중복되는 댓글 UI를 별도의 함수로 추출합니다.
-    const renderCommentSection = () => (
-        <CommentContainer isOpen={isCommentOpen}
-                          onClick={!isCommentOpen ? toggleCommentView : undefined}>
-            {isCommentOpen ? (
-                <CommentContentWrapper>
-                    <CommentHeader>
-                        <CommentTitleContainer>
-                            <CommentTitle>comments({comments.length})</CommentTitle>
-                            <SortOption active={commentSortBy === 'likes'}
-                                        onClick={() => setCommentSortBy('likes')}>인기순</SortOption>
-                            <SortOption active={commentSortBy === 'recent'}
-                                        onClick={() => setCommentSortBy('recent')}>최신순</SortOption>
-                        </CommentTitleContainer>
-                        <HideButton onClick={toggleCommentView}>Hide</HideButton>
-                    </CommentHeader>
-                    <CommentList>
-                        {comments.length > 0 ?
-                            comments.map(comment => <div key={comment.commentId}>{comment.content}</div>)
-                            : <p>아직 댓글이 없습니다.</p>}
-                    </CommentList>
-                    <CommentInputContainer>
-                        <ProfilePicture
-                            src={user?.profileImage || 'https://via.placeholder.com/40'}
-                            alt="내 프로필"
-                            referrerPolicy="no-referrer"
-                        />
-                        <CommentForm onSubmit={handleCommentSubmit}>
-                            <input type="text" placeholder="Add a comment..." value={newComment}
-                                   onChange={(e) => setNewComment(e.target.value)}/>
-                            <button type="submit" disabled={!newComment.trim()}><TbMessageCirclePlus/></button>
-                        </CommentForm>
-                    </CommentInputContainer>
-                </CommentContentWrapper>
-            ) : (
-                <span>Comments ({journal.commentCount || 0})</span>
-            )}
-        </CommentContainer>
-    );
+    const handleLikeCountClick = useCallback(async (postId) => {
+        if (!postId) return;
+        setCurrentPostId(postId);
+        setLikersModalOpen(true);
+        setIsLikersLoading(true);
+
+        try {
+            const response = await getPostLikers(postId);
+            setLikersList(response.data);
+        } catch (error) {
+            console.error("좋아요 목록을 불러오는 데 실패했습니다.", error);
+            message.error("좋아요 목록을 불러오는 데 실패했습니다.");
+            setLikersModalOpen(false);
+        } finally {
+            setIsLikersLoading(false);
+        }
+    }, []);
+
+    // ✅ [추가] 모달 내에서 팔로우/언팔로우 시 목록을 새로고침하는 함수
+    const refreshLikersList = useCallback(() => {
+        if (currentPostId) {
+            handleLikeCountClick(currentPostId);
+        }
+    }, [currentPostId, handleLikeCountClick]);
 
     if (!journal) {
         return <ViewContainer className="no-image"><p>일기 정보를 불러올 수 없습니다. 목록에서 다시 시도해주세요.</p>
@@ -211,15 +205,25 @@ const JournalView = () => {
                             </AuthorInfo>
                         </div>
                         <ActionItem>
-                            {journal.likeCount > 0 && <span>{journal.likeCount}</span>}
+                            {journal.likeCount > 0 && (
+                                <LikeCountSpan onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleLikeCountClick(journal.id);
+                                }}>{journal.likeCount}</LikeCountSpan>
+                            )}
                             <button><FaRegHeart/></button>
                         </ActionItem>
                     </ProfileSection>
-                    <h3>{formattedDate}</h3>
+                    <JournalDate>{formattedDate}</JournalDate>
                     <ContentSection>
                         <p>{journal.content}</p>
                     </ContentSection>
-                    {renderCommentSection()}
+                    {/* ✅ [수정] PostComment 컴포넌트를 재사용합니다. */}
+                    <PostComment
+                        journal={journal}
+                        isOpen={isCommentOpen}
+                        onToggle={toggleCommentView}
+                        onCommentCountChange={handleCommentCountChange}/>
                 </ViewContainer>
                 {/* ✅ [수정] 컨테이너는 항상 렌더링하고, 내부 탭을 조건부로 보여줍니다. */}
                 <SideActionTabsContainer>
@@ -238,6 +242,15 @@ const JournalView = () => {
                         </>
                     )}
                 </SideActionTabsContainer>
+
+                {/* ✅ [추가] 좋아요 목록 모달 렌더링 */}
+                <PostLikersModal
+                    open={isLikersModalOpen}
+                    onClose={() => setLikersModalOpen(false)}
+                    users={likersList}
+                    loading={isLikersLoading}
+                    onUpdate={refreshLikersList}
+                />
             </JournalViewWrapper>
         );
     }
@@ -268,16 +281,25 @@ const JournalView = () => {
                                 </AuthorInfo>
                             </div>
                             <ActionItem>
-                                {journal.likeCount > 0 && <span>{journal.likeCount}</span>}
+                                {journal.likeCount > 0 && (
+                                    <LikeCountSpan onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleLikeCountClick(journal.id);
+                                    }}>{journal.likeCount}</LikeCountSpan>
+                                )}
                                 <button><FaRegHeart/></button>
                             </ActionItem>
                         </ProfileSection>
-                        <h3>{formattedDate}</h3>
+                        <JournalDate>{formattedDate}</JournalDate>
                         <ContentSection>
                             <p>{journal.content}</p>
                         </ContentSection>
-                        {/* ✅ [수정] 클릭 시 댓글 창을 토글하고, 상태에 따라 다른 내용을 보여줍니다. */}
-                        {renderCommentSection()}
+                        {/* ✅ [수정] PostComment 컴포넌트를 재사용합니다. */}
+                        <PostComment
+                            journal={journal}
+                            isOpen={isCommentOpen}
+                            onToggle={toggleCommentView}
+                            onCommentCountChange={handleCommentCountChange}/>
                     </ContentContainer>
                 </BookLayoutContainer>
             </ViewContainer>
@@ -298,6 +320,15 @@ const JournalView = () => {
                     </>
                 )}
             </SideActionTabsContainer>
+
+            {/* ✅ [추가] 좋아요 목록 모달 렌더링 */}
+            <PostLikersModal
+                open={isLikersModalOpen}
+                onClose={() => setLikersModalOpen(false)}
+                users={likersList}
+                loading={isLikersLoading}
+                onUpdate={refreshLikersList}
+            />
         </JournalViewWrapper>
     );
 };

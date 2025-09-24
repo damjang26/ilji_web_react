@@ -1,25 +1,19 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../AuthContext";
 import SocialLogin from "../account/GoogleLogin";
-import { FaSearch } from "react-icons/fa";
 import { EllipsisOutlined } from "@ant-design/icons";
 import { Dropdown } from "antd";
+import defaultProfileImage from '../../static/image/default-profile.png';
 import {
-  ButtonContainer,
-  CloseButton,
   Email,
   IconContainer,
   ImageWrapper,
   InfoWrapper,
   LoginWrapper,
-  LogoutButton,
-  ModalHeader,
   Nickname,
   ProfileContainer,
   ProfileImageArea,
-  SearchInput,
-  SearchModal,
 } from "../../styled_components/left_side_bar/ProfileStyled.jsx";
 
 const Profile = () => {
@@ -31,27 +25,6 @@ const Profile = () => {
   // 값이 없으면 구글 초기 정보(name, picture)를 대신 보여줍니다. (Fallback)
   const displayName = user?.nickname || user?.name;
   const displayImage = user?.profileImage || user?.picture;
-
-  const [isModalSearch, setIsModalSearch] = useState(false);
-  const modalRef = useRef(null);
-  const searchRef = useRef(null);
-
-  useEffect(() => {
-    const handelClickOut = (e) => {
-      if (searchRef.current && searchRef.current.contains(e.target)) {
-        return;
-      }
-      if (modalRef.current && !modalRef.current.contains(e.target)) {
-        setIsModalSearch(false);
-      }
-    };
-    if (isModalSearch) {
-      document.addEventListener("mousedown", handelClickOut);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handelClickOut);
-    };
-  }, [isModalSearch]);
 
   const handleMenuClick = ({ key }) => {
     if (key === "logout") {
@@ -82,9 +55,6 @@ const Profile = () => {
       {user ? (
         <>
           <IconContainer>
-            <span ref={searchRef}>
-              <FaSearch onClick={() => setIsModalSearch(!isModalSearch)} />
-            </span>
             <Dropdown
               menu={{ items: menuItems, onClick: handleMenuClick }}
               trigger={["click"]}
@@ -94,21 +64,10 @@ const Profile = () => {
               />
             </Dropdown>
           </IconContainer>
-          {isModalSearch && (
-            <SearchModal ref={modalRef}>
-              <ModalHeader>
-                <span>검색</span>
-                <CloseButton onClick={() => setIsModalSearch(false)}>
-                  닫기
-                </CloseButton>
-              </ModalHeader>
-              <SearchInput type="text" placeholder="검색어를 입력하세요" />
-            </SearchModal>
-          )}
           <ProfileImageArea>
             <ImageWrapper as="div" onClick={handleMyPageClick} style={{ cursor: 'pointer' }}>
               <img
-                src={displayImage || "/default-profile.png"}
+                src={displayImage || defaultProfileImage}
                 alt={`${displayName} 프로필`}
                 referrerPolicy="no-referrer"
               />

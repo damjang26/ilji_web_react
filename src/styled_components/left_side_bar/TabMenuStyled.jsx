@@ -29,7 +29,7 @@ const commonMenuItemStyle = `
     border-radius: 10px; /* 둥근 알약 모양 */
     font-size: 14px;
     font-weight: 450; /* ✅ 세미볼드 굵기로 가독성 향상 */
-    font-family: 'Inter', sans-serif; /* ✅ 캘린더와 폰트 통일 */
+    font-family: 'GowoonDodum', sans-serif; /* ✅ 캘린더와 폰트 통일 */
     color: #8394a6; /* 기본 텍스트 색상 (캘린더와 통일) */
     text-decoration: none;
     cursor: pointer;

@@ -7,7 +7,7 @@ import {
     IconButton,
     PostButton,
     CropArea,
-    ImageEditorContainer,
+    ImageEditorContainer, ImageEditorModalWrapper,
 } from '../../../../styled_components/main/journal/JournalWriteStyled';
 import FabricEditor from "./FabricEditor.jsx";
 
@@ -58,12 +58,14 @@ const ImageEditor = ({imageInfo, onSave, onCancel, onFabricModeChange}) => {
         if (fabricEditorRef.current) {
             const editedImageDataUrl = fabricEditorRef.current.exportCanvas();
             // 부모 컴포넌트(JournalWrite)의 onSave 함수를 호출하여 데이터 전달
+            if (onFabricModeChange) onFabricModeChange(false); // 모달
             onSave(editedImageDataUrl);
         }
     };
 
     const handleCancelEdit = () => {
         if (window.confirm('편집을 취소하시겠습니까? 변경사항이 저장되지 않습니다.')) {
+            if (onFabricModeChange) onFabricModeChange(false); // 모달
             onCancel(); // 부모 컴포넌트의 취소 함수 호출
         }
     };
@@ -77,26 +79,32 @@ const ImageEditor = ({imageInfo, onSave, onCancel, onFabricModeChange}) => {
               display: flex를 사용하여 Cropper가 남은 공간을 모두 채우도록 합니다.
             */}
             <div style={{display: editingStep === 'crop' ? 'block' : 'none'}}>
-                <ModalHeader>
-                    <IconButton onClick={handleCancelEdit} style={{color: '#555'}}><FaArrowLeft/></IconButton>
-                    <h2>이미지 자르기</h2>
-                    <PostButton onClick={handleNextStep}>다음</PostButton>
-                </ModalHeader>
-                <CropArea>
-                    <Cropper
-                        ref={cropperRef}
-                        src={imageInfo.image.preview}
-                        style={{height: '100%', width: '100%'}}
-                        viewMode={1}
-                        guides={true}
-                        background={false}
-                        responsive={true}
-                        checkOrientation={false}
-                        minCropBoxHeight={100}
-                        minCropBoxWidth={100}
-                        autoCropArea={1}
-                    />
-                </CropArea>
+                <ImageEditorModalWrapper>
+                    <ModalHeader>
+                        <IconButton data-tooltip="back" onClick={handleCancelEdit}
+                                    style={{color: '#555'}}><FaArrowLeft/></IconButton>
+                        <h2>image crop</h2>
+                        <PostButton onClick={handleNextStep}>next</PostButton>
+                    </ModalHeader>
+                    {/* ✅ [수정] CropArea를 ImageEditorContainer로 감싸서 비율을 유지하도록 합니다. */}
+                    <ImageEditorContainer>
+                        <CropArea>
+                            <Cropper
+                                ref={cropperRef}
+                                src={imageInfo.image.preview}
+                                style={{height: '100%', width: '100%'}}
+                                viewMode={1}
+                                guides={true}
+                                background={false}
+                                responsive={true}
+                                checkOrientation={false}
+                                minCropBoxHeight={100}
+                                minCropBoxWidth={100}
+                                autoCropArea={1}
+                            />
+                        </CropArea>
+                    </ImageEditorContainer>
+                </ImageEditorModalWrapper>
             </div>
 
             {/*
@@ -105,10 +113,10 @@ const ImageEditor = ({imageInfo, onSave, onCancel, onFabricModeChange}) => {
             */}
             <div style={{display: editingStep === 'fabric' ? 'block' : 'none'}}>
                 <ModalHeader>
-                    <IconButton onClick={() => setEditingStep('crop')}
+                    <IconButton data-tooltip="back" onClick={() => setEditingStep('crop')}
                                 style={{color: '#555'}}><FaArrowLeft/></IconButton>
-                    <h2>이미지 꾸미기</h2>
-                    <PostButton onClick={handleSaveEdit}>저장</PostButton>
+                    <h2>image edit</h2>
+                    <PostButton onClick={handleSaveEdit}>save</PostButton>
                 </ModalHeader>
                 <ImageEditorContainer>
                     {/*{croppedImage && <FabricEditor croppedImage={croppedImage}/>}*/}

@@ -14,15 +14,34 @@ const NotificationsCtx = createContext({
 });
 
 // API 응답 -> 프론트엔드 아이템 형태로 매핑하는 헬퍼 함수
-const mapItem = (n) => ({
-    id: n.id,
-    type: n.type,
-    title: n.title, // Changed from n.messageTitle
-    body: n.body,   // Changed from n.messageBody
-    linkUrl: n.linkUrl,
-    status: n.status,
-    createdAt: n.createdAt,
-});
+const mapItem = (n) => {
+    // 데이터가 비정상적인 경우를 대비한 방어 코드
+    if (!n || typeof n !== 'object') {
+        return {
+            id: Math.random().toString(),
+            type: 'ERROR',
+            title: 'Invalid notification data received',
+            body: '',
+            linkUrl: '#',
+            status: 'NEW',
+            createdAt: new Date().toISOString(),
+        };
+    }
+
+    return {
+        id: n.id, // 백엔드 필드명 `id` 사용
+        type: n.type,
+        title: n.title || n.message_title || '내용 없는 알림', // `title`과 `message_title` 필드를 모두 지원하여 안정성 확보
+        body: n.body || n.message_body || '', // `body`와 `message_body` 필드를 모두 지원
+        linkUrl: n.linkUrl, // 백엔드에서 제공하는 `linkUrl` 사용
+        status: n.status, // 백엔드 필드명 `status` 사용
+        createdAt: n.createdAt,
+        entityId: n.entityId, // 라우팅에 필요한 entityId 추가
+        entityType: n.entityType, // 타입 구분을 위한 entityType 추가
+        // 나머지 메타 데이터도 전달
+        ...(n.meta || {}),
+    };
+};
 
 export function NotificationsProvider({ children }) {
     const { user } = useAuth();
@@ -44,7 +63,7 @@ export function NotificationsProvider({ children }) {
             list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
             setNotifications(list.map(mapItem));
-            setUnreadCount(countRes.data?.unread || 0);
+            setUnreadCount(countRes.data?.count || 0);
         } catch (error) {
             console.error("Failed to load notifications:", error);
         } finally {
@@ -112,7 +131,7 @@ export function NotificationsProvider({ children }) {
 
     // 4. 사용자 액션 핸들러 (읽음/삭제 처리)
     const markAllRead = useCallback(async () => {
-        await apiNoti.post("/notifications/mark-all-read");
+        await apiNoti.post("/notifications/read-all");
         setNotifications(prev => prev.map(n => ({ ...n, status: "READ" })));
         setUnreadCount(0);
     }, []);

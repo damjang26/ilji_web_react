@@ -1,12 +1,10 @@
 import React, {useState, useRef, useMemo, useEffect} from 'react';
 import {useAuth} from '../../../AuthContext';
 import {useJournal} from '../../../contexts/JournalContext.jsx';
-import {FaImage, FaSmile, FaUserTag} from 'react-icons/fa';
+import {FaImage, FaSmile} from 'react-icons/fa';
 import {useLocation} from 'react-router-dom';
 import EmojiPicker from 'emoji-picker-react';
 import {
-    FormContainer,
-    ProfilePicture,
     FormContent,
     StyledTextarea,
     ImagePreviewContainer,
@@ -19,13 +17,19 @@ import {
     IconButton,
     CharCounter,
     PostButton,
-    CheckboxLabel,
-    CheckboxInput,
-} from '../../../styled_components/main/journal/JournalWriteStyled';
-import {CloseButton, ModalHeader} from '../../../styled_components/main/journal/ModalStyled';
+    VisibilitySelector,
+    VisibilityButton,
+    VisibilityDropdown,
+    VisibilityOption,
+    JournalWriteContainer, // ✅ JournalWriteStyled에서 가져오도록 수정
+    ProfilePicture, ModalTitle,
+} from '../../../styled_components/main/journal/JournalWriteStyled.jsx';
+import {CloseButton, ModalHeader} from '../../../styled_components/main/journal/ModalStyled.jsx';
+import {SpringBinder, SpringBinder2} from "../../../styled_components/main/post/PostListStyled.jsx";
 import ImageEditor from './image_edit/ImageEditor.jsx';
+import {LuGlobe, LuLock, LuUsers} from "react-icons/lu"; // 공개 범위 아이콘
 
-const MAX_CHAR_LIMIT = 3000;
+const MAX_CHAR_LIMIT = 2000;
 const MAX_IMAGE_LIMIT = 2;
 
 // Base64 데이터 URL을 File 객체로 변환하는 헬퍼 함수
@@ -40,13 +44,6 @@ const dataURLtoFile = (dataurl, filename) => {
     }
     return new File([u8arr], filename, {type: mime});
 };
-
-// ✅ [추가] URL로부터 이미지를 가져와 File 객체로 변환하는 헬퍼 함수
-// const urlToImageFile = async (url, filename) => {
-//     const response = await fetch(url);
-//     const blob = await response.blob();
-//     return new File([blob], filename, {type: blob.type});
-// };
 
 const JournalWrite = ({
                           onClose,
@@ -71,22 +68,34 @@ const JournalWrite = ({
     const isEditMode = !!journalToEdit; // journalToEdit 데이터가 있으면 수정 모드!
 
     const [isSubmitting, setIsSubmitting] = useState(false); // ✅ 제출 중 상태 추가
+    const spring = "/images/spring_binder.png";
     const [editingImageInfo, setEditingImageInfo] = useState(null); // ✅ 이미지 편집 상태 관리
     const [isDragging, setIsDragging] = useState(false); // ✅ 드래그 상태를 관리할 state 추가
 
     // --- 상태 초기값 설정 ---
     const [content, setContent] = useState('');
-    const [isPrivate, setIsPrivate] = useState(false); // ✅ 비공개 여부 상태, 기본값: 비공개(true)
+    // ✅ [수정] isPrivate를 visibility로 변경 (0: 전체, 1: 친구, 2: 비공개)
+    const [visibility, setVisibility] = useState('PUBLIC'); // ✅ [수정] 기본값을 문자열 'PUBLIC'으로 변경
     const [images, setImages] = useState([]);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [isVisibilityDropdownOpen, setIsVisibilityDropdownOpen] = useState(false);
     const fileInputRef = useRef(null);
     const textareaRef = useRef(null);
     const emojiPickerContainerRef = useRef(null);
 
+    // ✅ [추가] 이미지 편집 모드에 따라 부모 모달의 스타일을 제어합니다.
+    // editingImageInfo가 있으면(편집 모드 on) isFabricMode를 true로 설정합니다.
+    useEffect(() => {
+        if (onFabricModeChange) {
+            onFabricModeChange(!!editingImageInfo);
+        }
+    }, [editingImageInfo, onFabricModeChange]);
+
     useEffect(() => {
         if (isEditMode) {
             setContent(journalToEdit.content || '');
-            setIsPrivate(journalToEdit.visibility === 2);
+            // ✅ [수정] visibility 상태를 초기화합니다.
+            setVisibility(journalToEdit.visibility || 'PUBLIC');
 
             // 이 필드는 이미지 URL 문자열의 배열입니다.
             if (journalToEdit.images && Array.isArray(journalToEdit.images)) {
@@ -121,6 +130,20 @@ const JournalWrite = ({
         return () => document.removeEventListener('mousedown', handleClickOutside); // 컴포넌트 언마운트 시 리스너 제거
     }, [showEmojiPicker]);
 
+    // --- 공개 범위 드롭다운 외부 클릭 감지 Hook ---
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            // ActionButtonWrapper(드롭다운 버튼이 있는 곳)의 자손이 아니면 닫기
+            if (event.target.closest(VisibilitySelector.toString()) === null) {
+                setIsVisibilityDropdownOpen(false);
+            }
+        };
+        if (isVisibilityDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isVisibilityDropdownOpen]);
+
     // 날짜 포맷팅 (e.g., "8월 25일")
     const formattedDate = useMemo(() => {
         // 수정 모드일 때는 journalToEdit의 날짜를, 생성 모드일 때는 selectedDate를 사용
@@ -128,8 +151,34 @@ const JournalWrite = ({
         if (!dateToFormat) return '';
         const date = new Date(dateToFormat);
         // toLocaleDateString은 브라우저/시스템의 로케일을 따르므로 일관된 결과를 위해 옵션 지정
-        return date.toLocaleDateString('ko-KR', {month: 'long', day: 'numeric'});
+        return date.toLocaleDateString('en-US', {month: 'long', day: '2-digit'});
     }, [isEditMode, journalToEdit, selectedDate]);
+
+    // ✅ [신규] 현재 visibility 상태에 맞는 아이콘과 텍스트를 반환하는 객체
+    const visibilityOptions = useMemo(() => ({
+        'PUBLIC': {
+            icon: <LuGlobe/>,
+            text: '전체 공개',
+            description: '모든 사람이 내 일기를 볼 수 있습니다.'
+        },
+        'FRIENDS_ONLY': {
+            icon: <LuUsers/>,
+            text: '친구 공개',
+            description: '나와 내 친구들만 볼 수 있습니다.'
+        },
+        'PRIVATE': {
+            icon: <LuLock/>,
+            text: '나만 보기',
+            description: '이 일기는 나만 볼 수 있습니다.'
+        }
+    }), []);
+
+    // ✅ [신규] 공개 범위 옵션 클릭 핸들러
+    const handleVisibilityChange = (newVisibility) => {
+        setVisibility(newVisibility);
+        setIsVisibilityDropdownOpen(false); // 옵션 선택 후 드롭다운 닫기
+    };
+
 
     const handleContentChange = (e) => {
         const text = e.target.value;
@@ -140,27 +189,25 @@ const JournalWrite = ({
 
     // ✅ File을 base64(dataURL)로 변환해서 preview에 저장
     const processFiles = (files) => {
-        if (images.length + files.length > MAX_IMAGE_LIMIT) {
+        // ✅ [추가] 허용할 이미지 파일의 MIME 타입 정의
+        const allowedTypes = ['image/jpeg', 'image/png'];
+        const allFiles = Array.from(files);
+
+        // 1. 허용되지 않는 파일 형식을 먼저 걸러냅니다.
+        const invalidFiles = allFiles.filter(file => !allowedTypes.includes(file.type));
+        if (invalidFiles.length > 0) {
+            alert(`지원하지 않는 파일 형식입니다. JPG, PNG 파일만 업로드할 수 있습니다.`);
+            return; // 유효하지 않은 파일이 있으면 함수를 중단합니다.
+        }
+
+        // 2. 허용된 파일들로만 개수 제한을 확인합니다.
+        if (images.length + allFiles.length > MAX_IMAGE_LIMIT) {
             alert(`사진은 최대 ${MAX_IMAGE_LIMIT}개까지 추가할 수 있습니다.`);
             return;
         }
 
-        // Array.from(files).forEach((file) => {
-        //     const reader = new FileReader();
-        //     reader.onloadend = () => {
-        //         const base64Data = reader.result; // ✅ dataURL (base64)
-        //         setImages((prevImages) => [
-        //             ...prevImages,
-        //             {
-        //                 file,                // 원본 File도 저장 (필요하면 서버 업로드용)
-        //                 preview: base64Data, // ✅ 이제 blobURL 대신 base64 저장
-        //             },
-        //         ]);
-        //     };
-        //     reader.readAsDataURL(file);
-        // });
-
-        Array.from(files).forEach((file) => {
+        // 3. 모든 검증을 통과한 파일들만 상태에 추가합니다.
+        allFiles.forEach((file) => {
             // ✅ base64 대신 blob URL 사용
             const blobUrl = URL.createObjectURL(file);
 
@@ -239,8 +286,6 @@ const JournalWrite = ({
         setShowEmojiPicker(false); // 이모지 선택 후 피커 닫기
     };
 
-    const handleTagClick = () => alert('친구 태그 기능 구현 예정');
-
     // --- Drag & Drop 핸들러 추가 ---
     const handleDragEnter = (e) => {
         e.preventDefault();
@@ -271,13 +316,11 @@ const JournalWrite = ({
 
     // --- 이미지 편집 모드 핸들러 ---
     const handleCancelEdit = () => {
-        if (onFabricModeChange) onFabricModeChange(false); // 편집 모드 종료 시 모달 크기 복원
         setEditingImageInfo(null); // 편집 모드 종료
     };
 
     // ✅ ImageEditor로부터 최종 편집된 이미지 데이터를 받아 처리하는 함수
     const handleSaveEdit = (editedImageDataUrl) => {
-        // 1. FabricEditor가 반환한 고해상도 base64 데이터를 File 객체로 변환합니다.
         const filename = `edited_${user.uid}_${Date.now()}.png`;
         const editedFile = dataURLtoFile(editedImageDataUrl, filename);
 
@@ -302,7 +345,6 @@ const JournalWrite = ({
         };
 
         setImages(newImages);
-        if (onFabricModeChange) onFabricModeChange(false); // 편집 저장 시 모달 크기 복원
         setEditingImageInfo(null); // 모든 편집 모드 종료
         alert('이미지가 성공적으로 편집되었습니다.');
     };
@@ -313,17 +355,25 @@ const JournalWrite = ({
         setIsSubmitting(true);
         // console.log("onSubmit selectedDate:", selectedDate);
 
+        // ✅ [추가] 백엔드 Enum(int)에 맞게 문자열 visibility를 숫자로 변환합니다.
+        const visibilityMap = {
+            'PUBLIC': 0,
+            'FRIENDS_ONLY': 1,
+            'PRIVATE': 2
+        };
+
         // Context 함수에 전달할 데이터 묶음(payload)을 만듭니다.
         const journalPayload = {
-            images,
-            content,
-            isPrivate,
+            images, content, visibility: visibilityMap[visibility]
         };
 
         try {
             if (isEditMode) {
                 // ✅ 수정 모드일 경우
-                await updateJournalEntry(journalToEdit.id, journalPayload);
+                const updatedJournal = await updateJournalEntry(journalToEdit.id, journalPayload);
+                // ✅ [수정] 수정이 성공하면, 전역 이벤트를 발생시켜 다른 컴포넌트에게 알립니다.
+                // 이벤트의 detail에 수정된 '전체 일기 객체'를 담아 보냅니다.
+                window.dispatchEvent(new CustomEvent('journal:updated', { detail: { updatedJournal } }));
                 alert('일기가 성공적으로 수정되었습니다!');
             } else {
                 // ✅ 생성 모드일 경우
@@ -331,15 +381,13 @@ const JournalWrite = ({
                 await createJournalEntry(createPayload);
                 alert('일기가 성공적으로 저장되었습니다!');
             }
-
-
-            onClose(); // 저장 후 모달 닫기
         } catch (error) {
             console.error("일기 저장 실패:", error);
             // 서버에서 보낸 에러 메시지가 있다면 보여주는 것이 더 좋습니다.
             alert(error.response?.data?.message || '일기 저장에 실패했습니다.');
         } finally {
             setIsSubmitting(false); // 제출 상태 해제
+            onClose(); // 모든 작업 후 모달 닫기
         }
     };
 
@@ -350,22 +398,28 @@ const JournalWrite = ({
                 imageInfo={editingImageInfo}
                 onSave={handleSaveEdit}
                 onCancel={handleCancelEdit}
-                onFabricModeChange={onFabricModeChange} // ImageEditor로 심부름꾼 함수 전달
+                onFabricModeChange={onFabricModeChange}
             />
         );
     }
 
     return (
         <>
-            <ModalHeader>
-                <h2>{formattedDate}</h2> {/* 제목은 비워두거나 다른 용도로 사용 */}
-                <CloseButton onClick={onClose}>×</CloseButton>
-            </ModalHeader>
-            <FormContainer>
-                <ProfilePicture
-                    src={user?.picture || 'https://via.placeholder.com/48'}
-                    alt={`${user?.name || 'user'} profile`}
-                    referrerPolicy="no-referrer"/>
+            {/* ✅ [수정] JournalWriteContainer와 SpringBinder를 사용하여 일기장 디자인 적용 */}
+            <JournalWriteContainer>
+                <SpringBinder src={spring} alt="Spring binder"/>
+                <SpringBinder2 src={spring} alt="Spring binder"/>
+                <ModalHeader>
+                    <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                        <ProfilePicture
+                            src={user?.picture || 'https://via.placeholder.com/48'}
+                            alt={`${user?.name || 'user'} profile`}
+                            referrerPolicy="no-referrer"/>
+                        <span style={{fontWeight: 600}}>{user?.name || 'User'}</span>
+                    </div>
+                    <CloseButton onClick={onClose}>×</CloseButton>
+                </ModalHeader>
+                <ModalTitle>{formattedDate}</ModalTitle>
                 <FormContent>
                     <StyledTextarea
                         ref={textareaRef}
@@ -375,7 +429,7 @@ const JournalWrite = ({
                         onDragLeave={handleDragLeave}
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
-                        isDragging={isDragging} // ✅ 스타일링을 위해 isDragging 상태 전달
+                        $isDragging={isDragging} // ✅ 스타일링을 위해 isDragging 상태 전달
                         placeholder="오늘은 무슨 일이 있었나요?"
                     />
 
@@ -404,7 +458,7 @@ const JournalWrite = ({
                                 ref={fileInputRef}
                                 onChange={handleImageUpload}
                                 multiple
-                                accept="image/*"
+                                accept="image/jpeg, image/png"
                                 style={{display: 'none'}}
                             />
                             <IconButton data-tooltip="이미지 추가" onClick={handleImageButtonClick}
@@ -421,26 +475,33 @@ const JournalWrite = ({
                                     </EmojiPickerWrapper>
                                 )}
                             </ActionButtonWrapper>
-                            <IconButton data-tooltip="친구 태그 추가" onClick={handleTagClick}>
-                                <FaUserTag/>
-                            </IconButton>
                         </ActionButtons>
-                        <CharCounter error={content.length === MAX_CHAR_LIMIT}>
+                        <CharCounter $error={content.length === MAX_CHAR_LIMIT}>
                             {content.length} / {MAX_CHAR_LIMIT}
                         </CharCounter>
-                        <CheckboxLabel>
-                            <CheckboxInput
-                                checked={isPrivate}
-                                onChange={(e) => setIsPrivate(e.target.checked)}/>
-                            비공개
-                        </CheckboxLabel>
+                        <VisibilitySelector>
+                            <VisibilityButton onClick={() => setIsVisibilityDropdownOpen(prev => !prev)}>
+                                {visibilityOptions[visibility].icon}
+                                <span>{visibilityOptions[visibility].text}</span>
+                            </VisibilityButton>
+                            {isVisibilityDropdownOpen && (
+                                <VisibilityDropdown>
+                                    {Object.entries(visibilityOptions).map(([key, { icon, text }]) => (
+                                        <VisibilityOption key={key} onClick={() => handleVisibilityChange(key)}>
+                                            {icon}
+                                            <span>{text}</span>
+                                        </VisibilityOption>
+                                    ))}
+                                </VisibilityDropdown>
+                            )}
+                        </VisibilitySelector>
                         <PostButton onClick={onSubmit}
                                     disabled={(!content.trim() && images.length === 0) || isSubmitting}>
                             {isSubmitting ? (isEditMode ? '수정 중...' : '저장 중...') : (isEditMode ? '수정하기' : '게시하기')}
                         </PostButton>
                     </ActionBar>
                 </FormContent>
-            </FormContainer>
+            </JournalWriteContainer>
         </>
     );
 };

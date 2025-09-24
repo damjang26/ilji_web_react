@@ -73,7 +73,7 @@ export const NotiItem = styled.div`
   display: flex;
   padding: 12px 16px;
   border-bottom: 1px solid #f0f0f0;
-  background-color: ${({ unread }) => (unread ? "#f8f9fa" : "transparent")};
+  background-color: ${({ $unread }) => ($unread ? "#f8f9fa" : "transparent")};
   transition: background-color 0.2s;
 
   &:last-child {
@@ -92,6 +92,7 @@ export const ItemMain = styled.a`
   gap: 12px;
   text-decoration: none;
   color: inherit;
+  cursor: pointer;
 `;
 
 export const ItemIcon = styled.div`

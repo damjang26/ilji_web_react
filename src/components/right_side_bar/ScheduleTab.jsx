@@ -1,25 +1,40 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import ScheduleList from "./schedule_tab/ScheduleList.jsx";
 import ScheduleDetail from "./schedule_tab/ScheduleDetail.jsx"; // ScheduleDetail을 import 합니다.
 import { useSchedule } from "../../contexts/ScheduleContext.jsx";
 import { TabWrapper } from "../../styled_components/right_side_bar/ScheduleTabStyled.jsx";
 
-const ScheduleTab = () => {
+const ScheduleTab = ({ isInsideModal = false, initialEvent = null }) => {
     const {
         events,
+        selectedInfo, // 날짜 정보를 위해 selectedInfo 가져오기
         openSchedulePanelForNew,
-        // openSchedulePanelForDetail, // 더 이상 사용하지 않으므로 주석 처리 또는 삭제
-        deleteSchedule, // 삭제 함수를 context에서 가져옵니다 (가정)
-        updateSchedule, // 수정 함수를 context에서 가져옵니다 (가정)
+        openSchedulePanelForEdit, // 수정 패널을 여는 함수 가져오기
+        switchToModalFormView, // 모달 뷰 전환 함수 가져오기
     } = useSchedule();
 
     // 1. 선택된 이벤트를 관리할 상태를 추가합니다. null이면 목록, 값이 있으면 상세 정보를 표시합니다.
     const [selectedEvent, setSelectedEvent] = useState(null);
 
+    // prop으로 받은 initialEvent가 있으면 상세 보기 상태로 설정합니다.
+    useEffect(() => {
+        if (initialEvent) {
+            setSelectedEvent(initialEvent);
+        }
+    }, [initialEvent]);
+
     const handleAdd = useCallback(() => {
         const today = new Date().toISOString().split('T')[0];
-        openSchedulePanelForNew({ startStr: today, endStr: today, allDay: true });
-    }, [openSchedulePanelForNew]);
+        const dateInfo = { startStr: today, endStr: today, allDay: true };
+
+        if (isInsideModal) {
+            // 모달 안에서는 모달의 뷰를 '폼'으로 변경
+            switchToModalFormView(dateInfo);
+        } else {
+            // 사이드 패널에서는 기존 방식대로 패널 열기
+            openSchedulePanelForNew(dateInfo);
+        }
+    }, [isInsideModal, openSchedulePanelForNew, switchToModalFormView]);
 
     // 2. 목록에서 아이템 클릭 시, 전역 패널을 여는 대신 selectedEvent 상태를 업데이트합니다.
     const handleShowDetail = useCallback((event) => {
@@ -40,12 +55,14 @@ const ScheduleTab = () => {
     }, [handleBackToList]);
 
     const handleEdit = useCallback((event) => {
-        // 수정 로직 (예: 수정 폼을 연다)
-        console.log("수정할 이벤트:", event);
-        // 수정 패널을 여는 로직을 여기에 구현할 수 있습니다.
-        // 예: openSchedulePanelForEdit(event);
-        handleBackToList(); // 일단 목록으로 돌아가기
-    }, [handleBackToList]);
+        if (isInsideModal) {
+            // 모달 안에서는 모달의 뷰를 '폼'으로 변경
+            switchToModalFormView(event);
+        } else {
+            // 사이드 패널에서는 기존 방식대로 패널 열기
+            openSchedulePanelForEdit(event);
+        }
+    }, [isInsideModal, switchToModalFormView, openSchedulePanelForEdit]);
 
 
     return (
@@ -63,6 +80,8 @@ const ScheduleTab = () => {
                     allEvents={events}
                     onAdd={handleAdd}
                     onDetail={handleShowDetail} // 목록 아이템 클릭 시 handleShowDetail 함수 연결
+                    selectedDate={selectedInfo?.data?.startStr} // 선택된 날짜 정보를 prop으로 전달
+                    isInsideModal={isInsideModal} // 모달 안에 있는지 여부 전달
                 />
             )}
         </TabWrapper>
