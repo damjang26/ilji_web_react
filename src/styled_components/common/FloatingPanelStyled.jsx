@@ -58,6 +58,8 @@ export const CloseButton = styled.button`
         background-color: #efefef;
         color: #7b5fff;
     }
+    
+
 `;
 
 export const PanelBody = styled.div`
