@@ -141,6 +141,16 @@ export function ScheduleProvider({children}) {
     // 2. 팝업 상태
     const [popupState, setPopupState] = useState({isOpen: false, data: null});
 
+    // 3. 스케줄 상세/생성/수정을 위한 모달 상태
+    const [scheduleModalData, setScheduleModalData] = useState({
+        isOpen: false,
+        position: null,
+        dateInfo: null,
+        title: '',
+        view: 'list', // 'list' 또는 'form'
+        initialEvent: null, // 모달이 열릴 때 표시할 초기 이벤트
+    });
+
     // --- 데이터 상태 관리 ---
     const [formData, setFormData] = useState(null); // ✅ 폼 데이터 중앙 관리 상태
     const [events, setEvents] = useState([]);
@@ -458,10 +468,87 @@ export function ScheduleProvider({children}) {
         setPopupState({isOpen: false, data: null});
     }, []);
 
+    // 스케줄 모달 관련 함수들
+    const openScheduleModal = useCallback((selectInfo, event = null) => {
+        const { startStr, endStr, jsEvent } = selectInfo;
+        const start = new Date(startStr);
+        const end = new Date(endStr);
+        const diffInMs = end.getTime() - start.getTime();
+        const diffInDays = diffInMs / (1000 * 3600 * 24);
+
+        let title;
+        let view;
+
+        if (event) { // Case 1: 이벤트 클릭 시
+            title = '일정 상세 정보';
+            view = 'list'; // ScheduleTab이 상세보기를 포함하므로, list view를 띄움
+        } else if (diffInDays > 1) { // Case 2: 여러 날 드래그
+            title = `새 일정`;
+            view = 'form';
+        } else { // Case 3: 하루 클릭
+            title = `${start.getMonth() + 1}월 ${start.getDate()}일`;
+            view = 'list';
+        }
+
+        // view에 따라 공통 상태 설정
+        if (view === 'list') {
+            setSelectedInfo({ type: "list_for_date", data: { startStr } });
+            setFormData(null);
+        } else if (view === 'form') {
+            setFormData(transformInitialDataToFormState(selectInfo, user));
+            setSelectedInfo(null);
+        }
+
+        setScheduleModalData({
+            isOpen: true,
+            position: { x: jsEvent.clientX, y: jsEvent.clientY },
+            dateInfo: { startStr, endStr },
+            title: title,
+            view: view,
+            initialEvent: event, // 전달받은 이벤트를 상태에 저장
+        });
+
+    }, [user]);
+
+    const closeScheduleModal = useCallback(() => {
+        setScheduleModalData({
+            isOpen: false,
+            position: null,
+            dateInfo: null,
+            title: '',
+            view: 'list', // 닫을 때 초기화
+            initialEvent: null, // 이벤트 상태도 초기화
+        });
+        // 모달이 닫힐 때, 사이드바 선택 상태도 초기화합니다.
+        clearScheduleSelection();
+    }, [clearScheduleSelection]);
+
+    const switchToModalFormView = useCallback((data) => {
+        setScheduleModalData(prev => ({ ...prev, view: 'form' }));
+        // data에 id가 있으면 (이벤트 객체이면) 수정으로, 없으면 새 일정으로 판단
+        if (data && data.id) {
+            setFormData(transformEventToFormState(data));
+        } else {
+            const info = data || scheduleModalData.dateInfo;
+            setFormData(transformInitialDataToFormState(info, user));
+        }
+    }, [user, scheduleModalData.dateInfo]);
+
+    const switchToModalListView = useCallback(() => {
+        setScheduleModalData(prev => ({ ...prev, view: 'list' }));
+        setFormData(null);
+    }, []);
+
     /**
      * ✅ [신규] 사이드바에서 '뒤로 가기' 동작을 처리하는 통합 함수
      */
     const goBackInSchedulePanel = useCallback(() => {
+        // 만약 모달이 열려있다면, 모달의 뷰를 리스트로 변경하는 것이 최우선.
+        if (scheduleModalData.isOpen) {
+            switchToModalListView();
+            return;
+        }
+
         if (!selectedInfo) {
             clearScheduleSelection();
             return;
@@ -511,7 +598,7 @@ export function ScheduleProvider({children}) {
             default:
                 clearScheduleSelection();
         }
-    }, [selectedInfo, formData, openSchedulePanelForDetail, openSchedulePanelForDate, clearScheduleSelection]);
+    }, [selectedInfo, formData, scheduleModalData.isOpen, switchToModalListView, openSchedulePanelForDetail, openSchedulePanelForDate, clearScheduleSelection]);
 
     /**
      * ✅ [신규] 이벤트 상세보기를 위한 통합 함수
@@ -574,6 +661,13 @@ export function ScheduleProvider({children}) {
             popupState,
             openPopup,
             closePopup,
+
+            // 스케줄 모달 상태 및 함수
+            scheduleModalData,
+            openScheduleModal,
+            closeScheduleModal,
+            switchToModalFormView, // 모달 뷰 전환 함수
+            switchToModalListView, // 모달 뷰 전환 함수
             showEventDetails,
             goBackInSchedulePanel,
             // CRUD 함수 (deleteEvent는 confirmDelete 내부에서 사용됩니다)

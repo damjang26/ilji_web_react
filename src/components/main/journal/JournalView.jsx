@@ -15,25 +15,16 @@ import {
     ImageSliderContainer,
     ImageSlide,
     SliderArrow,
-    ContentContainer,
-    SideActionTabsContainer,
-    SideActionTab,
-    CommentContainer, CommentTitleContainer,
-    CommentContentWrapper, JournalDate,
-    CommentHeader,
-    CommentList,
-    CommentInputContainer, CommentTitle, HideButton,
-    CommentForm,
-    SortOption
+    ContentContainer, SideActionTabsContainer, SideActionTab, JournalDate
 } from '../../../styled_components/main/journal/JournalViewStyled';
 import {HiPencilAlt} from "react-icons/hi";
 import {MdDeleteForever} from "react-icons/md";
-import {ActionItem, EmptyComment, LikeCountSpan} from "../../../styled_components/main/post/PostListStyled.jsx";
+import {ActionItem, LikeCountSpan} from "../../../styled_components/main/post/PostListStyled.jsx";
 import {FaChevronLeft, FaChevronRight, FaRegHeart} from "react-icons/fa";
 import {useAuth} from "../../../AuthContext.jsx";
 import {BiSolidShareAlt} from "react-icons/bi";
-import {TbMessageCirclePlus} from "react-icons/tb";
 import PostLikersModal from "../post/PostLikersModal.jsx";
+import PostComment from "../post/PostComment.jsx"; // ✅ [추가] PostComment 컴포넌트 임포트
 
 const JournalView = () => {
     const {user} = useAuth();
@@ -45,11 +36,7 @@ const JournalView = () => {
     const [journal, setJournal] = useState(location.state?.journalData);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-
-    const [comments, setComments] = useState([]); // ✅ [신규] 댓글 목록 상태
-    const [newComment, setNewComment] = useState(''); // ✅ [신규] 댓글 입력 상태
     const [isCommentOpen, setIsCommentOpen] = useState(false); // ✅ [신규] 댓글 창 열림/닫힘 상태
-    const [commentSortBy, setCommentSortBy] = useState('likes'); // ✅ [신규] 댓글 정렬 상태 (기본: 'likes')
 
     // ✅ [신규] openCommentSection 플래그를 확인하여 댓글 창 자동 열기
     useEffect(() => {
@@ -67,6 +54,7 @@ const JournalView = () => {
             });
         }
     }, [journal, navigate, location]);
+
 
     // --- 좋아요 목록 모달 관련 상태 추가 ---
     const [isLikersModalOpen, setLikersModalOpen] = useState(false);
@@ -162,17 +150,12 @@ const JournalView = () => {
         setIsCommentOpen(prev => !prev);
     }, []);
 
-    // ✅ [신규] 댓글 제출 핸들러
-    const handleCommentSubmit = useCallback((e) => {
-        e.preventDefault();
-        if (!newComment.trim()) return; // 내용이 없으면 제출 방지
+    // ✅ [신규] 댓글 개수가 변경될 때 journal 상태를 업데이트하는 함수
+    const handleCommentCountChange = useCallback((changeAmount) => {
+        setJournal(prev => ({...prev, commentCount: (prev.commentCount || 0) + changeAmount}));
+    }, []);
 
-        console.log('새 댓글:', newComment);
-        // 여기에 댓글을 서버로 전송하는 API 호출 로직을 추가합니다.
-        setNewComment(''); // 입력창 초기화
-    }, [newComment]);
 
-    // ✅ [추가] 좋아요 개수 클릭 시 모달을 여는 함수
     const handleLikeCountClick = useCallback(async (postId) => {
         if (!postId) return;
         setCurrentPostId(postId);
@@ -197,47 +180,6 @@ const JournalView = () => {
             handleLikeCountClick(currentPostId);
         }
     }, [currentPostId, handleLikeCountClick]);
-
-    // ✅ [리팩토링] 중복되는 댓글 UI를 별도의 함수로 추출합니다.
-    const renderCommentSection = () => (
-        <CommentContainer isOpen={isCommentOpen}
-                          onClick={!isCommentOpen ? toggleCommentView : undefined}>
-            {isCommentOpen ? (
-                <CommentContentWrapper>
-                    <CommentHeader>
-                        <CommentTitleContainer>
-                            <CommentTitle>comments({comments.length})</CommentTitle>
-                            <SortOption active={commentSortBy === 'likes'}
-                                        onClick={() => setCommentSortBy('likes')}>Popular</SortOption>
-                            <SortOption active={commentSortBy === 'recent'}
-                                        onClick={() => setCommentSortBy('recent')}>New</SortOption>
-                        </CommentTitleContainer>
-                        <HideButton onClick={toggleCommentView}>Hide</HideButton>
-                    </CommentHeader>
-                    <CommentList>
-                        {comments.length > 0 ?
-                            comments.map(comment => <div key={comment.commentId}>{comment.content}</div>)
-                            : <EmptyComment>💬 No comments yet. <br/>
-                                Be the first to leave one!</EmptyComment>}
-                    </CommentList>
-                    <CommentInputContainer>
-                        <ProfilePicture
-                            src={user?.picture || 'https://via.placeholder.com/40'}
-                            alt="내 프로필"
-                            referrerPolicy="no-referrer"
-                        />
-                        <CommentForm onSubmit={handleCommentSubmit}>
-                            <input type="text" placeholder="Add a comment..." value={newComment}
-                                   onChange={(e) => setNewComment(e.target.value)}/>
-                            <button type="submit" disabled={!newComment.trim()}><TbMessageCirclePlus/></button>
-                        </CommentForm>
-                    </CommentInputContainer>
-                </CommentContentWrapper>
-            ) : (
-                <span>Comments ({journal.commentCount || 0})</span>
-            )}
-        </CommentContainer>
-    );
 
     if (!journal) {
         return <ViewContainer className="no-image"><p>일기 정보를 불러올 수 없습니다. 목록에서 다시 시도해주세요.</p>
@@ -276,7 +218,12 @@ const JournalView = () => {
                     <ContentSection>
                         <p>{journal.content}</p>
                     </ContentSection>
-                    {renderCommentSection()}
+                    {/* ✅ [수정] PostComment 컴포넌트를 재사용합니다. */}
+                    <PostComment
+                        journal={journal}
+                        isOpen={isCommentOpen}
+                        onToggle={toggleCommentView}
+                        onCommentCountChange={handleCommentCountChange}/>
                 </ViewContainer>
                 {/* ✅ [수정] 컨테이너는 항상 렌더링하고, 내부 탭을 조건부로 보여줍니다. */}
                 <SideActionTabsContainer>
@@ -347,7 +294,12 @@ const JournalView = () => {
                         <ContentSection>
                             <p>{journal.content}</p>
                         </ContentSection>
-                        {renderCommentSection()}
+                        {/* ✅ [수정] PostComment 컴포넌트를 재사용합니다. */}
+                        <PostComment
+                            journal={journal}
+                            isOpen={isCommentOpen}
+                            onToggle={toggleCommentView}
+                            onCommentCountChange={handleCommentCountChange}/>
                     </ContentContainer>
                 </BookLayoutContainer>
             </ViewContainer>

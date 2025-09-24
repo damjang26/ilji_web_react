@@ -44,7 +44,7 @@ export const CalendarWrapper = styled.div`
     /* 캘린더 상단 제목 (예: August 2025) */
 
     .fc .fc-toolbar-title {
-        font-family: 'Inter', sans-serif;
+        font-family: 'GowoonDodum', sans-serif;
         font-size: 15px; /* 원하는 크기로 조정 */
         font-weight: 600; /* 글자 두께 */
         margin: 0 12px; /* prev/next 사이 간격 */
@@ -117,7 +117,7 @@ export const CalendarWrapper = styled.div`
         border-left: none;
         border-top: none;
         border-bottom: 1px solid #dee2e8;
-        font-family: 'Inter', sans-serif;
+        font-family: 'GowoonDodum', sans-serif;
     }
 
     /* 주말(토/일) 색상 따로 */

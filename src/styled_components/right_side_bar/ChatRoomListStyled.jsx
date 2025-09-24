@@ -5,7 +5,7 @@ export const ChatRoomListContainer = styled.div`
     display: flex;
     flex-direction: column;
     height: 100%;
-    font-family: 'Inter', sans-serif;
+    font-family: 'GowoonDodum', sans-serif;
     position: relative; // For the FAB
 `;
 
@@ -111,6 +111,24 @@ export const RoomName = styled.div`
     height: 100%;
     display: flex;
     align-items: center;
+`;
+
+export const ParticipantAvatarsContainer = styled.div`
+    display: flex;
+    align-items: center;
+    margin-right: 5px; /* 메뉴 버튼과의 간격 */
+`;
+
+export const AvatarImage = styled.img`
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2px solid #fff; /* 겹칠 때 테두리 효과 */
+    object-fit: cover;
+
+    &:not(:first-child) {
+        margin-left: -8px; /* 겹치는 효과 */
+    }
 `;
 
 export const StyledHr = styled.hr`

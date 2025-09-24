@@ -34,6 +34,7 @@ import JournalList from "./feature/JournalList.jsx";
 import FriendManagementModal from "../../friends/FriendManagementModal.jsx";
 import MyPageSet from "./MyPageSet.jsx";
 import LikeList from "./feature/LikeList.jsx"; // Import the component to switch to
+import defaultProfileImage from '../../../static/image/default-profile.png';
 
 /**
  * MyPageContent - UI 렌더링만 담당
@@ -182,7 +183,7 @@ const MyPage = () => {
                     {/* 클릭 가능한 프로필 이미지 */}
                     <ImgWrapper>
                         <ProfileImage
-                            src={profile.profileImage || "/default-profile.png"}
+                            src={profile.profileImage || defaultProfileImage}
                             alt="Profile"
                             // [수정] isOwner일 때만 커서 포인터를 적용합니다.
                             onClick={isOwner ? () => handleImageClick("profileImage") : undefined}

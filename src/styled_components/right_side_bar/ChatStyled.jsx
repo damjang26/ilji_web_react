@@ -32,7 +32,7 @@ export const ChatContainer = styled.div`
     display: flex;
     flex-direction: column;
     height: 100%;
-    font-family: 'Inter', sans-serif;
+    font-family: 'GowoonDodum', sans-serif;
 `;
 
 export const Header = styled.div`
@@ -64,7 +64,7 @@ export const MessagesContainer = styled.div`
     flex-grow: 1;
     overflow-y: auto;
     padding: 20px;
-    background-color: #f8f9fa;
+    background-color: white;
 `;
 
 export const Message = styled.div`

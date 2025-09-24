@@ -4,6 +4,7 @@ import { useAuth } from "../../AuthContext";
 import SocialLogin from "../account/GoogleLogin";
 import { EllipsisOutlined } from "@ant-design/icons";
 import { Dropdown } from "antd";
+import defaultProfileImage from '../../static/image/default-profile.png';
 import {
   Email,
   // IconContainer,
@@ -66,7 +67,7 @@ const Profile = () => {
           <ProfileImageArea>
             <ImageWrapper as="div" onClick={handleMyPageClick} style={{ cursor: 'pointer' }}>
               <img
-                src={displayImage || "/default-profile.png"}
+                src={displayImage || defaultProfileImage}
                 alt={`${displayName} 프로필`}
                 referrerPolicy="no-referrer"
               />

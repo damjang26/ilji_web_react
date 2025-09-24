@@ -222,6 +222,13 @@ export const JournalProvider = ({children, userId}) => {
     // ✅ 특정 날짜의 일기 데이터를 가져오는 함수 추가
     const getJournal = useCallback((date) => journals.get(date), [journals]);
 
+    // ✅ [신규] 특정 날짜에 '내' 일기가 있는지 확인하는 함수
+    const hasMyJournal = useCallback((date) => {
+        const journal = journals.get(date);
+        // 일기가 존재하고, 그 일기의 작성자 ID가 현재 로그인한 사용자 ID와 같으면 true
+        return !!journal && journal.writerId === user?.id;
+    }, [journals, user]);
+
     // ✅ [신규] ID로 특정 일기 하나를 서버에서 직접 조회하는 함수
     const getJournalById = useCallback(async (id) => {
         try {
@@ -243,6 +250,7 @@ export const JournalProvider = ({children, userId}) => {
         deleteJournal,
         hasJournal,
         getJournal,
+        hasMyJournal, // ✅ 내보내는 값에 추가
         getJournalById, // ✅ 내보내는 값에 추가
         setVisibleDateRange, // ✅ 캘린더 컴포넌트에서 날짜 범위를 설정할 수 있도록 함수를 내보냅니다.
     };

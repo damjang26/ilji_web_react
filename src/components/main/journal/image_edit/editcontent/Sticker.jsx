@@ -8,13 +8,8 @@ const Sticker = ({canvas}) => {
     const [deleteBtnPos, setDeleteBtnPos] = useState({x: 0, y: 0, visible: false});
     const iconSize = 28; // 삭제 아이콘 크기를 상수로 관리하면 유지보수가 편해집니다.
 
-    const stickers = [
-        "/images/emoji/sticker1.png",
-        "/images/emoji/sticker2.png",
-        "/images/emoji/sticker3.png",
-        "/images/emoji/sticker4.png",
-        "/images/emoji/sticker5.png",
-    ];
+    // ✅ [수정] Array.from을 사용하여 스티커 경로 배열을 동적으로 생성합니다.
+    const stickers = Array.from({ length: 14 }, (_, i) => `/images/emoji/sticker${i + 1}.png`);
 
     const addSticker = async (url) => {
         if (!canvas) return;
