@@ -236,7 +236,8 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit, onImageC
     );
 };
 
-const JournalList = () => {
+// [수정] 부모 컴포넌트로부터 onPostChange 함수를 props로 받습니다.
+const JournalList = ({ onPostChange }) => {
     // ✅ [수정] Context에서는 '수정/삭제' 기능만 가져옵니다. 데이터는 직접 관리합니다.
     const {deleteJournal} = useJournal();
     const {user: currentUser} = useAuth(); // 현재 로그인한 사용자 정보
@@ -340,6 +341,11 @@ const JournalList = () => {
             const onUpdate = (deletedId) => {
                 setJournals(prev => prev.filter(j => j.id !== deletedId));
                 alert("일기가 삭제되었습니다.");
+
+                // [핵심 수정] 삭제가 성공했음을 부모 컴포넌트(MyPage)에 알립니다.
+                if (onPostChange) {
+                    onPostChange();
+                }
             };
 
             try {
@@ -349,7 +355,7 @@ const JournalList = () => {
                 alert("일기 삭제 중 오류가 발생했습니다.");
             }
         }
-    }, [deleteJournal]); // setJournals는 의존성에 필요 없습니다. onUpdate 콜백이 클로저를 통해 접근합니다.
+    }, [deleteJournal, onPostChange]); // [수정] 의존성 배열에 onPostChange를 추가합니다.
 
     // ✅ [추가] 수정 버튼 클릭 핸들러
     const handleEdit = useCallback((journalToEdit) => {

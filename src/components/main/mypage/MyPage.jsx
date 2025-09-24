@@ -40,9 +40,9 @@ import LikeList from "./feature/LikeList.jsx"; // Import the component to switch
  */
 // [되돌리기] MyPageContent의 이름을 MyPage로 변경하고, MyPageWrapper가 이 컴포넌트를 렌더링하도록 구조를 변경합니다.
 const MyPage = () => {
-    const {userId} = useParams(); // [추가] URL에서 userId를 가져옵니다.
+    const { userId } = useParams(); // [추가] URL에서 userId를 가져옵니다.
     // [수정] AuthContext에서 전역 상태를 가져옵니다.
-    const {user: loggedInUser, following: myFollowing, fetchMyFollowing, logout} = useAuth(); // [수정] logout 함수 가져오기
+    const { user: loggedInUser, following: myFollowing, fetchMyFollowing, logout } = useAuth(); // [수정] postChangeSignal 제거
     const {
         profile,
         loading,
@@ -51,7 +51,13 @@ const MyPage = () => {
         // [수정] handleEdit 함수를 MyPage.jsx에서 직접 구현합니다.
         // handleEdit,
         setIsEditing, // MyPageContext에서 isEditing 상태를 직접 제어하는 함수를 가져옵니다.
+        refetchProfile, // [추가] 프로필 정보를 새로고침하는 함수를 가져옵니다.
     } = useMyPage();
+
+    // [핵심 수정] 페이지가 다시 활성화될 때 프로필 정보를 새로고침합니다.
+    useEffect(() => {
+        refetchProfile(userId);
+    }, [userId, refetchProfile]);
 
     // [추가] 드롭다운 메뉴 아이템 정의
     const menuItems = [
@@ -89,11 +95,12 @@ const MyPage = () => {
             }
             // [핵심] API 호출 성공 후, AuthContext의 전역 팔로잉 목록을 새로고침합니다.
             await fetchMyFollowing();
+            await refetchProfile(userId); // [추가] 팔로워 수 등을 업데이트하기 위해 프로필 정보를 다시 불러옵니다.
         } catch (err) {
             console.error('팔로우 상태 변경에 실패했습니다.', err);
             // 필요하다면 사용자에게 에러 메시지를 보여줄 수 있습니다.
         }
-    }, [isFollowing, userId, loggedInUser, isOwner, fetchMyFollowing]);
+    }, [isFollowing, userId, loggedInUser, isOwner, fetchMyFollowing, refetchProfile]);
 
     // 모달 상태 관리를 위한 state 추가
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -250,7 +257,8 @@ const MyPage = () => {
                     <FeatureContent>
                         {/* [수정] JournalList를 JournalProvider로 감싸고 userId를 전달합니다. */}
                         {activeTab === "feature1" && (
-                            <JournalList/>
+                            // [핵심 수정] 게시물 데이터 변경 시 MyPage의 프로필을 다시 불러오도록 콜백 함수를 전달합니다.
+                            <JournalList onPostChange={() => refetchProfile(userId)} />
                         )}
                         {activeTab === "feature2" && (
                             <LikeList/>
@@ -282,7 +290,11 @@ const MyPage = () => {
             />
             <FriendManagementModal
                 open={isFriendModalOpen}
-                onClose={() => setIsFriendModalOpen(false)}
+                onClose={() => {
+                    setIsFriendModalOpen(false);
+                    // [핵심 수정] 모달이 닫힐 때, MyPage의 프로필 정보를 다시 불러와 숫자를 갱신합니다.
+                    refetchProfile(userId);
+                }}
                 initialTab={friendModalInitialTab}
                 // [수정] 현재 보고 있는 페이지의 userId를 targetUserId prop으로 전달합니다.
                 targetUserId={userId}
