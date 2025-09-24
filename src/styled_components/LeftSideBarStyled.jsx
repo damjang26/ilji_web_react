@@ -6,7 +6,6 @@ export const SidebarContainer = styled.aside`
     flex-shrink: 0;
     height: 100vh;
     background-color: #f8f9fa;
-    padding: 20px;
     border-right: 1px solid #e9ecef;
     box-sizing: border-box;
     display: flex;
@@ -48,8 +47,8 @@ export const MenuItemWrapper = styled.div`
 // [신규] Profile 컴포넌트 우측 상단에 위치할 알림 아이콘 버튼
 export const NotificationIconButton = styled.button`
     position: absolute;
-    top: 0;
-    right: 0;
+    top: 15px;
+    right: 15px;
     background: none;
     border: none;
     cursor: pointer;
