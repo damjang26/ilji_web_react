@@ -64,7 +64,7 @@ export const MessagesContainer = styled.div`
     flex-grow: 1;
     overflow-y: auto;
     padding: 20px;
-    background-color: #f8f9fa;
+    background-color: white;
 `;
 
 export const Message = styled.div`

@@ -37,7 +37,7 @@ import {BiSolidShareAlt} from "react-icons/bi";
 import PostComment from "./PostComment.jsx";
 import PostLikersModal from "./PostLikersModal.jsx"; // 좋아요 목록 모달 임포트
 import FriendManagementModal from "../../friends/FriendManagementModal.jsx";
-import {message, Modal} from "antd"; // antd 메시지 임포트
+import {message, Modal, Spin} from "antd"; // antd 메시지 임포트
 
 const JournalItem = ({
                          journal,
@@ -506,7 +506,7 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
                     );
                 })}
                 {/* 데이터 로딩 중일 때 스피너를 보여줍니다. */}
-                {loading && <div>로딩 중...</div>}
+                {loading && <div style={{ textAlign: 'center', padding: '20px' }}><Spin /></div>}
                 {/* 더 이상 불러올 데이터가 없을 때 메시지를 보여줍니다. */}
                 {!loading && !hasMore && posts.length > 0 && (
                     <EndOfFeed>

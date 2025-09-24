@@ -10,6 +10,7 @@ export default function AuthProvider({ children }) {
     const [user, setUser] = useState(null);     // 사용자 정보
     const [token, setToken] = useState(null);   // 우리 서비스 전용 토큰(appToken)
     const [loading, setLoading] = useState(true);
+    const [postChangeSignal, setPostChangeSignal] = useState(0); // [추가] 게시물 변경 신호
     const [myPageViewRequest, setMyPageViewRequest] = useState(0); // [추가] 마이페이지 뷰 요청 신호
     const [error, setError]   = useState(null);
     const [following, setFollowing] = useState([]); // [추가] '나'의 팔로잉 목록 상태
@@ -108,6 +109,11 @@ export default function AuthProvider({ children }) {
         setMyPageViewRequest(prev => prev + 1); // 상태를 변경하여 useEffect를 트리거
     };
 
+    // [추가] 게시물 생성/수정/삭제 시 호출하여 전역 신호를 발생시키는 함수
+    const triggerPostChange = useCallback(() => {
+        setPostChangeSignal(prev => prev + 1);
+    }, []);
+
     const value = useMemo(() => ({
         user, token, loading, error, following, // [추가] following 상태 제공
         loginWithGoogle, logout, refreshUser,
@@ -115,7 +121,9 @@ export default function AuthProvider({ children }) {
         isAuthenticated: !!user,
         myPageViewRequest, // 신호 상태
         requestMyPageView, // 신호 보내기 함수
-    }), [user, token, loading, error, following, refreshUser, fetchMyFollowing, myPageViewRequest]);
+        postChangeSignal, // [추가] 신호 상태 제공
+        triggerPostChange, // [추가] 신호 발생 함수 제공
+    }), [user, token, loading, error, following, refreshUser, fetchMyFollowing, myPageViewRequest, postChangeSignal, triggerPostChange]);
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

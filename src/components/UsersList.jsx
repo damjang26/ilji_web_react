@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
+import { Spin } from 'antd';
+import styled from 'styled-components';
+
+const LoadingWrapper = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px; /* Adjust height as needed */
+`;
 
 export default function UsersList() {
     const [users, setUsers] = useState([]);
@@ -20,7 +29,7 @@ export default function UsersList() {
         })();
     }, []);
 
-    if (loading) return <div>로딩중...</div>;
+    if (loading) return <LoadingWrapper><Spin /></LoadingWrapper>;
     if (err) return <div>{err}</div>;
 
     return (

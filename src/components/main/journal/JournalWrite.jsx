@@ -51,7 +51,7 @@ const JournalWrite = ({
                           onFabricModeChange,
                           journalToEdit: journalToEditFromProp
                       }) => {
-    const {user} = useAuth(); // 현재 로그인한 유저 정보
+    const {user, triggerPostChange} = useAuth(); // [수정] triggerPostChange 함수를 가져옵니다.
     const {createJournalEntry, updateJournalEntry} = useJournal(); // ✅ 수정 함수도 가져옵니다.
 
     // ✅ [수정] props와 location.state 양쪽에서 데이터를 받을 수 있도록 로직 개선
@@ -375,11 +375,15 @@ const JournalWrite = ({
                 // 이벤트의 detail에 수정된 '전체 일기 객체'를 담아 보냅니다.
                 window.dispatchEvent(new CustomEvent('journal:updated', {detail: {updatedJournal}}));
                 alert('일기가 성공적으로 수정되었습니다!');
+                // [수정] 게시물 변경 신호를 보냅니다.
+                triggerPostChange();
             } else {
                 // ✅ 생성 모드일 경우
                 const createPayload = {...journalPayload, logDate: selectedDate};
                 await createJournalEntry(createPayload);
                 alert('일기가 성공적으로 저장되었습니다!');
+                // [핵심 추가] 생성 성공 후에도 게시물 변경 신호를 보냅니다.
+                triggerPostChange();
             }
         } catch (error) {
             console.error("일기 저장 실패:", error);

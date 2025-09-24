@@ -3,7 +3,8 @@ import {Modal, Tabs, List, Avatar, message, Input, Checkbox} from "antd";
 import {
     getFollowingList,
     getFollowersList,
-    searchUsers, createChatRoom,
+    searchUsers,
+    createChatRoom
 } from "../../api";
 import {useAuth} from "../../AuthContext";
 import {useDebounce} from "../../hooks/useDebounce";
