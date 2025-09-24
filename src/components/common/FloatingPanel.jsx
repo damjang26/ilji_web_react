@@ -21,8 +21,8 @@ const FloatingPanel = ({ title, children, onClose, onBack }) => {
                     <div style={{ width: '24px' }} /> // 제목 중앙 정렬을 위한 플레이스홀더
                 )}
                 <PanelTitle>{title}</PanelTitle>
-                <CloseButton onClick={onClose} title="닫기">
-                    <FaTimes />
+                <CloseButton onClick={onClose}>
+                    <FaTimes/>
                 </CloseButton>
             </PanelHeader>
             <PanelBody>

@@ -58,7 +58,6 @@ export const DatePickerContainer = styled.div`
     align-items: center; /* 내부 요소들을 가운데 정렬합니다. */
     gap: 16px; /* 달력과 버튼 사이의 간격을 줍니다. */
     width: 100%;
-    padding: 8px;
 `;
 
 // 패널 상단의 설명 텍스트

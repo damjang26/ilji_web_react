@@ -69,8 +69,7 @@ export const MainActionButton = styled.button`
     /* ✅ [추가] 버튼에 마우스를 올렸을 때 툴팁 표시 */
 
     &:hover::after {
-        /* $isOpen이 true일 때만 (즉, 버튼이 보일 때만) 툴팁 표시 */
-        opacity: ${props => props.$isOpen ? 1 : 0};
+        opacity: 1;
         transition-delay: 0.3s; /* 툴팁이 약간 늦게 나타나도록 */
     }
 `;
