@@ -20,7 +20,8 @@ import {
     ProfileImage,
     Tab,
     TabMenuContainer,
-    StatsGroup, // [추가]
+    StatsGroup,
+    StatItem, // [추가] 스타일 파일에서 StatItem을 import 합니다.
     ButtonGroup, // [추가]
     UserActions,
     ContentBox,
@@ -211,19 +212,22 @@ const MyPage = () => {
                             )}
 
                             <StatsGroup>
-                                <div>post</div>
-                                <div
+                                <StatItem>
+                                    <div>post</div>
+                                    <div>{profile.postCount ?? 0}</div>
+                                </StatItem>
+                                <StatItem
                                     onClick={() => handleFriendModalOpen("following")}
-                                    style={{cursor: "pointer"}}
                                 >
-                                    follow
-                                </div>
-                                <div
+                                    <div>follow</div>
+                                    <div>{profile.followingCount ?? 0}</div>
+                                </StatItem>
+                                <StatItem
                                     onClick={() => handleFriendModalOpen("followers")}
-                                    style={{cursor: "pointer"}}
                                 >
-                                    follower
-                                </div>
+                                    <div>follower</div>
+                                    <div>{profile.followerCount ?? 0}</div>
+                                </StatItem>
                             </StatsGroup>
                         </UserActions>
                     </HeaderContent>

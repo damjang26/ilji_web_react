@@ -135,13 +135,31 @@ export const ButtonGroup = styled.div`
 
 //  'post', 'follow', 'follower'를 묶는 그룹
 export const StatsGroup = styled.div`
+    /* [수정] position: relative 대신 flexbox 정렬을 사용합니다. */
     display: flex;
-    position: relative;
-    top: -30px;
-    right: 100px; 
     align-items: center;
-    gap: 50px; /* 'post', 'follow', 'follower' 사이의 간격 조정 */
+    gap: 24px; /* 'post', 'follow', 'follower' 사이의 간격 조정 */
+`;
+
+/**
+ * [추가] 통계 그룹 내 개별 아이템 (post, follow, follower 각각)
+ */
+export const StatItem = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px; /* 레이블과 숫자 사이의 간격 */
+    min-width: 60px; /* 각 아이템의 최소 너비를 확보하여 정렬을 맞춤 */
     font-size: 0.9rem;
+    color: #495057;
+    cursor: ${props => (props.onClick ? 'pointer' : 'default')};
+
+    /* 숫자 부분 스타일 */
+    & > div:last-child {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #212529;
+    }
 `;
 
 //  드롭다운 아이콘을 감싸는 컨테이너
