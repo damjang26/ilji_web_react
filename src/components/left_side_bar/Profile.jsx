@@ -7,7 +7,7 @@ import { Dropdown } from "antd";
 import defaultProfileImage from '../../static/image/default-profile.png';
 import {
   Email,
-  IconContainer,
+  // IconContainer,
   ImageWrapper,
   InfoWrapper,
   LoginWrapper,
@@ -26,21 +26,21 @@ const Profile = () => {
   const displayName = user?.nickname || user?.name;
   const displayImage = user?.profileImage || user?.picture;
 
-  const handleMenuClick = ({ key }) => {
-    if (key === "logout") {
-      logout();
-    }
-  };
+  // const handleMenuClick = ({ key }) => {
+  //   if (key === "logout") {
+  //     logout();
+  //   }
+  // };
 
   const handleMyPageClick = () => {
     requestMyPageView(); // [추가] 마이페이지 보기 요청 신호를 보냄
     navigate('/mypage'); // URL은 그대로 변경
   };
 
-  const menuItems = [
-    { key: "logout", label: "로그아웃" },
-    // 다른 메뉴 아이템 추가 가능
-  ];
+  // const menuItems = [
+  //   { key: "logout", label: "로그아웃" },
+  //   // 다른 메뉴 아이템 추가 가능
+  // ];
 
   if (loading) {
     return (
@@ -54,16 +54,16 @@ const Profile = () => {
     <ProfileContainer>
       {user ? (
         <>
-          <IconContainer>
-            <Dropdown
-              menu={{ items: menuItems, onClick: handleMenuClick }}
-              trigger={["click"]}
-            >
-              <EllipsisOutlined
-                style={{ fontSize: "20px", cursor: "pointer" }}
-              />
-            </Dropdown>
-          </IconContainer>
+          {/*<IconContainer>*/}
+          {/*  <Dropdown*/}
+          {/*    menu={{ items: menuItems, onClick: handleMenuClick }}*/}
+          {/*    trigger={["click"]}*/}
+          {/*  >*/}
+          {/*    <EllipsisOutlined*/}
+          {/*      style={{ fontSize: "20px", cursor: "pointer" }}*/}
+          {/*    />*/}
+          {/*  </Dropdown>*/}
+          {/*</IconContainer>*/}
           <ProfileImageArea>
             <ImageWrapper as="div" onClick={handleMyPageClick} style={{ cursor: 'pointer' }}>
               <img

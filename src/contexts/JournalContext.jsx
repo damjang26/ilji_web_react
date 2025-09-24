@@ -180,6 +180,17 @@ export const JournalProvider = ({children, userId}) => {
         return updatedJournalEntry;
     }, [user]);
 
+    // [핵심 추가] JournalList를 위한 새로운 삭제 함수
+    // 이 함수는 오직 API 호출에만 집중하며, 다른 로컬 상태를 건드리지 않습니다.
+    const deleteJournalEntryForList = useCallback(async (logId) => {
+        try {
+            await api.delete(`/api/i-log/${logId}`);
+        } catch (err) {
+            console.error("일기 삭제 API 호출 실패:", err);
+            throw err; // 에러를 다시 던져서 호출한 컴포넌트에서 처리하도록 합니다.
+        }
+    }, []);
+
     // ✅ [수정] onUpdate 콜백을 받아 다른 컴포넌트의 상태도 갱신할 수 있도록 수정
     const deleteJournal = useCallback(async (logId, date, onUpdate) => {
         try {
@@ -235,6 +246,7 @@ export const JournalProvider = ({children, userId}) => {
         error,
         createJournalEntry,
         updateJournalEntry,
+        deleteJournalEntryForList, // [핵심 추가] 새로 만든 함수를 내보냅니다.
         deleteJournal,
         hasJournal,
         getJournal,

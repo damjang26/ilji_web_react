@@ -12,15 +12,12 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
     const cropperRef = useRef(null);
     const fileInputRef = useRef(null);
 
-
-
     // 1. 사용자가 파일을 선택했을 때 처리
     const handleFileChange = (e) => {
         const file = e.target.files?.[0];
         if (!file) {
-            // 사용자가 파일 선택을 취소하면 모달닫기
             onClose();
-            return; // 여기서 함수를 종료
+            return;
         }
 
         const reader = new FileReader();
@@ -40,15 +37,18 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
             return;
         }
 
-        // [해결책] '적용' 버튼을 누르는 순간, 크롭 박스를 아래로 1px 이동시켜
-        // CSS와 라이브러리 간의 미세한 계산 오차를 보정합니다.
-        cropper.move(0, 20); // X축(좌우)은 0, Y축(상하)은 1px 아래로 이동
-
-        cropper.getCroppedCanvas().toBlob((blob) => {
+        const croppedCanvas = cropper.getCroppedCanvas({
+            width: 1200, 
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high',
+        });
+        
+        croppedCanvas.toBlob((blob) => {
             if (blob) {
                 // 잘린 이미지를 'banner.jpg'라는 이름의 File 객체로 제작
                 const croppedFile = new File([blob], "banner.jpg", { type: "image/jpeg" });
-                onCropComplete(croppedFile); // 부모에게 최종 File 객체 전달
+                // 부모에게 파일만 전달하고, yPosition은 0으로 고정합니다.
+                onCropComplete(croppedFile, 0);
             } else {
                 console.error("이미지 자르기에 실패했습니다.");
                 alert("이미지 처리에 실패했습니다. 다른 이미지를 시도해주세요.");
@@ -83,13 +83,11 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
                             autoCropArea={1}
                         />
                     ) : (
-                        // 이미지가 선택되지 않았을 때 안내 메시지를 표시
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#888' }}>
                             배너로 사용할 이미지를 선택해주세요.
                         </div>
                     )}
                 </CropArea>
-                {/* 이미지가 없을 때만 '이미지 선택' 버튼을 표시 */}
                 {!imageSrc && (
                     <ActionButtonGroup><SubmitButton onClick={handleUploadButtonClick}>이미지 선택</SubmitButton></ActionButtonGroup>
                 )}

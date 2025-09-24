@@ -1,5 +1,7 @@
 import {Link, useParams} from "react-router-dom"; // [추가] useParams import
 import React, {useState, useCallback, useEffect} from "react";
+import { EllipsisOutlined } from "@ant-design/icons"; // [추가] antd 아이콘
+import { Dropdown } from "antd"; // [추가] antd 드롭다운
 import ImageBox from "./ImageBox";
 import BannerImageEditor from "./BannerImageEditor.jsx";
 import {followUser, unfollowUser} from "../../../api"; // [추가]
@@ -9,6 +11,8 @@ import {
     FeatureContent,
     HeaderContent,
     ImgWrapper,
+    BannerImage, // [추가] BannerImage 컴포넌트를 import 합니다.
+    IconContainer, // [추가] 아이콘을 감싸는 컨테이너
     MyPageContainer,
     MyPageHeader,
     MypageImg,
@@ -16,6 +20,9 @@ import {
     ProfileImage,
     Tab,
     TabMenuContainer,
+    StatsGroup,
+    StatItem, // [추가] 스타일 파일에서 StatItem을 import 합니다.
+    ButtonGroup, // [추가]
     UserActions,
     ContentBox,
     UserInfo,
@@ -34,16 +41,50 @@ import defaultProfileImage from '../../../static/image/default-profile.png';
  */
 // [되돌리기] MyPageContent의 이름을 MyPage로 변경하고, MyPageWrapper가 이 컴포넌트를 렌더링하도록 구조를 변경합니다.
 const MyPage = () => {
-    const {userId} = useParams(); // [추가] URL에서 userId를 가져옵니다.
+    const { userId } = useParams(); // [추가] URL에서 userId를 가져옵니다.
     // [수정] AuthContext에서 전역 상태를 가져옵니다.
-    const {user: loggedInUser, following: myFollowing, fetchMyFollowing} = useAuth();
+    const { user: loggedInUser, following: myFollowing, fetchMyFollowing, logout, postChangeSignal } = useAuth(); // [추가] postChangeSignal 가져오기
     const {
         profile,
         loading,
         error,
         updateProfile,
-        handleEdit,
+        // [수정] handleEdit 함수를 MyPage.jsx에서 직접 구현합니다.
+        // handleEdit,
+        setIsEditing, // MyPageContext에서 isEditing 상태를 직접 제어하는 함수를 가져옵니다.
+        refetchProfile, // [추가] 프로필 정보를 새로고침하는 함수를 가져옵니다.
     } = useMyPage();
+
+    // [핵심 수정] 게시물 생성/삭제 신호를 감지하여 프로필 정보를 다시 불러옵니다.
+    useEffect(() => {
+        // postChangeSignal이 0보다 클 때만 (초기 렌더링 방지) 실행합니다.
+        if (postChangeSignal > 0) {
+            // 현재 보고 있는 페이지가 로그인한 사용자의 페이지일 때만 갱신하도록 합니다.
+            const isCurrentPageOwner = !userId || (loggedInUser && loggedInUser.id.toString() === userId);
+            if (isCurrentPageOwner) {
+                refetchProfile(userId);
+            }
+        }
+    }, [postChangeSignal, userId, loggedInUser, refetchProfile]);
+
+    // [추가] 드롭다운 메뉴 아이템 정의
+    const menuItems = [
+        { key: "logout", label: "로그아웃" },
+        // 다른 메뉴 아이템 추가 가능
+    ];
+
+    // [추가] 드롭다운 메뉴 클릭 핸들러
+    const handleMenuClick = ({ key }) => {
+        if (key === "logout") {
+            logout();
+        }
+    };
+
+    // [추가] 정보 수정 버튼 클릭 시 상태를 변경하고, 현재 프로필 정보를 localStorage에 저장합니다.
+    const handleEdit = () => {
+        localStorage.setItem('editingProfile', JSON.stringify(profile));
+        setIsEditing(true);
+    };
 
     // [수정] isOwner와 isFollowing을 AuthContext와 useParams를 기반으로 계산합니다.
     const isOwner = !userId || (loggedInUser && loggedInUser.id.toString() === userId);
@@ -62,11 +103,12 @@ const MyPage = () => {
             }
             // [핵심] API 호출 성공 후, AuthContext의 전역 팔로잉 목록을 새로고침합니다.
             await fetchMyFollowing();
+            await refetchProfile(userId); // [추가] 팔로워 수 등을 업데이트하기 위해 프로필 정보를 다시 불러옵니다.
         } catch (err) {
             console.error('팔로우 상태 변경에 실패했습니다.', err);
             // 필요하다면 사용자에게 에러 메시지를 보여줄 수 있습니다.
         }
-    }, [isFollowing, userId, loggedInUser, isOwner, fetchMyFollowing]);
+    }, [isFollowing, userId, loggedInUser, isOwner, fetchMyFollowing, refetchProfile]);
 
     // 모달 상태 관리를 위한 state 추가
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -110,9 +152,14 @@ const MyPage = () => {
 
     // BannerImageEditor에서 편집 완료 후
     const handleBannerCropComplete = useCallback(
-        async (croppedFile) => {
-            // updateProfile 호출 시 파일 정보만 전달합니다.
-            await updateProfile({}, {bannerImageFile: croppedFile});
+        async (croppedFile, yPosition) => {
+            // [수정] BannerImageEditor가 이제 완성된 이미지를 생성하므로,
+            // yPosition은 항상 0으로 고정하여 저장합니다.
+            // 파일 정보(두 번째 인자)에는 bannerImageFile을 전달합니다.
+            await updateProfile(
+                { bannerPositionY: 0 }, // 위치 조정값은 0
+                { bannerImageFile: croppedFile } // 완성된 이미지 파일
+            );
             setIsBannerEditorOpen(false);
         },
         [updateProfile]
@@ -124,15 +171,13 @@ const MyPage = () => {
     if (!loading && !profile) return <div>프로필 정보가 없습니다.</div>;
     return (
         <MyPageContainer>
-            {/* 클릭 가능한 배경 배너 */}
             <MypageImg
-                style={{
-                    backgroundImage: `url(${profile.bannerImage || ""})`,
-                }}
-                // [수정] isOwner일 때만 커서 포인터를 적용합니다.
                 onClick={isOwner ? () => handleImageClick("bannerImage") : undefined}
                 $isOwner={isOwner}
-            />
+            >
+                {/* [수정] MypageImg 내부에 BannerImage를 렌더링합니다. */}
+                {profile.bannerImage && <BannerImage src={profile.bannerImage} yPosition={profile.bannerPositionY} alt="배너 이미지" />}
+            </MypageImg>
             <ContentBox>
                 <MyPageHeader>
                     {/* 클릭 가능한 프로필 이미지 */}
@@ -156,30 +201,49 @@ const MyPage = () => {
                             )}
                             <div>{profile.bio || ""}</div>
                         </UserInfo>
+
                         <UserActions>
-                            <div>post</div>
-                            <div
-                                onClick={() => handleFriendModalOpen("following")}
-                                style={{cursor: "pointer"}}
-                            >
-                                follow
-                            </div>
-                            <div
-                                onClick={() => handleFriendModalOpen("followers")}
-                                style={{cursor: "pointer"}}
-                            >
-                                follower
-                            </div>
-                            {/* [수정] isOwner 값에 따라 다른 버튼을 렌더링합니다. */}
+                            {/* [수정] isOwner에 따라 다른 버튼 그룹을 렌더링 */}
                             {isOwner ? (
-                                // 내 페이지일 경우 '정보수정' 버튼을 보여줍니다.
-                                <button onClick={handleEdit}>정보수정</button>
+                                // 내 페이지일 경우
+                                <ButtonGroup>
+                                    <button onClick={handleEdit}>정보수정</button>
+                                    <IconContainer>
+                                        <Dropdown
+                                            menu={{ items: menuItems, onClick: handleMenuClick }}
+                                            trigger={["click"]}
+                                        >
+                                            <EllipsisOutlined style={{ fontSize: "20px", cursor: "pointer" }} />
+                                        </Dropdown>
+                                    </IconContainer>
+                                </ButtonGroup>
                             ) : (
                                 // 친구 페이지일 경우 '팔로우/언팔로우' 버튼을 보여줍니다.
-                                <button onClick={handleFollowToggle}>
-                                    {isFollowing ? 'following' : 'follow'}
-                                </button>
+                                <ButtonGroup>
+                                    <button onClick={handleFollowToggle}>
+                                        {isFollowing ? 'following' : 'follow'}
+                                    </button>
+                                </ButtonGroup>
                             )}
+
+                            <StatsGroup>
+                                <StatItem>
+                                    <div>post</div>
+                                    <div>{profile.postCount ?? 0}</div>
+                                </StatItem>
+                                <StatItem
+                                    onClick={() => handleFriendModalOpen("following")}
+                                >
+                                    <div>follow</div>
+                                    <div>{profile.followingCount ?? 0}</div>
+                                </StatItem>
+                                <StatItem
+                                    onClick={() => handleFriendModalOpen("followers")}
+                                >
+                                    <div>follower</div>
+                                    <div>{profile.followerCount ?? 0}</div>
+                                </StatItem>
+                            </StatsGroup>
                         </UserActions>
                     </HeaderContent>
                 </MyPageHeader>
@@ -201,7 +265,8 @@ const MyPage = () => {
                     <FeatureContent>
                         {/* [수정] JournalList를 JournalProvider로 감싸고 userId를 전달합니다. */}
                         {activeTab === "feature1" && (
-                            <JournalList/>
+                            // [핵심 수정] 게시물 데이터 변경 시 MyPage의 프로필을 다시 불러오도록 콜백 함수를 전달합니다.
+                            <JournalList onPostChange={() => refetchProfile(userId)} />
                         )}
                         {activeTab === "feature2" && (
                             <LikeList/>
@@ -233,7 +298,11 @@ const MyPage = () => {
             />
             <FriendManagementModal
                 open={isFriendModalOpen}
-                onClose={() => setIsFriendModalOpen(false)}
+                onClose={() => {
+                    setIsFriendModalOpen(false);
+                    // [핵심 수정] 모달이 닫힐 때, MyPage의 프로필 정보를 다시 불러와 숫자를 갱신합니다.
+                    refetchProfile(userId);
+                }}
                 initialTab={friendModalInitialTab}
                 // [수정] 현재 보고 있는 페이지의 userId를 targetUserId prop으로 전달합니다.
                 targetUserId={userId}
