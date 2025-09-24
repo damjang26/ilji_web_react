@@ -239,8 +239,8 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit, onImageC
 // [수정] 부모 컴포넌트로부터 onPostChange 함수를 props로 받습니다.
 const JournalList = ({ onPostChange }) => {
     // ✅ [수정] Context에서는 '수정/삭제' 기능만 가져옵니다. 데이터는 직접 관리합니다.
-    const {deleteJournal} = useJournal();
-    const {user: currentUser} = useAuth(); // 현재 로그인한 사용자 정보
+    const { deleteJournalEntryForList } = useJournal(); // [수정] 새로 만든 함수를 사용합니다.
+    const {user: currentUser, postChangeSignal, triggerPostChange} = useAuth(); // [수정] triggerPostChange를 가져옵니다.
     const {userId} = useParams();
     const navigate = useNavigate(); // ✅ navigate 함수 가져오기
     const location = useLocation(); // ✅ 모달 네비게이션의 배경 위치를 위해 추가합니다.
@@ -294,7 +294,7 @@ const JournalList = ({ onPostChange }) => {
         } finally {
             setLoading(false);
         }
-    }, [userId, currentUser, sortBy, page, loading]); // ✅ [수정] 의존성 배열 변경
+    }, [userId, currentUser, sortBy, page]); // ✅ [수정] 의존성 배열에서 loading을 제거합니다.
 
     // ✅ [신규] 정렬 기준 변경 시, 데이터 새로고침 (LikeList와 동일)
     useEffect(() => {
@@ -314,6 +314,17 @@ const JournalList = ({ onPostChange }) => {
             fetchJournals(false);
         }
     }, [inView, hasMore, loading, fetchJournals]);
+
+    // [핵심 수정] AuthContext의 postChangeSignal을 감지하여 일기 목록을 새로고침합니다.
+    useEffect(() => {
+        // postChangeSignal이 0보다 클 때만 (초기 렌더링 방지) 실행합니다.
+        if (postChangeSignal > 0) {
+            // 현재 JournalList가 보여주는 사용자의 목록만 갱신합니다.
+            const targetUserId = userId || currentUser?.id;
+            if (targetUserId) fetchJournals(true);
+        }
+        // postChangeSignal이 바뀔 때마다 fetchJournals 함수를 실행합니다.
+    }, [postChangeSignal, fetchJournals]);
 
     // ✅ [수정] 'journal:updated' 전역 이벤트를 감지하여, 목록 전체를 다시 불러오는 대신 수정된 항목만 교체합니다.
     useEffect(() => {
@@ -337,25 +348,18 @@ const JournalList = ({ onPostChange }) => {
     const handleDelete = useCallback(async (journalId, journalDate) => {
         // 사용자가 정말 삭제할 것인지 확인
         if (window.confirm("정말로 이 일기를 삭제하시겠습니까?")) {
-            // ✅ [수정] 삭제 성공 시 실행될 콜백 함수 정의
-            const onUpdate = (deletedId) => {
-                setJournals(prev => prev.filter(j => j.id !== deletedId));
-                alert("일기가 삭제되었습니다.");
-
-                // [핵심 수정] 삭제가 성공했음을 부모 컴포넌트(MyPage)에 알립니다.
-                if (onPostChange) {
-                    onPostChange();
-                }
-            };
-
             try {
-                // ✅ [수정] Context의 deleteJournal 함수에 콜백 전달
-                await deleteJournal(journalId, journalDate, onUpdate);
+                // 1. Context의 새 함수를 호출하여 서버에서 삭제합니다.
+                await deleteJournalEntryForList(journalId);
+                alert("일기가 삭제되었습니다.");
+                // 2. [핵심] 삭제 성공 후, 전역 신호를 발생시킵니다.
+                triggerPostChange();
             } catch (error) {
-                alert("일기 삭제 중 오류가 발생했습니다.");
+                console.error("일기 삭제 중 오류 발생", error);
+                alert("일기 삭제에 실패했습니다.");
             }
         }
-    }, [deleteJournal, onPostChange]); // [수정] 의존성 배열에 onPostChange를 추가합니다.
+    }, [deleteJournalEntryForList, triggerPostChange]); // [수정] 의존성 배열을 새 함수에 맞게 변경합니다.
 
     // ✅ [추가] 수정 버튼 클릭 핸들러
     const handleEdit = useCallback((journalToEdit) => {

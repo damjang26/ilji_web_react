@@ -42,7 +42,7 @@ import LikeList from "./feature/LikeList.jsx"; // Import the component to switch
 const MyPage = () => {
     const { userId } = useParams(); // [추가] URL에서 userId를 가져옵니다.
     // [수정] AuthContext에서 전역 상태를 가져옵니다.
-    const { user: loggedInUser, following: myFollowing, fetchMyFollowing, logout } = useAuth(); // [수정] postChangeSignal 제거
+    const { user: loggedInUser, following: myFollowing, fetchMyFollowing, logout, postChangeSignal } = useAuth(); // [추가] postChangeSignal 가져오기
     const {
         profile,
         loading,
@@ -54,10 +54,17 @@ const MyPage = () => {
         refetchProfile, // [추가] 프로필 정보를 새로고침하는 함수를 가져옵니다.
     } = useMyPage();
 
-    // [핵심 수정] 페이지가 다시 활성화될 때 프로필 정보를 새로고침합니다.
+    // [핵심 수정] 게시물 생성/삭제 신호를 감지하여 프로필 정보를 다시 불러옵니다.
     useEffect(() => {
-        refetchProfile(userId);
-    }, [userId, refetchProfile]);
+        // postChangeSignal이 0보다 클 때만 (초기 렌더링 방지) 실행합니다.
+        if (postChangeSignal > 0) {
+            // 현재 보고 있는 페이지가 로그인한 사용자의 페이지일 때만 갱신하도록 합니다.
+            const isCurrentPageOwner = !userId || (loggedInUser && loggedInUser.id.toString() === userId);
+            if (isCurrentPageOwner) {
+                refetchProfile(userId);
+            }
+        }
+    }, [postChangeSignal, userId, loggedInUser, refetchProfile]);
 
     // [추가] 드롭다운 메뉴 아이템 정의
     const menuItems = [
