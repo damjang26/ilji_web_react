@@ -34,10 +34,32 @@ export const PanelHeader = styled.div`
 `;
 
 export const PanelTitle = styled.h3`
+    flex: 1;
+    text-align: center;
     margin: 0;
     font-size: 16px;
     font-weight: 600;
     color: #343a40;
+`;
+
+export const BackButton = styled.button`
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    margin: -8px; // To increase clickable area
+    border-radius: 50%;
+    color: #8394a6;
+    font-size: 16px;
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+        background-color: #efefef;
+        color: #7b5fff;
+    }
 `;
 
 export const CloseButton = styled.button`

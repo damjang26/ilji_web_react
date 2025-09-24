@@ -89,12 +89,8 @@ const AppContent = () => {
     }, [selectedInfo]);
 
     const handlePanelButtonClick = (panel) => {
-        console.log("handlePanelButtonClick called with:", panel);
-        setActivePanel(prev => {
-            const newState = prev === panel ? null : panel;
-            console.log("activePanel changing from", prev, "to", newState);
-            return newState;
-        });
+        setFloatingChatRoomId(null); // 다른 패널 버튼 클릭 시 채팅방 닫기
+        setActivePanel(prev => prev === panel ? null : panel);
     };
 
     const handleChatRoomSelect = (roomId) => {
@@ -178,6 +174,10 @@ const AppContent = () => {
                 <FloatingPanel
                     title="채팅"
                     onClose={() => {
+                        setFloatingChatRoomId(null);
+                        setActivePanel(null);
+                    }}
+                    onBack={() => {
                         setFloatingChatRoomId(null);
                         setActivePanel('messages');
                     }}

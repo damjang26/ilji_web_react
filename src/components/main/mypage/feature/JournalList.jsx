@@ -33,6 +33,7 @@ import {formatRelativeTime} from "../../../../utils/timeFormatter.js";
 import {BiSolidShareAlt} from "react-icons/bi";
 import PostLikersModal from "../../post/PostLikersModal.jsx";
 import PostComment from "../../post/PostComment.jsx";
+import {parseString} from "rrule/dist/esm/parsestring.js";
 
 // ✅ [신규] 각 일기 항목을 렌더링하는 컴포넌트
 // 각 아이템이 독립적인 이미지 슬라이더 상태를 갖도록 분리합니다.
@@ -270,6 +271,7 @@ const JournalList = () => {
         const targetUserId = userId || currentUser?.id;
         if (!targetUserId) return; // 조회할 ID가 없으면 중단
 
+
         const currentPage = isNewSort ? 0 : page;
         console.log("마이페이지 일기")
 
@@ -280,6 +282,7 @@ const JournalList = () => {
                 page: currentPage,
                 size: 10
             });
+
 
             const newJournals = response.data.content;
             setJournals(prev => isNewSort ? newJournals : [...prev, ...newJournals]);
