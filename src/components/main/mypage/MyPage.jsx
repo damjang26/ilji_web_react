@@ -147,9 +147,7 @@ const MyPage = () => {
     // BannerImageEditor에서 편집 완료 후
     const handleBannerCropComplete = useCallback(
         async (croppedFile, yPosition) => {
-            // [수정] BannerImageEditor가 이제 완성된 이미지를 생성하므로,
-            // yPosition은 항상 0으로 고정하여 저장합니다.
-            // 파일 정보(두 번째 인자)에는 bannerImageFile을 전달합니다.
+            // [수정] BannerImageEditor가 이제 완성된 이미지를 생성하므로,yPosition은 항상 0으로 고정하여 저장
             await updateProfile(
                 { bannerPositionY: 0 }, // 위치 조정값은 0
                 { bannerImageFile: croppedFile } // 완성된 이미지 파일
@@ -169,7 +167,7 @@ const MyPage = () => {
                 onClick={isOwner ? () => handleImageClick("bannerImage") : undefined}
                 $isOwner={isOwner}
             >
-                {/* [수정] MypageImg 내부에 BannerImage를 렌더링합니다. */}
+                {/* [수정] MypageImg 내부에 BannerImage를 렌더링 */}
                 {profile.bannerImage && <BannerImage src={profile.bannerImage} yPosition={profile.bannerPositionY} alt="배너 이미지" />}
             </MypageImg>
             <ContentBox>
@@ -179,7 +177,7 @@ const MyPage = () => {
                         <ProfileImage
                             src={profile.profileImage || defaultProfileImage}
                             alt="Profile"
-                            // [수정] isOwner일 때만 커서 포인터를 적용합니다.
+                            // [수정] isOwner일 때만 커서 포인터를 적용
                             onClick={isOwner ? () => handleImageClick("profileImage") : undefined}
                             $isOwner={isOwner}
                         />
@@ -201,7 +199,7 @@ const MyPage = () => {
                             {isOwner ? (
                                 // 내 페이지일 경우
                                 <ButtonGroup>
-                                    {/* 3) 버튼 클릭 핸들러 교체: 이제 버튼은 Context에서 직접 가져온 올바른 handleEdit 함수를 호출합니다. */}
+                                    {/* 3) 버튼 클릭 핸들러 교체: 이제 버튼은 Context에서 직접 가져온 올바른 handleEdit 함수를 호출 */}
                                     <button onClick={handleEdit}>정보수정</button>
                                     <IconContainer>
                                         <Dropdown
@@ -213,7 +211,7 @@ const MyPage = () => {
                                     </IconContainer>
                                 </ButtonGroup>
                             ) : (
-                                // 친구 페이지일 경우 '팔로우/언팔로우' 버튼을 보여줍니다.
+                                // 친구 페이지일 경우 '팔로우/언팔로우' 버튼을 보여줌
                                 <ButtonGroup>
                                     <button onClick={handleFollowToggle}>
                                         {isFollowing ? 'following' : 'follow'}
@@ -258,9 +256,9 @@ const MyPage = () => {
                         </Tab>
                     </TabMenuContainer>
                     <FeatureContent>
-                        {/* [수정] JournalList를 JournalProvider로 감싸고 userId를 전달합니다. */}
+                        {/* JournalList를 JournalProvider로 감싸고 userId를 전달합 */}
                         {activeTab === "feature1" && (
-                            // [핵심 수정] 게시물 데이터 변경 시 MyPage의 프로필을 다시 불러오도록 콜백 함수를 전달합니다.
+                            // 게시물 데이터 변경 시 MyPage의 프로필을 다시 불러오도록 콜백 함수를 전달
                             <JournalList onPostChange={() => refetchProfile(userId)} />
                         )}
                         {activeTab === "feature2" && (
@@ -271,7 +269,7 @@ const MyPage = () => {
             </ContentBox>
 
             {/* 이미지 수정 모달 */}
-            {/* [수정] ImageBox 모달 - isEditable에 isOwner 전달 */}
+            {/* ImageBox 모달 - isEditable에 isOwner 전달 */}
             <ImageBox
                 isOpen={isImageModalOpen}
                 onClose={() => setIsImageModalOpen(false)}
@@ -295,11 +293,11 @@ const MyPage = () => {
                 open={isFriendModalOpen}
                 onClose={() => {
                     setIsFriendModalOpen(false);
-                    // [수정] 모달을 닫을 때 더 이상 프로필을 자동으로 갱신하지 않습니다.
+                    // 모달을 닫을 때 더 이상 프로필을 자동으로 갱신X
                     // refetchProfile(userId);
                 }}
                 initialTab={friendModalInitialTab}
-                // [수정] 현재 보고 있는 페이지의 userId를 targetUserId prop으로 전달합니다.
+                //  현재 보고 있는 페이지의 userId를 targetUserId prop으로 전달
                 targetUserId={userId}
             />
         </MyPageContainer>
@@ -307,21 +305,18 @@ const MyPage = () => {
 };
 
 /**
- * MyPage - Manager
  * paramUserId가 있으면 친구 페이지, 없으면 로그인 사용자 페이지
- * [되돌리기] 이 컴포넌트는 이제 Provider를 감싸는 Wrapper 역할만 담당합니다.
  */
-// [핵심 수정] MyPageWrapper와 PageSwitcher를 하나로 통합합니다.
+// MyPageWrapper와 PageSwitcher를 하나로 통합
 const MyPageWrapper = () => {
-    // URL에서 userId 파라미터를 가져옵니다. (예: /mypage/123 -> userId는 "123")
-    // URL이 /mypage이면 userId는 undefined가 됩니다.
+    // URL에서 userId 파라미터를 가져옴 (예: /mypage/123 -> userId는 "123") URL이 /mypage이면 userId는 undefined로
     const {userId} = useParams();
 
     return (
-        // [수정] MyPageProvider에 userId를 전달합니다.
+        // MyPageProvider에 userId를 전달
         <MyPageProvider userId={userId}>
             <JournalProvider userId={userId}>
-                {/* PageSwitcher의 로직을 이곳으로 직접 가져옵니다. */}
+                {/* PageSwitcher의 로직을 이곳으로 직접 가져옴 */}
                 <MyPageContent/>
             </JournalProvider>
         </MyPageProvider>

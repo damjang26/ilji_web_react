@@ -21,13 +21,13 @@ export const MypageImg = styled.div`
     cursor: ${props => (props.$isOwner ? 'pointer' : 'default')};
 `;
 
-// [신규 추가] MypageImg 내부에 위치할 실제 이미지 태그
+//  MypageImg 내부에 위치할 실제 이미지 태그
 export const BannerImage = styled.img`
     width: 100%;
-    height: 110%;
-    object-fit: cover; 
-    /* yPosition prop을 받아 이미지의 수직 위치를 정밀하게 조정 */
-    object-position: center ${props => props.yPosition || -5}%;
+    height: 100%;
+    object-fit: fill;
+    transform: translateY(10px); /* 양수 값은 아래로, 음수 값은 위로 이동 */
+    /* [핵심 수정] transform을 사용하여 이미지의 수직 위치를 미세 조정 */
 `;
 
 // 헤더, 메인을 감싸서 이미지 위에 띄울 박스 컨테이너
@@ -141,9 +141,6 @@ export const StatsGroup = styled.div`
     gap: 24px; /* 'post', 'follow', 'follower' 사이의 간격 조정 */
 `;
 
-/**
- * [추가] 통계 그룹 내 개별 아이템 (post, follow, follower 각각)
- */
 export const StatItem = styled.div`
     display: flex;
     flex-direction: column;
