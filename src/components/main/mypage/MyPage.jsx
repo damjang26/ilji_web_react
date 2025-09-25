@@ -295,8 +295,8 @@ const MyPage = () => {
                 open={isFriendModalOpen}
                 onClose={() => {
                     setIsFriendModalOpen(false);
-                    // [핵심 수정] 모달이 닫힐 때, MyPage의 프로필 정보를 다시 불러와 숫자를 갱신합니다.
-                    refetchProfile(userId);
+                    // [수정] 모달을 닫을 때 더 이상 프로필을 자동으로 갱신하지 않습니다.
+                    // refetchProfile(userId);
                 }}
                 initialTab={friendModalInitialTab}
                 // [수정] 현재 보고 있는 페이지의 userId를 targetUserId prop으로 전달합니다.
