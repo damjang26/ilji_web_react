@@ -49,9 +49,8 @@ const MyPage = () => {
         loading,
         error,
         updateProfile,
-        // [수정] handleEdit 함수를 MyPage.jsx에서 직접 구현합니다.
-        // handleEdit,
-        setIsEditing, // MyPageContext에서 isEditing 상태를 직접 제어하는 함수를 가져옵니다.
+        // 1) useMyPage()에서 가져오는 항목 변경: Context가 제공하는 공식적인 'handleEdit' 함수를 가져옵니다.
+        handleEdit,
         refetchProfile, // [추가] 프로필 정보를 새로고침하는 함수를 가져옵니다.
     } = useMyPage();
 
@@ -80,12 +79,7 @@ const MyPage = () => {
         }
     };
 
-    // [추가] 정보 수정 버튼 클릭 시 상태를 변경하고, 현재 프로필 정보를 localStorage에 저장합니다.
-    const handleEdit = () => {
-        localStorage.setItem('editingProfile', JSON.stringify(profile));
-        setIsEditing(true);
-    };
-
+    // 2) 로컬 핸들러를 Context 함수 호출로 변경: 불필요한 로컬 handleEdit 함수를 제거합니다.
     // [수정] isOwner와 isFollowing을 AuthContext와 useParams를 기반으로 계산합니다.
     const isOwner = !userId || (loggedInUser && loggedInUser.id.toString() === userId);
     const isFollowing = (myFollowing && Array.isArray(myFollowing))
@@ -207,6 +201,7 @@ const MyPage = () => {
                             {isOwner ? (
                                 // 내 페이지일 경우
                                 <ButtonGroup>
+                                    {/* 3) 버튼 클릭 핸들러 교체: 이제 버튼은 Context에서 직접 가져온 올바른 handleEdit 함수를 호출합니다. */}
                                     <button onClick={handleEdit}>정보수정</button>
                                     <IconContainer>
                                         <Dropdown
@@ -316,25 +311,26 @@ const MyPage = () => {
  * paramUserId가 있으면 친구 페이지, 없으면 로그인 사용자 페이지
  * [되돌리기] 이 컴포넌트는 이제 Provider를 감싸는 Wrapper 역할만 담당합니다.
  */
+// [핵심 수정] MyPageWrapper와 PageSwitcher를 하나로 통합합니다.
 const MyPageWrapper = () => {
     // URL에서 userId 파라미터를 가져옵니다. (예: /mypage/123 -> userId는 "123")
     // URL이 /mypage이면 userId는 undefined가 됩니다.
     const {userId} = useParams();
 
-    // The Wrapper's job is to provide the context and render the switcher.
     return (
         // [수정] MyPageProvider에 userId를 전달합니다.
         <MyPageProvider userId={userId}>
             <JournalProvider userId={userId}>
-                <PageSwitcher/>
+                {/* PageSwitcher의 로직을 이곳으로 직접 가져옵니다. */}
+                <MyPageContent/>
             </JournalProvider>
         </MyPageProvider>
     );
 };
 
-const PageSwitcher = () => {
-    const {isEditing} = useMyPage();
-    return isEditing ? <MyPageSet/> : <MyPage/>;
-};
+const MyPageContent = () => {
+    const { isEditing } = useMyPage();
+    return isEditing ? <MyPageSet /> : <MyPage />;
+}
 
 export default MyPageWrapper;

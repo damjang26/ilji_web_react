@@ -128,7 +128,8 @@ const MyPageSet = () => {
             // 텍스트 정보만 업데이트하므로 두 번째 인자는 빈 객체({})
             await updateProfile(profileDataForServer, {});
             alert('프로필이 성공적으로 업데이트되었습니다.');
-            // 저장 성공 시 updateProfile 함수가 내부적으로 isEditing을 false로 바꾸므로 추가 작업 불필요
+            // [수정] 저장 성공 후, MyPage로 돌아가기 위해 handleCancel을 호출합니다.
+            handleCancel();
         } catch (err) {
             console.error("프로필 저장 실패:", err);
         }
