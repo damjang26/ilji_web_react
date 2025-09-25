@@ -12,7 +12,7 @@ export const MyPageContainer = styled.div`
 export const MypageImg = styled.div`
     height: 250px; /* 헤더,메인 박스가 겹칠 수 있도록 높이 확보 */
     margin: -40px 0 0; /* 부모의 여백 무시, 좌우 채우기*/
-    width: 100%;    
+    width: 100%;
     flex-shrink: 0; /* 컨테이너 크기 유지. */
     z-index: 0;
     overflow: hidden; /*  컨테이너를 벗어나는 이미지를 숨깁니다. */
@@ -25,7 +25,7 @@ export const MypageImg = styled.div`
 export const BannerImage = styled.img`
     width: 100%;
     height: 110%;
-    object-fit: cover; 
+    object-fit: cover;
     /* yPosition prop을 받아 이미지의 수직 위치를 정밀하게 조정 */
     object-position: center ${props => props.yPosition || -5}%;
 `;
@@ -60,7 +60,7 @@ export const ImageWrapper = styled.div`
     margin-left: 100px; /*이미지와 왼쪽 끝의 간격 */
     width: 90px; /* 이미지 크기를 변경 */
     height: 90px;
-    border-radius: 50%; 
+    border-radius: 50%;
     overflow: hidden; /* 이미지가 컨테이너를 벗어나지 않도록 함 */
     display: flex; /* 이미지를 중앙에 배치하기 위해 */
     justify-content: center;
@@ -116,19 +116,21 @@ export const ButtonGroup = styled.div`
     align-items: center;
     gap: 20px; /* '정보수정' 버튼과 '...' 아이콘 사이의 간격 조정 */
     /* UserActions 내부의 모든 button에 대한 공통 스타일 */
+
     button {
-        display: flex; 
+        display: flex;
         align-items: center;
         gap: 6px; /* 아이콘과 텍스트 사이의 간격 */
         padding: 8px 16px;
         border: 1px solid #ccc;
-        border-radius: 4px;
+        border-radius: 36px;
         background-color: #fff;
         cursor: pointer;
         transition: background-color 0.2s;
+        font-size: 0.9rem;
 
         &:hover {
-            background-color: #f8f9fa;
+            background-color: #f0f2f5;
         }
     }
 `;
@@ -138,7 +140,8 @@ export const StatsGroup = styled.div`
     /* [수정] position: relative 대신 flexbox 정렬을 사용합니다. */
     display: flex;
     align-items: center;
-    gap: 24px; /* 'post', 'follow', 'follower' 사이의 간격 조정 */
+    gap: 54px; /* 'post', 'follow', 'follower' 사이의 간격 조정 */
+    padding-right: 20px;
 `;
 
 /**
@@ -146,17 +149,18 @@ export const StatsGroup = styled.div`
  */
 export const StatItem = styled.div`
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 4px; /* 레이블과 숫자 사이의 간격 */
+    gap: 25px; /* 레이블과 숫자 사이의 간격 */
     min-width: 60px; /* 각 아이템의 최소 너비를 확보하여 정렬을 맞춤 */
     font-size: 0.9rem;
     color: #495057;
     cursor: ${props => (props.onClick ? 'pointer' : 'default')};
 
     /* 숫자 부분 스타일 */
+
     & > div:last-child {
-        font-size: 1.1rem;
+        font-size: 0.9rem;
         font-weight: 600;
         color: #212529;
     }
@@ -246,7 +250,6 @@ export const Contents = styled.div`
     padding: 20px;
     /* 추가적인 스타일링 (예: 게시물 목록) */
 `;
-
 
 
 // LikeList 정렬 옵션 관련 스타일

@@ -46,7 +46,12 @@ export default function FullCalendarExample() {
     const location = useLocation();
 
     const {
-        hasJournal, getJournal, deleteJournal, getJournalById, setVisibleDateRange
+        hasJournal,
+        getJournal,
+        deleteJournal,
+        getJournalById,
+        setVisibleDateRange,
+        loading: journalLoading,
     } = useJournal();
     const [diaryPopover, setDiaryPopover] = useState({
         visible: false,
@@ -170,7 +175,7 @@ export default function FullCalendarExample() {
 
     // 초기 로딩 시에만 전체 로딩 화면을 표시합니다.
     // (로딩 중이면서, 아직 이벤트가 하나도 없을 때)
-    const isInitialLoading = loading && events.length === 0;
+    const isInitialLoading = (loading) && events.length === 0;
     if (isInitialLoading) {
         return (
             <SpinnerWrapper>
@@ -218,7 +223,7 @@ export default function FullCalendarExample() {
         // 이로 인해 Context에서 해당 범위의 일기 데이터만 가져오는 API 요청이 트리거됩니다.
         const start = formatDate(dateInfo.view.activeStart);
         const end = formatDate(dateInfo.view.activeEnd);
-        setVisibleDateRange({ start, end });
+        setVisibleDateRange({start, end});
     };
 
     const handleEventDrop = (dropInfo) => {
@@ -355,7 +360,7 @@ export default function FullCalendarExample() {
     return (
         <CalendarWrapper>
             {/* 필터링 등 다시 로딩 시 스피너 표시 */}
-            {loading && (
+            {(loading || journalLoading) && !isInitialLoading && (
                 <SpinnerWrapper>
                     <Spinner/>
                 </SpinnerWrapper>
@@ -416,7 +421,6 @@ export default function FullCalendarExample() {
                 </DiaryPopoverContainer>,
                 document.body
             )}
-
 
 
             <FullCalendar
