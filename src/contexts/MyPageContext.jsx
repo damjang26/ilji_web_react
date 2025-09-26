@@ -87,7 +87,7 @@ export const MyPageProvider = ({ children, userId }) => { // [수정] userId pro
   
         await refreshUser(); // 전역 상태 업데이트
         await loadProfile(loggedInUser.id);
-        setIsEditing(false); // 수정 완료 후 보기 모드로 전환
+        // setIsEditing(false); // 수정 완료 후 보기 모드로 전환
       } catch (err) {
         console.error("[MyPageContext] updateProfile 오류", err);
         const message = err.response?.data?.message || "프로필 업데이트 중 오류 발생";
