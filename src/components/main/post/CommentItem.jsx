@@ -43,13 +43,17 @@ const CommentItem = ({comment, isReply = false, onLike, onLikeCountClick, onDele
     const [isReplyFormOpen, setReplyFormOpen] = useState(false);
     const [replyContent, setReplyContent] = useState('');
     // ✅ [추가] 낙관적 업데이트를 위한 로컬 상태
-    const [likedStatus, setLikedStatus] = useState(comment.isLiked);
+    const [likedStatus, setLikedStatus] = useState(comment.liked);
     const [currentLikeCount, setCurrentLikeCount] = useState(comment.likeCount);
+    // ✅ [추가] API 요청 진행 상태를 추적하는 상태
+    const [isLiking, setIsLiking] = useState(false);
 
     // ✅ [추가] 답글 목록을 보여줄지 여부를 관리하는 상태
     const [showReplies, setShowReplies] = useState(false);
 
     const isAuthor = user?.id === comment.writer?.userId;
+
+    console.log('랜더링되는 덧글 : ', comment)
 
     // 메뉴 외부 클릭 시 닫기
     useEffect(() => {
@@ -65,10 +69,13 @@ const CommentItem = ({comment, isReply = false, onLike, onLikeCountClick, onDele
     }, []);
 
     // ✅ [추가] comment prop이 변경될 때마다 로컬 좋아요 상태를 동기화
+    // ✅ [수정] API 요청 중(isLiking)에는 prop으로 상태를 덮어쓰지 않도록 수정
     useEffect(() => {
-        setLikedStatus(comment.isLiked);
-        setCurrentLikeCount(comment.likeCount);
-    }, [comment.isLiked, comment.likeCount]);
+        if (!isLiking) {
+            setLikedStatus(comment.liked);
+            setCurrentLikeCount(comment.likeCount);
+        }
+    }, [comment.liked, comment.likeCount, isLiking]);
 
 
     const handleProfileClick = () => {
@@ -97,6 +104,9 @@ const CommentItem = ({comment, isReply = false, onLike, onLikeCountClick, onDele
 
     // ✅ [추가] 좋아요 버튼 클릭 핸들러 (낙관적 업데이트 포함)
     const handleLikeClick = async () => {
+        // ✅ [추가] API 요청 시작
+        setIsLiking(true);
+
         // 이전 상태 저장 (실패 시 롤백용)
         const prevLikedStatus = likedStatus;
         const prevLikeCount = currentLikeCount;
@@ -113,6 +123,9 @@ const CommentItem = ({comment, isReply = false, onLike, onLikeCountClick, onDele
             console.error("Failed to update like status on server:", error);
             setLikedStatus(prevLikedStatus);
             setCurrentLikeCount(prevLikeCount);
+        } finally {
+            // ✅ [추가] API 요청 완료 (성공/실패 무관)
+            setIsLiking(false);
         }
     };
 

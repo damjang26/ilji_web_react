@@ -25,8 +25,10 @@ export const MypageImg = styled.div`
 export const BannerImage = styled.img`
     width: 100%;
     height: 100%;
-    object-fit: fill;
-    transform: translateY(10px); /* 양수 값은 아래로, 음수 값은 위로 이동 */
+    /* ✅ [수정] 이미지 비율을 유지하면서 컨테이너를 채우도록 변경 */
+    object-fit: cover;
+    /* ✅ [대체] transform 대신 object-position을 사용해 이미지의 표시 기준점을 중앙으로 설정 */
+    object-position: center;
 `;
 
 // 헤더, 메인을 감싸서 이미지 위에 띄울 박스 컨테이너
@@ -149,7 +151,7 @@ export const StatItem = styled.div`
     align-items: center;
     gap: 25px; /* 레이블과 숫자 사이의 간격 */
     min-width: 60px; /* 각 아이템의 최소 너비를 확보하여 정렬을 맞춤 */
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: #495057;
     cursor: ${props => (props.onClick ? 'pointer' : 'default')};
 
@@ -230,7 +232,7 @@ export const ProfileImage = styled.img`
 //  탭에 따라 선택된 기능이 표시될 영역
 export const FeatureContent = styled.main`
     flex-grow: 1; /* 헤더를 제외한 나머지 모든 수직 공간을 차지 */
-    padding: 20px;
+    padding: 50px;
     width: 100%;
 `;
 

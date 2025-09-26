@@ -44,7 +44,7 @@ const JournalView = () => {
             setIsCommentOpen(true);
 
             // 플래그 사용 후 location.state에서 제거하여 재실행 방지
-            const { openCommentSection, ...restJournalData } = journal;
+            const {openCommentSection, ...restJournalData} = journal;
             navigate(location.pathname, {
                 state: {
                     ...location.state,
@@ -67,11 +67,11 @@ const JournalView = () => {
     // ✅ [추가] 'journal:updated' 이벤트를 감지하여 현재 뷰의 데이터를 업데이트합니다.
     useEffect(() => {
         const handleJournalUpdate = (event) => {
-            const { updatedJournal } = event.detail;
+            const {updatedJournal} = event.detail;
             // 수정된 일기가 현재 보고 있는 일기와 동일한 경우에만 상태를 업데이트합니다.
             if (updatedJournal && journal && updatedJournal.id === journal.id) {
                 // 기존 journal 데이터에 수정된 데이터를 덮어씁니다.
-                setJournal(prevJournal => ({ ...prevJournal, ...updatedJournal }));
+                setJournal(prevJournal => ({...prevJournal, ...updatedJournal}));
             }
         };
 
@@ -228,16 +228,16 @@ const JournalView = () => {
                 {/* ✅ [수정] 컨테이너는 항상 렌더링하고, 내부 탭을 조건부로 보여줍니다. */}
                 <SideActionTabsContainer>
                     <SideActionTab type="share" onClick={handleShare}>
-                        <button data-tooltip="공유"><BiSolidShareAlt/></button>
+                        <button data-tooltip="share"><BiSolidShareAlt/></button>
                     </SideActionTab>
                     {user?.id === journal.writerId && (
                         <>
                             <SideActionTab type="edit" onClick={() => handleEdit(journal)}>
-                                <button data-tooltip="수정"><HiPencilAlt/></button>
+                                <button data-tooltip="edit"><HiPencilAlt/></button>
                             </SideActionTab>
                             <SideActionTab type="delete"
                                            onClick={() => handleDelete(journal.id, journal.logDate.split('T')[0])}>
-                                <button data-tooltip="삭제"><MdDeleteForever/></button>
+                                <button data-tooltip="delete"><MdDeleteForever/></button>
                             </SideActionTab>
                         </>
                     )}
@@ -306,16 +306,16 @@ const JournalView = () => {
             {/* ✅ [수정] 컨테이너는 항상 렌더링하고, 내부 탭을 조건부로 보여줍니다. */}
             <SideActionTabsContainer>
                 <SideActionTab type="share" onClick={handleShare}>
-                    <button data-tooltip="공유"><BiSolidShareAlt/></button>
+                    <button data-tooltip="share"><BiSolidShareAlt/></button>
                 </SideActionTab>
                 {user?.id === journal.writerId && (
                     <>
                         <SideActionTab type="edit" onClick={() => handleEdit(journal)}>
-                            <button data-tooltip="수정"><HiPencilAlt/></button>
+                            <button data-tooltip="edit"><HiPencilAlt/></button>
                         </SideActionTab>
                         <SideActionTab type="delete"
                                        onClick={() => handleDelete(journal.id, journal.logDate.split('T')[0])}>
-                            <button data-tooltip="삭제"><MdDeleteForever/></button>
+                            <button data-tooltip="delete"><MdDeleteForever/></button>
                         </SideActionTab>
                     </>
                 )}

@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import Cropper from 'react-cropper';
 import 'cropperjs/dist/cropper.min.css';
 import ImageModal from './ImageModal';
-import { ModalBody, ModalFooter } from '../../../styled_components/main/mypage/ImageModalStyled';
-import { ActionButtonGroup } from '../../../styled_components/main/mypage/ImageBoxStyled';
-import { CancelButton, SubmitButton } from '../../../styled_components/main/mypage/MyPageSetStyled.jsx';
-import { CropArea } from '../../../styled_components/main/journal/JournalWriteStyled';
+import {ModalBody, ModalFooter} from '../../../styled_components/main/mypage/ImageModalStyled';
+import {ActionButtonGroup} from '../../../styled_components/main/mypage/ImageBoxStyled';
+import {CancelButton, SubmitButton} from '../../../styled_components/main/mypage/MyPageSetStyled.jsx';
+import {CropArea} from '../../../styled_components/main/journal/JournalWriteStyled';
 
-const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
+const BannerImageEditor = ({isOpen, onClose, onCropComplete}) => {
     const [imageSrc, setImageSrc] = useState(null);
     const cropperRef = useRef(null);
     const fileInputRef = useRef(null);
@@ -38,15 +38,15 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
         }
 
         const croppedCanvas = cropper.getCroppedCanvas({
-            width: 1200, 
+            width: 1200,
             imageSmoothingEnabled: true,
             imageSmoothingQuality: 'high',
         });
-        
+
         croppedCanvas.toBlob((blob) => {
             if (blob) {
                 // 잘린 이미지를 'banner.jpg'라는 이름의 File 객체로 제작
-                const croppedFile = new File([blob], "banner.jpg", { type: "image/jpeg" });
+                const croppedFile = new File([blob], "banner.jpg", {type: "image/jpeg"});
                 // 부모에게 파일만 전달하고, yPosition은 0으로 고정합니다.
                 onCropComplete(croppedFile, 0);
             } else {
@@ -62,7 +62,7 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
             <input
                 type="file"
                 ref={fileInputRef}
-                style={{ display: 'none' }}
+                style={{display: 'none'}}
                 accept="image/*"
                 onChange={handleFileChange}
             />
@@ -73,8 +73,8 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
                         <Cropper
                             ref={cropperRef}
                             src={imageSrc}
-                            style={{ height: '100%', width: '100%' }}
-                            aspectRatio={3 / 1} // 배너 비율
+                            style={{height: '100%', width: '100%'}}
+                            aspectRatio={5 / 1} // 배너 비율
                             viewMode={2}
                             guides={true}
                             background={false}
@@ -83,13 +83,20 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
                             autoCropArea={1}
                         />
                     ) : (
-                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#888' }}>
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            height: '100%',
+                            color: '#888'
+                        }}>
                             배너로 사용할 이미지를 선택해주세요.
                         </div>
                     )}
                 </CropArea>
                 {!imageSrc && (
-                    <ActionButtonGroup><SubmitButton onClick={handleUploadButtonClick}>이미지 선택</SubmitButton></ActionButtonGroup>
+                    <ActionButtonGroup><SubmitButton onClick={handleUploadButtonClick}>이미지
+                        선택</SubmitButton></ActionButtonGroup>
                 )}
             </ModalBody>
             <ModalFooter>

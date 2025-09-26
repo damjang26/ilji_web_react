@@ -1,6 +1,7 @@
 import {useEffect, useState, useRef} from "react";
 import {FaPenFancy} from "react-icons/fa";
 import {BiSolidSprayCan} from "react-icons/bi";
+import { BsCircle } from "react-icons/bs"; // ✅ [추가] 원 브러시 아이콘
 import {
     EditDrawBrushWidthBtn,
     EditDrawBrushWidthList,
@@ -15,6 +16,7 @@ import {TiDelete} from "react-icons/ti";
 const PEN_TYPES = {
     PENCIL: 'Pencil',
     SPRAY: 'Spray',
+    CIRCLE: 'Circle', // ✅ [추가] 원 브러시 타입
 };
 const BRUSH_WIDTHS = [3, 5, 10, 15];
 const COLORS = ['#000000', '#E53E3E', '#3182CE', '#38A169', '#D69E2E', '#ffffff', '#7b5fff'];
@@ -37,7 +39,7 @@ const Draw = ({canvas}) => {
         brushesRef.current = {
             [PEN_TYPES.PENCIL]: new fabric.PencilBrush(canvas),
             [PEN_TYPES.SPRAY]: new fabric.SprayBrush(canvas),
-            // 나중에 여기에 new fabric.CircleBrush(canvas) 등을 추가하면 됩니다.
+            [PEN_TYPES.CIRCLE]: new fabric.CircleBrush(canvas), // ✅ [추가] 원 브러시 생성
         };
     }, [canvas]);
 
@@ -143,6 +145,13 @@ const Draw = ({canvas}) => {
                     $active={activeTool === PEN_TYPES.SPRAY}
                 >
                     <BiSolidSprayCan/>
+                </EditDrawPenButton>
+                {/* ✅ [추가] 원 브러시 선택 버튼 */}
+                <EditDrawPenButton
+                    onClick={() => handleToolSelect(PEN_TYPES.CIRCLE)}
+                    $active={activeTool === PEN_TYPES.CIRCLE}
+                >
+                    <BsCircle />
                 </EditDrawPenButton>
             </div>
             <EditDrawBrushWidthList>
