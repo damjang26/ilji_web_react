@@ -13,12 +13,8 @@ import { Button, ActionButtons } from "../../../styled_components/common/FormEle
 import { useAuth } from "../../../AuthContext.jsx";
 
 const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete}) => {
-    console.log("ScheduleDetail: Component rendering started.");
-    console.log("ScheduleDetail received event:", event);
     const { tags } = useTags();
     const { user } = useAuth();
-    console.log("ScheduleDetail - tags from useTags():", tags);
-    console.log("ScheduleDetail - user from useAuth():", user);
 
     if (!event) {
         return <div>일정을 선택해주세요.</div>;
@@ -31,51 +27,51 @@ const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete}) => {
         if (!Array.isArray(tags)) return null; // tags가 배열이 아닐 경우 방어 코드
         return tags.find(t => t.id === tagId);
     }, [event, tags]);
-    console.log("ScheduleDetail - currentTag:", currentTag);
 
     // 날짜와 시간을 상황에 맞게 표시하는 함수
     const formatDateRange = () => {
         if (!event.start) return "날짜 정보 없음";
 
         const start = new Date(event.start);
-        const end = event.end ? new Date(event.end) : start; // end가 없으면 start로 대체
+        let end;
+
+        // For recurring instances, _instance.range.end is the most reliable source.
+        if (event._instance?.range?.end) {
+            end = new Date(event._instance.range.end);
+        } else {
+            end = event.end ? new Date(event.end) : new Date(start);
+        }
+
+        const pad = (num) => String(num).padStart(2, "0");
+        const toDateStr = (d) => d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+        const toTimeStr = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+        const startDateStr = toDateStr(start);
 
         // Case 1: '하루 종일' 일정
         if (event.allDay) {
-            // FullCalendar의 end는 exclusive(포함 안됨)이므로,
-            // 화면 표시는 inclusive(포함됨)으로 바꿔야 합니다. (하루 빼기)
-            const inclusiveEnd = new Date(end.getTime());
-            inclusiveEnd.setDate(inclusiveEnd.getDate() - 1);
+            // end가 exclusive이므로 하루를 빼서 inclusive로 만듭니다.
+            const inclusiveEnd = new Date(end.getTime() - (event.end ? 1 : 0));
+            const inclusiveEndDateStr = toDateStr(inclusiveEnd);
 
-            const startDateStr = start.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-            const inclusiveEndDateStr = inclusiveEnd.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-
-            // 시작일과 (보정된)종료일이 같으면 날짜 하나만 표시
             if (startDateStr === inclusiveEndDateStr) {
                 return startDateStr;
             }
-            // 여러 날에 걸친 경우
             return `${startDateStr} ~ ${inclusiveEndDateStr}`;
         }
 
         // Case 2: 시간 지정 일정
-        const startDateStr = start.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-        const startTimeStr = start.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const startTimeStr = toTimeStr(start);
+        const endDateStr = toDateStr(end);
+        const endTimeStr = toTimeStr(end);
 
-        const endDateStr = end.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-        const endTimeStr = end.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-        // 같은 날에 시작하고 끝나는 경우
         if (startDateStr === endDateStr) {
             return `${startDateStr} ${startTimeStr} - ${endTimeStr}`;
         }
-        // 여러 날에 걸쳐 진행되는 경우
         return `${startDateStr} ${startTimeStr} - ${endDateStr} ${endTimeStr}`;
     };
-    console.log("ScheduleDetail - formatDateRange result:", formatDateRange());
     
     const isOwner = user && user.id === event.extendedProps.calendarId; // user가 null일 수 있으므로 방어 코드 필요
-    console.log("ScheduleDetail - isOwner:", isOwner);
 
     return (
         <DetailWrapper>

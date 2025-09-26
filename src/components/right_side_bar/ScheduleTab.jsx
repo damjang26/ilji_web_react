@@ -11,6 +11,7 @@ const ScheduleTab = ({ isInsideModal = false, initialEvent = null }) => {
         openSchedulePanelForNew,
         openSchedulePanelForEdit, // 수정 패널을 여는 함수 가져오기
         switchToModalFormView, // 모달 뷰 전환 함수 가져오기
+        requestDeleteConfirmation, // 삭제 확인 모달을 여는 함수
     } = useSchedule();
 
     // 1. 선택된 이벤트를 관리할 상태를 추가합니다. null이면 목록, 값이 있으면 상세 정보를 표시합니다.
@@ -46,13 +47,11 @@ const ScheduleTab = ({ isInsideModal = false, initialEvent = null }) => {
         setSelectedEvent(null);
     }, []);
 
-    // 상세 보기의 삭제/수정 처리 (Context의 함수를 호출하고 목록으로 돌아감)
-    const handleDelete = useCallback(async (eventId) => {
-        if (window.confirm("정말로 이 일정을 삭제하시겠습니까?")) {
-            // await deleteSchedule(eventId); // context의 삭제 함수 호출
-            handleBackToList(); // 목록으로 돌아가기
-        }
-    }, [handleBackToList]);
+    // 상세 보기의 삭제 처리 - Context의 함수를 호출
+    const handleDelete = useCallback((eventId) => {
+        requestDeleteConfirmation(eventId);
+        // 확인 모달이 뜬 후, 삭제가 성공하면 Context에서 목록으로 돌아가는 것까지 처리해줍니다.
+    }, [requestDeleteConfirmation]);
 
     const handleEdit = useCallback((event) => {
         if (isInsideModal) {

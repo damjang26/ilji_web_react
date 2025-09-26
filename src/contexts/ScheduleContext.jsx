@@ -73,50 +73,57 @@ const transformInitialDataToFormState = (initialData, user) => {
  * 기존 이벤트 객체를 폼 상태로 변환합니다.
  */
 const transformEventToFormState = (event) => {
+    console.log("--- transformEventToFormState START ---");
+    console.log("1. Raw event object received:", event);
+
     if (!event) return null;
 
-    // ✅ [핵심 수정] rrule 값을 안정적으로 읽어오기 위한 다단계 로직
-    // 1. 안정적인 API인 toPlainObject()를 우선 사용합니다.
     const plainEvent = typeof event.toPlainObject === 'function' ? event.toPlainObject() : event;
+    console.log("2. plainEvent (after toPlainObject):", plainEvent);
 
-    // 2. plainEvent에서 rrule 값을 먼저 찾습니다.
-    let rruleValue = plainEvent.rrule || "";
-
-    // 3. 만약 plainEvent에 rrule이 없다면, FullCalendar의 내부 구조에 직접 접근하여 다시 시도합니다.
-    //    이는 toPlainObject가 rrule을 제대로 반환하지 않는 경우를 위한 예비 로직입니다.
-    if (!rruleValue) {
-        try {
-            const rruleSet = event._def?.recurringDef?.typeData?.rruleSet;
-            const mainRruleObject = rruleSet?._rrule?.[0];
-            if (mainRruleObject && typeof mainRruleObject.toString === 'function') {
-                rruleValue = mainRruleObject.toString();
-            }
-        } catch (e) {
-            console.error("내부 rrule 구조를 파싱하는 중 오류가 발생했습니다:", e);
+    // 1. FIX RRULE DELETION BUG: Robustly parse rrule
+    let rruleValue = "";
+    try {
+        const rruleSet = event._def?.recurringDef?.typeData?.rruleSet;
+        const mainRruleObject = rruleSet?._rrule?.[0];
+        if (mainRruleObject && typeof mainRruleObject.toString === 'function') {
+            rruleValue = mainRruleObject.toString();
+        } else if (typeof plainEvent.rrule === 'string') {
+            rruleValue = plainEvent.rrule;
         }
+    } catch {
+        rruleValue = typeof plainEvent.rrule === 'string' ? plainEvent.rrule : '';
     }
-
-    // 4. 어떤 방식으로 rrule 값을 가져왔든, "RRULE:" 접두사가 있다면 제거하여
-    //    폼에서 사용할 수 있는 순수한 규칙 문자열로 만듭니다.
     if (rruleValue.startsWith('RRULE:')) {
         rruleValue = rruleValue.replace(/^RRULE:/, '');
     }
+    console.log("2.1. Parsed rruleValue:", rruleValue);
 
-    const start = new Date(plainEvent.start);
-    let inclusiveEnd;
-    if (plainEvent.allDay && plainEvent.end) {
-        inclusiveEnd = new Date(plainEvent.end);
-        inclusiveEnd.setDate(inclusiveEnd.getDate() - 1);
+    // 2. FIX TIMED & ALL-DAY BUGS: Correctly determine end date
+    const start = new Date(event.start);
+    let end;
+    if (event._instance?.range?.end) {
+        end = new Date(event._instance.range.end);
     } else {
-        inclusiveEnd = plainEvent.end ? new Date(plainEvent.end) : new Date(start);
+        end = event.end ? new Date(event.end) : new Date(start);
     }
-    const toYYYYMMDD = (d) =>
-        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-            d.getDate()
-        ).padStart(2, "0")}`;
-    const toHHMM = (d) => d.toTimeString().substring(0, 5);
+    console.log("3. Parsed Date objects:", { start, end });
 
-    return {
+    let formEndDate = end;
+    if (rruleValue && plainEvent.allDay) {
+        formEndDate = new Date(start);
+    } else if (plainEvent.allDay && event.end) {
+        if (start.toISOString().split('T')[0] !== end.toISOString().split('T')[0]) {
+            formEndDate = new Date(end.getTime() - (1000 * 3600 * 24));
+        }
+    }
+
+    // 3. FIX TIME SHIFT BUG: Use getHours/getMinutes for timezone-safe time string
+    const pad = (num) => String(num).padStart(2, "0");
+    const toYYYYMMDD = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const toHHMM = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+    const result = {
         id: plainEvent.id,
         title: plainEvent.title,
         location: plainEvent.extendedProps?.location || "",
@@ -125,13 +132,17 @@ const transformEventToFormState = (event) => {
         allDay: plainEvent.allDay,
         startDate: toYYYYMMDD(start),
         startTime: plainEvent.allDay ? "09:00" : toHHMM(start),
-        endDate: toYYYYMMDD(inclusiveEnd),
-        endTime: plainEvent.allDay ? "10:00" : toHHMM(inclusiveEnd),
+        endDate: toYYYYMMDD(formEndDate),
+        endTime: plainEvent.allDay ? "10:00" : toHHMM(end),
         calendarId: plainEvent.extendedProps?.calendarId || 1,
         rrule: rruleValue,
     };
-};
 
+    console.log("4. Final returned object for form:", result);
+    console.log("--- transformEventToFormState END ---");
+
+    return result;
+};
 export function ScheduleProvider({children}) {
     const {user} = useAuth(); // AuthContext에서 사용자 정보 가져오기
 
@@ -166,8 +177,6 @@ export function ScheduleProvider({children}) {
 
     // 백엔드 데이터를 FullCalendar 형식으로 변환하는 헬퍼 함수
     const formatEventForCalendar = (event) => {
-        // ✅ [수정] 백엔드에서 isAllDay 플래그가 false로 오는 경우에 대비하여,
-        // 시간 형식을 보고 '하루 종일' 여부를 다시 판단하는 방어 로직을 복원합니다.
         const isAllDayEvent =
             event.isAllDay ||
             (event.startTime?.endsWith("00:00:00") &&
@@ -176,23 +185,26 @@ export function ScheduleProvider({children}) {
         const commonProps = {
             id: event.id,
             title: event.title,
-            // ✅ 위에서 판단한 정확한 값을 사용합니다.
             allDay: isAllDayEvent,
-            // ✅ [버그 수정] 백엔드에서 rrule이 ""(빈 문자열)로 올 경우, FullCalendar 오류를 방지하기 위해 null로 변환합니다.
             rrule: event.rrule || null,
             extendedProps: {
                 description: event.description,
                 location: event.location,
-                tagId: event.tagId || NO_TAG_ID, // `tags`가 아닌 `tagId`를 매핑합니다.
+                tagId: event.tagId || NO_TAG_ID,
                 calendarId: event.calendarId,
             },
         };
 
-        // ✅ 위에서 판단한 정확한 값을 기준으로 분기합니다.
-        if (isAllDayEvent) {
-            // FullCalendar에서 하루 종일 일정의 종료일은 '포함되지 않는(exclusive)' 날짜입니다.
-            // 백엔드는 '포함하는(inclusive)' 날짜(예: 8월 2일 23:59)를 저장하므로, 날짜를 하루 더해줍니다.
-            // new Date() 생성자의 시간대 오류를 피하기 위해 UTC 기준으로 날짜를 계산합니다.
+        // Case 1: '하루 종일' 반복 일정 -> end 날짜를 제공하지 않음 (긴 막대 버그 방지)
+        if (event.rrule && isAllDayEvent) {
+            return {
+                ...commonProps,
+                start: event.startTime.split("T")[0],
+            };
+        }
+
+        // Case 2: '하루 종일'이고 반복 없는 장기 일정
+        if (!event.rrule && isAllDayEvent) {
             const endDateStr = event.endTime.split("T")[0];
             const parts = endDateStr.split("-").map(Number);
             const exclusiveEndDate = new Date(
@@ -207,6 +219,7 @@ export function ScheduleProvider({children}) {
             };
         }
 
+        // Case 3: 시간이 지정된 모든 일정 (반복 여부 무관) -> start와 end를 그대로 사용
         return {...commonProps, start: event.startTime, end: event.endTime};
     };
 
@@ -640,14 +653,19 @@ export function ScheduleProvider({children}) {
     const confirmDelete = useCallback(async () => {
         if (deleteModalState.eventId) {
             await deleteEvent(deleteModalState.eventId);
-            // 삭제 후, 사이드바가 상세/수정 화면이었다면 목록으로 되돌립니다.
-            if (selectedInfo?.type === "detail" || selectedInfo?.type === "edit") {
+
+            // 삭제 후, 메인 모달이 열려있었다면 닫아줍니다.
+            if (scheduleModalData.isOpen) {
+                closeScheduleModal();
+            } 
+            // 그렇지 않고 사이드바가 열려있었다면 목록으로 되돌립니다.
+            else if (selectedInfo?.type === "detail" || selectedInfo?.type === "edit") {
                 goBackInSchedulePanel();
             }
         }
-        // 모달을 닫고 상태를 초기화합니다.
+        // 삭제 확인 모달을 닫고 상태를 초기화합니다.
         setDeleteModalState({isOpen: false, eventId: null});
-    }, [deleteModalState.eventId, deleteEvent, selectedInfo, goBackInSchedulePanel]);
+    }, [deleteModalState.eventId, deleteEvent, selectedInfo, scheduleModalData.isOpen, closeScheduleModal, goBackInSchedulePanel]);
 
     const restoreCachedEvents = useCallback(() => {
         setEvents(cachedEvents);
