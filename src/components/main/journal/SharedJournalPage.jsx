@@ -55,6 +55,7 @@ const SharedJournalPage = () => {
     const [isLikersLoading, setIsLikersLoading] = useState(false);
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
     const [selectedImageUrl, setSelectedImageUrl] = useState('');
+    const [isCommentOpen, setIsCommentOpen] = useState(false); // ✅ [추가] 댓글 창 상태
 
     useEffect(() => {
         const fetchSharedJournal = async () => {
@@ -98,3 +99,97 @@ const SharedJournalPage = () => {
             await toggleLike(postId, user?.id);
         } catch (error) {
             console.error("좋아요 처리 중 오류 발생:", error);
+            message.error("좋아요 처리에 실패했습니다.");
+            // 실패 시 롤백
+            setJournal(prev => ({
+                ...prev,
+                liked: !prev.liked,
+                likeCount: prev.liked ? prev.likeCount - 1 : prev.likeCount + 1,
+            }));
+        }
+    }, [journal, user?.id]);
+
+    const handleLikeCountClick = useCallback(async (postId) => {
+        if (!postId) return;
+        setLikersModalOpen(true);
+        setIsLikersLoading(true);
+        try {
+            const response = await getPostLikers(postId);
+            setLikersList(response.data);
+        } catch (error) {
+            message.error("좋아요 목록을 불러오는 데 실패했습니다.");
+            setLikersModalOpen(false);
+        } finally {
+            setIsLikersLoading(false);
+        }
+    }, []);
+
+    const handleCommentCountChange = useCallback((postId, changeAmount) => {
+        setJournal(prev => prev.id === postId ? {...prev, commentCount: prev.commentCount + changeAmount} : prev);
+    }, []);
+
+    // ✅ [추가] 댓글 창을 토글하는 함수
+    const toggleCommentView = useCallback((e) => {
+        e?.stopPropagation(); // 이벤트 버블링 방지
+        setIsCommentOpen(prev => !prev);
+    }, []);
+
+    if (loading) {
+        return <LoadingContainer><Spin size="large"/></LoadingContainer>;
+    }
+
+    if (error) {
+        return <ErrorContainer>🚫<br/>{error}</ErrorContainer>;
+    }
+
+    if (!journal) {
+        return null; // 데이터가 없으면 아무것도 렌더링하지 않음
+    }
+
+    return (
+        <PageContainer>
+            <ContentWrapper>
+                {/* ✅ JournalItem 재활용! 필요한 props를 모두 전달합니다. */}
+                <JournalItem
+                    journal={journal}
+                    user={user}
+                    handleLikeClick={handleLikeClick}
+                    onLikeCountClick={handleLikeCountClick}
+                    onProfileClick={handleProfileClick}
+                    onImageClick={handleImageClick}
+                    onCommentCountChange={(amount) => handleCommentCountChange(journal.id, amount)}
+                    // ✅ [수정] 빠져있던 onToggle과 isCommentOpen prop을 전달합니다.
+                    onToggle={toggleCommentView}
+                    isCommentOpen={isCommentOpen}
+                    // 공유 페이지에서는 수정/삭제/무한스크롤 기능이 필요 없으므로 비워두거나 더미 함수를 전달합니다.
+                    onDelete={() => {
+                    }}
+                    handleEdit={() => {
+                    }}
+                    lastJournalElementRef={null}
+                />
+            </ContentWrapper>
+
+            <PostLikersModal
+                open={isLikersModalOpen}
+                onClose={() => setLikersModalOpen(false)}
+                users={likersList}
+                loading={isLikersLoading}
+                onUpdate={() => handleLikeCountClick(journal.id)}
+            />
+
+            <Modal
+                open={isImageModalOpen}
+                onCancel={() => setIsImageModalOpen(false)}
+                footer={null}
+                centered
+                width="auto"
+                bodyStyle={{padding: 0, background: 'none'}}
+            >
+                <OriginalImage src={selectedImageUrl} alt="Original post image"/>
+            </Modal>
+        </PageContainer>
+    );
+};
+
+export default SharedJournalPage;
