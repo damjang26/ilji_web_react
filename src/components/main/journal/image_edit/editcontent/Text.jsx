@@ -34,28 +34,37 @@ const Text = ({canvas}) => {
     const [deleteBtnPos, setDeleteBtnPos] = useState({x: 0, y: 0, visible: false});
     const iconSize = 28;
 
-    const addText = () => {
+    // ✅ [수정] async/await를 사용하여 폰트 로딩을 기다리도록 변경
+    const addText = async () => {
         if (!canvas) return;
 
-        const iText = new fabric.IText('텍스트를 입력하세요', {
-            left: canvas.width / 2,
-            top: canvas.height / 2,
-            originX: 'center',
-            originY: 'center',
-            fontFamily: selectedFont,
-            fontSize: selectedSize,
-            fill: selectedColor,
-            padding: 10,
-            borderColor: '#7b5fff',
-            cornerColor: '#7b5fff',
-            cornerSize: 10,
-            transparentCorners: false,
-        });
+        try {
+            // ✅ [핵심] 캔버스에 텍스트를 추가하기 전에, 사용할 폰트가 로드될 때까지 기다립니다.
+            // 이렇게 하면 폰트가 적용되지 않는 문제를 해결할 수 있습니다.
+            await document.fonts.load(`${selectedSize}px ${selectedFont}`);
 
-        canvas.add(iText).setActiveObject(iText);
-        iText.enterEditing();
-        iText.selectAll();
-        canvas.renderAll();
+            const iText = new fabric.IText('Type your text here', {
+                left: canvas.width / 2,
+                top: canvas.height / 2,
+                originX: 'center',
+                originY: 'center',
+                fontFamily: selectedFont,
+                fontSize: selectedSize,
+                fill: selectedColor,
+                padding: 5,
+                borderColor: '#7b5fff',
+                cornerColor: '#7b5fff',
+                cornerSize: 10,
+                transparentCorners: false,
+            });
+
+            canvas.add(iText).setActiveObject(iText);
+            iText.enterEditing();
+            iText.selectAll();
+            canvas.renderAll();
+        } catch (err) {
+            console.error("Font loading failed or text creation failed:", err);
+        }
     };
 
     // 캔버스 이벤트를 감지하여 상태를 업데이트하는 메인 Effect
