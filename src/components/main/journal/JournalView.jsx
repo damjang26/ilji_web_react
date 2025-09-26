@@ -95,15 +95,15 @@ const JournalView = () => {
 
     const handleDelete = async (journalId, pageDate) => {
         // 사용자가 정말 삭제할 것인지 확인
-        if (window.confirm("정말로 이 일기를 삭제하시겠습니까?")) {
+        if (window.confirm("Are you sure you want to delete this journal?")) {
             try {
                 // Context의 deleteJournal 함수 호출
                 await deleteJournal(journalId, pageDate);
-                alert("일기가 삭제되었습니다.");
+                alert("Journal deleted successfully.");
                 // ✅ 삭제 성공 후, 이전 페이지(일기 목록)로 이동시킵니다.
                 navigate(-1);
             } catch (error) {
-                alert("일기 삭제 중 오류가 발생했습니다.");
+                alert("An error occurred while deleting the journal.");
             }
         }
     };
@@ -122,17 +122,17 @@ const JournalView = () => {
     // ✅ [신규] 공유 버튼 클릭 핸들러
     const handleShare = useCallback(async () => {
         const shareUrl = window.location.href;
-        const shareTitle = `"${journal.writerNickname}"님의 일기`;
+        const shareTitle = `Journal by "${journal.writerNickname}"`;
 
         try {
             // Web Share API를 사용하여 네이티브 공유 UI를 엽니다.
             await navigator.share({
                 title: shareTitle,
-                text: `[일지]에서 ${shareTitle}를 확인해보세요!`,
+                text: `Check out ${shareTitle} on [Ilji]!`,
                 url: shareUrl,
             });
         } catch (error) {
-            console.log("공유 기능이 지원되지 않거나 사용자가 취소했습니다.", error);
+            console.log("Web Share API not supported or share canceled by user.", error);
         }
     }, [journal]);
 
@@ -166,8 +166,8 @@ const JournalView = () => {
             const response = await getPostLikers(postId);
             setLikersList(response.data);
         } catch (error) {
-            console.error("좋아요 목록을 불러오는 데 실패했습니다.", error);
-            message.error("좋아요 목록을 불러오는 데 실패했습니다.");
+            console.error("Failed to load the list of likers.", error);
+            message.error("Failed to load the list of likers.");
             setLikersModalOpen(false);
         } finally {
             setIsLikersLoading(false);
@@ -182,8 +182,8 @@ const JournalView = () => {
     }, [currentPostId, handleLikeCountClick]);
 
     if (!journal) {
-        return <ViewContainer className="no-image"><p>일기 정보를 불러올 수 없습니다. 목록에서 다시 시도해주세요.</p>
-        </ViewContainer>;
+        return <ViewContainer className="no-image"><p>Could not load journal information. Please try again from the list.</p>
+        </ViewContainer>
     }
 
     // 이미지가 있는지 여부 확인
@@ -201,7 +201,7 @@ const JournalView = () => {
                                 alt={`${journal?.writerNickname || 'user'} profile`}
                                 referrerPolicy="no-referrer"/>
                             <AuthorInfo>
-                                <AuthorName>{journal?.writerNickname || '사용자'}</AuthorName>
+                                <AuthorName>{journal?.writerNickname || 'User'}</AuthorName>
                             </AuthorInfo>
                         </div>
                         <ActionItem>
@@ -277,7 +277,7 @@ const JournalView = () => {
                                     alt={`${journal?.writerNickname || 'user'} profile`}
                                     referrerPolicy="no-referrer"/>
                                 <AuthorInfo>
-                                    <AuthorName>{journal?.writerNickname || '사용자'}</AuthorName>
+                                    <AuthorName>{journal?.writerNickname || 'User'}</AuthorName>
                                 </AuthorInfo>
                             </div>
                             <ActionItem>

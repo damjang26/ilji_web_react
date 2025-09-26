@@ -56,7 +56,7 @@ export const JournalProvider = ({children, userId}) => {
                 }
 
                 const userJournals = response.data; // [{...}, {...}] 형태의 배열
-                console.log("일기 데이터", userJournals);
+                console.log("Journal data", userJournals);
 
                 // 배열을 Map으로 변환하여 상태를 업데이트합니다. key는 날짜, value는 일기 객체입니다.
                 // ✅ [수정] 백엔드 응답 필드명 변경에 따라 'ilogDate'를 'logDate'로 수정합니다.
@@ -69,7 +69,7 @@ export const JournalProvider = ({children, userId}) => {
                     return newJournals;
                 });
             } catch (err) {
-                console.error("일기 목록 로딩 실패:", err);
+                console.error("Failed to load journals:", err);
                 setError(err);
                 setJournals(new Map()); // 에러 발생 시 목록을 비웁니다.
             } finally {
@@ -218,7 +218,7 @@ export const JournalProvider = ({children, userId}) => {
         try {
             await api.delete(`/api/i-log/${logId}`);
         } catch (err) {
-            console.error("일기 삭제 API 호출 실패:", err);
+            console.error("Journal deletion API call failed:", err);
             throw err; // 에러를 다시 던져서 호출한 컴포넌트에서 처리하도록 합니다.
         }
     }, []);
@@ -244,7 +244,7 @@ export const JournalProvider = ({children, userId}) => {
             }
 
         } catch (err) {
-            console.error("일기 삭제 실패:", err);
+            console.error("Failed to delete journal:", err);
             // 컴포넌트에서 에러를 인지하고 후속 처리(예: alert)를 할 수 있도록 에러를 다시 던집니다.
             throw err;
         }
@@ -267,7 +267,7 @@ export const JournalProvider = ({children, userId}) => {
             const response = await api.get(`/api/i-log/${id}`);
             return response.data;
         } catch (err) {
-            console.error(`ID(${id})로 일기 조회 실패:`, err);
+            console.error(`Failed to fetch journal with ID(${id}):`, err);
             throw err; // 에러를 상위로 전파하여 컴포넌트에서 처리할 수 있도록 함
         }
     }, []);

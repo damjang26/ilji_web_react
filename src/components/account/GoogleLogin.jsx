@@ -20,13 +20,13 @@ const SocialLogin = () => {
                 onSuccess={async (res) => {
                     try {
                         await loginWithGoogle(res.credential);
-                        console.log("로그인 성공!");
+                        console.log("Login successful!");
                     } catch (err) {
-                        console.error("로그인 처리 중 에러 발생:", err);
+                        console.error("Error during login process:", err);
                     }
                 }}
                 onError={() => {
-                    console.log("Google 로그인 실패");
+                    console.log("Google login failed");
                 }}
             />
             {error && (
@@ -43,7 +43,7 @@ const SocialLogin = () => {
                         margin: 0, // 기본 마진 제거
                     }}
                 >
-                    {error.message || "로그인 중 에러가 발생했습니다."}
+                    {error.message || "An error occurred during login."}
                 </p>
             )}
         </div>

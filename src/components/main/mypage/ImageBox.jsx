@@ -71,11 +71,11 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
             // Context의 updateProfile 함수 호출 (수정된 데이터로)
             await updateProfile(textProfileData, updateOptions);
 
-            alert('이미지가 성공적으로 업데이트되었습니다.');
+            alert('Image updated successfully.');
             onClose();
         } catch (err) {
-            console.error('이미지 업데이트 실패:', err);
-            alert('이미지 업데이트 중 오류가 발생했습니다.');
+            console.error('Image update failed:', err);
+            alert('An error occurred while updating the image.');
         }
     };
 
@@ -83,12 +83,10 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
         <ImageModal
             isOpen={isOpen}
             onClose={onClose}
-            title={`${imageType === 'profileImage' ? '프로필' : '배너'} 이미지 변경`}
+            title={`Change ${imageType === 'profileImage' ? 'Profile' : 'Banner'} Image`}
         >
             <ModalBody>
-                <ImagePreview imageUrl={previewUrl} imageType={imageType}>
-                    {!previewUrl && "이미지를 업로드하세요"}
-                </ImagePreview>
+                <ImagePreview imageUrl={previewUrl} imageType={imageType}>{!previewUrl && "Upload an image"}</ImagePreview>
 
                 <input
                     ref={fileInputRef}
@@ -99,16 +97,16 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
                 />
 
                 <ActionButtonGroup>
-                    <SubmitButton type="button" onClick={handleUploadButtonClick}>이미지 선택</SubmitButton>
+                    <SubmitButton type="button" onClick={handleUploadButtonClick}>Select Image</SubmitButton>
                     {imageType === 'profileImage' && (
-                        <CancelButton type="button" onClick={handleRevert}>기본으로 복원</CancelButton>
+                        <CancelButton type="button" onClick={handleRevert}>Revert to Default</CancelButton>
                     )}
                 </ActionButtonGroup>
             </ModalBody>
 
             <ModalFooter>
-                <CancelButton type="button" onClick={onClose}>취소</CancelButton>
-                <SubmitButton type="button" onClick={handleConfirm} disabled={!imageFile && !revertMode}>확인</SubmitButton>
+                <CancelButton type="button" onClick={onClose}>Cancel</CancelButton>
+                <SubmitButton type="button" onClick={handleConfirm} disabled={!imageFile && !revertMode}>Confirm</SubmitButton>
             </ModalFooter>
         </ImageModal>
     );

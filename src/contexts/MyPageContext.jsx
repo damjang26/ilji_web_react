@@ -37,10 +37,10 @@ export const MyPageProvider = ({ children, userId }) => { // [수정] userId pro
       const response = await api.get(endpoint);
       setProfile(response.data);
     } catch (err) {
-      console.error(`[MyPageContext] 프로필 로딩 실패:`, err);
+      console.error(`[MyPageContext] Profile loading failed:`, err);
       const message = err.response?.status === 404
-          ? "존재하지 않는 사용자입니다."
-          : "프로필 정보를 불러오는 데 실패했습니다.";
+          ? "User not found."
+          : "Failed to load profile information.";
       setError(message);
       setProfile(null);
     } finally {
@@ -65,7 +65,7 @@ export const MyPageProvider = ({ children, userId }) => { // [수정] userId pro
   // [수정] updateProfile 함수를 useCallback으로 감싸서 안정화시킵니다.
   const updateProfile = useCallback(async (profileData, { profileImageFile, bannerImageFile, revertToDefault = {} }) => {
       if (!loggedInUser) {
-        const err = new Error("사용자 인증 정보가 없어 프로필을 업데이트할 수 없습니다.");
+        const err = new Error("Cannot update profile without user authentication.");
         setError(err.message);
         throw err;
       }
@@ -89,8 +89,8 @@ export const MyPageProvider = ({ children, userId }) => { // [수정] userId pro
         await loadProfile(loggedInUser.id);
         // setIsEditing(false); // 수정 완료 후 보기 모드로 전환
       } catch (err) {
-        console.error("[MyPageContext] updateProfile 오류", err);
-        const message = err.response?.data?.message || "프로필 업데이트 중 오류 발생";
+        console.error("[MyPageContext] updateProfile error", err);
+        const message = err.response?.data?.message || "An error occurred while updating the profile.";
         setError(message);
         throw err;
       }

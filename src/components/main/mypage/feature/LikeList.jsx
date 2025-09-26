@@ -44,8 +44,8 @@ const LikeList = () => {
         } catch (error) {
             // [수정] 요청이 취소된 경우(AbortError)는 정상적인 동작이므로 에러를 출력하지 않습니다.
             if (error.name !== 'AbortError' && error.name !== 'CanceledError') {
-                console.error("좋아요 누른 일기 목록을 불러오는 데 실패했습니다.", error);
-                message.error("목록을 불러오는 데 실패했습니다.");
+                console.error("Failed to load the list of diaries you liked.", error);
+                message.error("Failed to load list.");
             }
         } finally {
             setLoading(false);

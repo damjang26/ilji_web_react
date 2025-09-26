@@ -43,7 +43,7 @@ const ImageEditor = ({imageInfo, onSave, onCancel, onFabricModeChange}) => {
 
         croppedCanvas.toBlob((blob) => {
             if (!blob) {
-                console.error("⚠️ Blob 생성 실패");
+                console.error("⚠️ Blob creation failed");
                 return;
             }
             const blobUrl = URL.createObjectURL(blob);
@@ -64,7 +64,7 @@ const ImageEditor = ({imageInfo, onSave, onCancel, onFabricModeChange}) => {
     };
 
     const handleCancelEdit = () => {
-        if (window.confirm('편집을 취소하시겠습니까? 변경사항이 저장되지 않습니다.')) {
+        if (window.confirm('Are you sure you want to cancel your edits? Your changes will not be saved.')) {
             if (onFabricModeChange) onFabricModeChange(false); // 모달
             onCancel(); // 부모 컴포넌트의 취소 함수 호출
         }

@@ -31,13 +31,13 @@ const TERMINATION_TYPES = {
 };
 
 const WEEKDAYS = [
-    { label: '월', value: 'MO' },
-    { label: '화', value: 'TU' },
-    { label: '수', value: 'WE' },
-    { label: '목', value: 'TH' },
-    { label: '금', value: 'FR' },
-    { label: '토', value: 'SA' },
-    { label: '일', value: 'SU' },
+    { label: 'Mon', value: 'MO' },
+    { label: 'Tue', value: 'TU' },
+    { label: 'Wed', value: 'WE' },
+    { label: 'Thu', value: 'TH' },
+    { label: 'Fri', value: 'FR' },
+    { label: 'Sat', value: 'SA' },
+    { label: 'Sun', value: 'SU' },
 ];
 
 // Helper to sort BYDAY arrays consistently according to the defined order (월-일)
@@ -201,13 +201,13 @@ const RRuleGenerator = ({ value, onChange, onClose }) => {
 
     const freqLabel = useMemo(() => {
         switch (freq) {
-            case FREQ_OPTIONS.DAILY: return '일';
-            case FREQ_OPTIONS.WEEKLY: return '주';
-            case FREQ_OPTIONS.MONTHLY: return '개월';
-            case FREQ_OPTIONS.YEARLY: return '년';
+            case FREQ_OPTIONS.DAILY: return interval > 1 ? 'days' : 'day';
+            case FREQ_OPTIONS.WEEKLY: return interval > 1 ? 'weeks' : 'week';
+            case FREQ_OPTIONS.MONTHLY: return interval > 1 ? 'months' : 'month';
+            case FREQ_OPTIONS.YEARLY: return interval > 1 ? 'years' : 'year';
             default: return '';
         }
-    }, [freq]);
+    }, [freq, interval]);
 
     // --- Render ---
     return (
@@ -215,11 +215,11 @@ const RRuleGenerator = ({ value, onChange, onClose }) => {
             {/* Frequency and Interval */}
             <Row>
                 <Select value={freq} onChange={handleFreqChange}>
-                    <option value={FREQ_OPTIONS.NONE}>반복 안 함</option>
-                    <option value={FREQ_OPTIONS.DAILY}>매일</option>
-                    <option value={FREQ_OPTIONS.WEEKLY}>매주</option>
-                    <option value={FREQ_OPTIONS.MONTHLY}>매월</option>
-                    <option value={FREQ_OPTIONS.YEARLY}>매년</option>
+                    <option value={FREQ_OPTIONS.NONE}>Does not repeat</option>
+                    <option value={FREQ_OPTIONS.DAILY}>Daily</option>
+                    <option value={FREQ_OPTIONS.WEEKLY}>Weekly</option>
+                    <option value={FREQ_OPTIONS.MONTHLY}>Monthly</option>
+                    <option value={FREQ_OPTIONS.YEARLY}>Yearly</option>
                 </Select>
             </Row>
 
@@ -231,7 +231,7 @@ const RRuleGenerator = ({ value, onChange, onClose }) => {
                         onChange={handleIntervalChange}
                         min="1"
                     />
-                    <span>{freqLabel}마다 반복</span>
+                    <span>Repeat every {interval} {freqLabel}</span>
                 </InputRow>
             )}
 
@@ -267,7 +267,7 @@ const RRuleGenerator = ({ value, onChange, onClose }) => {
                                 checked={terminationType === TERMINATION_TYPES.NONE}
                                 onChange={() => handleTerminationTypeChange(TERMINATION_TYPES.NONE)}
                             />
-                            계속 반복
+                            Repeat indefinitely
                         </RadioLabel>
 
                         <RadioLabel>
@@ -285,7 +285,7 @@ const RRuleGenerator = ({ value, onChange, onClose }) => {
                                     min="1"
                                     onClick={handleCountInputClick}
                                 />
-                                <span>회 반복</span>
+                                <span>time(s)</span>
                             </ClickableInputWrapper>
                         </RadioLabel>
 
@@ -297,7 +297,7 @@ const RRuleGenerator = ({ value, onChange, onClose }) => {
                                 onChange={() => handleTerminationTypeChange(TERMINATION_TYPES.UNTIL)}
                             />
                              <ClickableInputWrapper>
-                                <span>종료 날짜</span>
+                                <span>End date</span>
                                 <SmallInput
                                     as="input"
                                     type="date"
@@ -314,8 +314,8 @@ const RRuleGenerator = ({ value, onChange, onClose }) => {
 
             {/* ✅ 확인/뒤로가기 버튼 추가 */}
             <ActionButtons>
-                <Button className="secondary" onClick={onClose}>뒤로가기</Button>
-                <Button className="primary" onClick={onClose}>확인</Button>
+                <Button className="secondary" onClick={onClose}>Back</Button>
+                <Button className="primary" onClick={onClose}>Confirm</Button>
             </ActionButtons>
         </GeneratorWrapper>
     );

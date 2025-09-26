@@ -57,17 +57,17 @@ const ContentWrapper = styled.div`
 const getSchedulePanelTitle = (type) => {
     switch (type) {
         case 'new':
-            return '새 일정 추가';
+            return 'Add new schedule';
         case 'edit':
-            return '일정 수정';
+            return 'Edit schedule';
         case 'detail':
-            return '일정 상세 정보';
+            return 'Schedule Details';
         // case 'list_for_date':
         //     return '선택한 날짜의 일정';
         case 'rrule_form':
-            return '반복 설정';
+            return 'Repeat settings';
         default:
-            return '일정';
+            return 'Schedule';
     }
 }
 

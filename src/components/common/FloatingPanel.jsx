@@ -14,7 +14,7 @@ const FloatingPanel = ({ title, children, onClose, onBack }) => {
         <PanelContainer onMouseDown={(e) => e.stopPropagation()}>
             <PanelHeader>
                 {onBack ? (
-                    <BackButton onClick={onBack} title="뒤로가기">
+                    <BackButton onClick={onBack} title="back">
                         <FaChevronLeft />
                     </BackButton>
                 ) : (
