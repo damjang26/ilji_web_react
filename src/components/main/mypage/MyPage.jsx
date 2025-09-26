@@ -68,7 +68,7 @@ const MyPage = () => {
 
     // [추가] 드롭다운 메뉴 아이템 정의
     const menuItems = [
-        {key: "logout", label: "로그아웃"},
+        {key: "logout", label: "logout"},
         // 다른 메뉴 아이템 추가 가능
     ];
 
@@ -99,8 +99,7 @@ const MyPage = () => {
             await fetchMyFollowing();
             await refetchProfile(userId); // [추가] 팔로워 수 등을 업데이트하기 위해 프로필 정보를 다시 불러옵니다.
         } catch (err) {
-            console.error('팔로우 상태 변경에 실패했습니다.', err);
-            // 필요하다면 사용자에게 에러 메시지를 보여줄 수 있습니다.
+            console.error('Failed to change follow status.', err);
         }
     }, [isFollowing, userId, loggedInUser, isOwner, fetchMyFollowing, refetchProfile]);
 
@@ -160,7 +159,7 @@ const MyPage = () => {
     // 로딩/에러 처리
     if (loading) return <div>로딩 중...</div>;
     if (error) return <div style={{color: "red"}}>{error}</div>;
-    if (!loading && !profile) return <div>프로필 정보가 없습니다.</div>;
+    if (!loading && !profile) return <div>There is no profile information.</div>;
     return (
         <MyPageContainer>
             <MypageImg
@@ -183,41 +182,43 @@ const MyPage = () => {
                             $isOwner={isOwner}
                         />
                     </ImgWrapper>
-                    <HeaderContent>
+                    {/* ✅ [수정] HeaderContent에 position: relative를 추가하여, 자식 요소의 절대 위치 기준점으로 만듭니다. */}
+                    <HeaderContent style={{ position: 'relative' }}>
+                        {/* ✅ [수정] 로그아웃 버튼을 HeaderContent의 직접적인 자식으로 옮기고, 오른쪽 상단에 절대 위치로 고정합니다. */}
+                        {isOwner && (
+                            <IconContainer style={{ position: 'absolute', top: '-40px', right: '-20px' }}>
+                                <Dropdown
+                                    menu={{items: menuItems, onClick: handleMenuClick}}
+                                    trigger={["click"]}
+                                >
+                                    <EllipsisOutlined style={{fontSize: "20px", cursor: "pointer"}}/>
+                                </Dropdown>
+                            </IconContainer>
+                        )}
                         <UserInfo>
-                            <div className="nickname">{profile.nickname || "Guest"}</div>
-                            {/* [수정] isOwner만 이메일 표시 */}
-                            {isOwner && (
-                                <div className="email">
-                                    {profile.email || "guest@example.com"}
+                            {/* ✅ [수정] 이름과 버튼을 한 줄로 묶고, 이름에 굵은 스타일을 직접 적용합니다. */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }} >
+                                {/* ✅ [수정] 이름 div에도 flex와 align-items를 적용하여 수직 중앙 정렬을 보장합니다. */}
+                                <div className="nickname" style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+                                    {profile.nickname || "Guest"}
                                 </div>
-                            )}
+                                {isOwner ?
+                                    // ✅ [수정] 버튼에 다시 스타일을 적용하기 위해 ButtonGroup으로 감쌉니다.
+                                    <ButtonGroup style={{ position: 'relative', top: '1px' }}>
+                                        <button onClick={handleEdit}>Edit Profile</button>
+                                    </ButtonGroup>
+                                    :
+                                    // ✅ [수정] 버튼에 다시 스타일을 적용하기 위해 ButtonGroup으로 감쌉니다.
+                                    <ButtonGroup style={{ position: 'relative', top: '1px' }}>
+                                        <button onClick={handleFollowToggle}>{isFollowing ? 'following' : 'follow'}</button>
+                                    </ButtonGroup>
+                                }
+                            </div>
+                            {isOwner && <div className="email">{profile.email || "guest@example.com"}</div>}
                             <div>{profile.bio || ""}</div>
                         </UserInfo>
-
                         <UserActions>
-                            {isOwner ? (
-                                // 내 페이지일 경우
-                                <ButtonGroup>
-                                    <button onClick={handleEdit}>Edit Profile</button>
-                                    <IconContainer>
-                                        <Dropdown
-                                            menu={{items: menuItems, onClick: handleMenuClick}}
-                                            trigger={["click"]}
-                                        >
-                                            <EllipsisOutlined style={{fontSize: "20px", cursor: "pointer"}}/>
-                                        </Dropdown>
-                                    </IconContainer>
-                                </ButtonGroup>
-                            ) : (
-                                // 친구 페이지일 경우 '팔로우/언팔로우' 버튼을 보여줌
-                                <ButtonGroup>
-                                    <button onClick={handleFollowToggle}>
-                                        {isFollowing ? 'following' : 'follow'}
-                                    </button>
-                                </ButtonGroup>
-                            )}
-
+                            {/* ✅ [수정] 로그아웃 버튼이 분리되었으므로, StatsGroup만 남겨둡니다. */}
                             <StatsGroup>
                                 <StatItem>
                                     <div>post</div>

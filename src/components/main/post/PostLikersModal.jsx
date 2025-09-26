@@ -19,7 +19,7 @@ export default function PostLikersModal({open, onClose, users, onUpdate, loading
             itemLayout="horizontal"
             dataSource={userList}
             loading={loading} // ✅ [추가] antd List 컴포넌트에 로딩 상태 전달
-            locale={{emptyText: "좋아요를 누른 사용자가 없습니다."}}
+            locale={{emptyText: "No one has liked this yet."}}
             renderItem={(item) => {
                 const isFollowing = Array.isArray(myFollowing)
                     ? myFollowing.some((f) => f.userId === item.userId)
@@ -36,7 +36,7 @@ export default function PostLikersModal({open, onClose, users, onUpdate, loading
                                     style={{cursor: 'pointer'}}/>
                                 }
                                 title={<a onClick={() => handleProfileClick(item.userId, onClose)}
-                                          style={{cursor: 'pointer'}}>{item.nickname} (나)</a>}
+                                          style={{cursor: 'pointer'}}>{item.nickname} (me)</a>}
                             />
                         </List.Item>
                     );
@@ -47,9 +47,9 @@ export default function PostLikersModal({open, onClose, users, onUpdate, loading
                     <List.Item
                         actions={[
                             isFollowing ? (
-                                <Button onClick={() => handleUnfollow(item.userId)}>언팔로우</Button>
+                                <Button onClick={() => handleUnfollow(item.userId)}>Unfollow</Button>
                             ) : (
-                                <Button type="primary" onClick={() => handleFollow(item.userId)}>팔로우</Button>
+                                <Button type="primary" onClick={() => handleFollow(item.userId)}>Follow</Button>
                             ),
                         ]}
                     >
@@ -69,7 +69,7 @@ export default function PostLikersModal({open, onClose, users, onUpdate, loading
 
     return (
         <Modal
-            title="좋아요 누른 사람"
+            title="People who liked this"
             open={open}
             onCancel={onClose}
             footer={null}

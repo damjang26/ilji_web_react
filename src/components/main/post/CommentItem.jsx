@@ -78,7 +78,7 @@ const CommentItem = ({comment, isReply = false, onLike, onLikeCountClick, onDele
     };
 
     const handleDeleteClick = () => {
-        if (window.confirm("정말로 이 댓글을 삭제하시겠습니까?")) {
+        if (window.confirm("Are you sure you want to delete this comment?")) {
             onDelete(comment.commentId);
         }
         setMenuOpen(false);
@@ -121,7 +121,7 @@ const CommentItem = ({comment, isReply = false, onLike, onLikeCountClick, onDele
             <CommentItemContainer>
                 <CommentAvatar
                     src={comment.writer?.profileImage || `https://api.dicebear.com/7.x/miniavs/svg?seed=${comment.writer?.userId}`}
-                    alt={`${comment.writer?.nickname} 프로필`}
+                    alt={`${comment.writer?.nickname} profile`}
                     onClick={handleProfileClick}
                 />
                 <CommentBody>
@@ -164,12 +164,12 @@ const CommentItem = ({comment, isReply = false, onLike, onLikeCountClick, onDele
                 <ReplyInputContainer>
                     <CommentAvatar
                         src={user?.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${user?.id}`}
-                        alt="내 프로필"
+                        alt="My profile"
                     />
                     <PostCommentForm onSubmit={handleReplySubmit}>
                         <input
                             type="text"
-                            placeholder={`${comment.writer.nickname}님에게 답글 남기기...`}
+                            placeholder={`Reply to ${comment.writer.nickname}...`}
                             value={replyContent}
                             onChange={(e) => setReplyContent(e.target.value)}
                             autoFocus

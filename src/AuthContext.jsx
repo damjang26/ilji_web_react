@@ -22,7 +22,7 @@ export default function AuthProvider({ children }) {
             const response = await getFollowingList(); // userId 없이 호출하면 '나'의 목록을 가져옴
             setFollowing(response.data);
         } catch (e) {
-            console.error("팔로잉 목록을 가져오는데 실패했습니다.", e);
+            console.error("Failed to fetch following list.", e);
             setFollowing([]); // 실패 시 목록을 비웁니다.
         }
     }, []);
@@ -54,7 +54,7 @@ export default function AuthProvider({ children }) {
                 const payload = JSON.parse(atob(appToken.split('.')[1]));
                 // console.log("JWT Payload (사용자 정보):", payload);
             } catch (e) {
-                console.error("JWT 디코딩 실패:", e);
+                console.error("JWT decoding failed:", e);
             }
             // -----------------------------------------
 

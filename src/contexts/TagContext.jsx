@@ -28,7 +28,7 @@ export const TagProvider = ({children}) => {
             ]);
         } catch (error) {
             console.error("Failed to fetch my tags:", error);
-            message.error('내 태그 목록을 불러오는데 실패했습니다.');
+            message.error('Failed to load my tags.');
         } finally {
             setLoading(false);
         }
@@ -46,10 +46,10 @@ export const TagProvider = ({children}) => {
         try {
             await api.post('/api/tags', newTagPayload);
             fetchMyTags();
-            message.success('새로운 태그가 추가되었습니다.');
+            message.success('New tag added successfully.');
         } catch (error) {
             console.error("Failed to create tag:", error);
-            const errorMessage = error.response?.data?.message || '태그 생성에 실패했습니다.';
+            const errorMessage = error.response?.data?.message || 'Failed to create tag.';
             message.error(errorMessage);
             throw error;
         }
@@ -57,41 +57,41 @@ export const TagProvider = ({children}) => {
 
     const deleteTag = async (tagIdToDelete) => {
         if (tagIdToDelete === NO_TAG_ID) {
-            message.error(`'태그 없음' 태그는 삭제할 수 없습니다.`);
+            message.error(`The 'No Tags' tag cannot be deleted.`);
             return;
         }
         const tagToDelete = tags.find(tag => tag.id === tagIdToDelete);
         if (tagToDelete && tagToDelete.owner.userId !== user.id) {
-            message.error('자신이 생성한 태그만 삭제할 수 있습니다.');
+            message.error('You can only delete tags you created.');
             return;
         }
         try {
             await api.delete(`/api/tags/${tagIdToDelete}`);
             fetchMyTags();
-            message.success('태그가 삭제되었습니다.');
+            message.success('Tag deleted successfully.');
         } catch (error) {
             console.error("Failed to delete tag:", error);
-            message.error('태그 삭제에 실패했습니다.');
+            message.error('Failed to delete tag.');
         }
     };
 
     const updateTag = async (tagId, payload) => {
+        const tagToUpdate = tags.find(tag => tag.id === tagId);
         if (tagId === NO_TAG_ID) {
-            message.error(`'태그 없음' 태그는 수정할 수 없습니다.`);
+            message.error(`The 'No Tags' tag cannot be updated.`);
             return;
         }
-        const tagToUpdate = tags.find(tag => tag.id === tagId);
         if (tagToUpdate && tagToUpdate.owner.userId !== user.id) {
-            message.error('자신이 생성한 태그만 수정할 수 있습니다.');
+            message.error('You can only update tags you created.');
             return;
         }
         try {
             await api.put(`/api/tags/${tagId}`, payload);
             fetchMyTags();
-            message.success('태그가 성공적으로 수정되었습니다.');
+            message.success('Tag updated successfully.');
         } catch (error) {
             console.error("Failed to update tag:", error);
-            const errorMessage = error.response?.data?.message || '태그 수정에 실패했습니다.';
+            const errorMessage = error.response?.data?.message || 'Failed to update tag.';
             message.error(errorMessage);
             throw error;
         }
@@ -107,7 +107,7 @@ export const TagProvider = ({children}) => {
             setTags(prevTags => [...prevTags, ...friendTagsWithOwner]);
         } catch (error) {
             console.error(`Failed to fetch tags for ${friend.name}:`, error);
-            message.error(`${friend.name}님의 태그를 불러오는데 실패했습니다.`);
+            message.error(`Failed to load tags for ${friend.name}.`);
         }
     };
 

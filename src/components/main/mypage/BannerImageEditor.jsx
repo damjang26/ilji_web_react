@@ -12,6 +12,14 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
     const cropperRef = useRef(null);
     const fileInputRef = useRef(null);
 
+    // ✅ [추가] 모달이 닫힐 때 상태를 초기화하는 로직
+    useEffect(() => {
+        // isOpen이 false가 되면(모달이 닫히면) 이미지 소스를 null로 리셋합니다.
+        if (!isOpen) {
+            setImageSrc(null);
+        }
+    }, [isOpen]); // isOpen prop이 변경될 때마다 이 효과를 실행합니다.
+
     // 1. 사용자가 파일을 선택했을 때 처리
     const handleFileChange = (e) => {
         const file = e.target.files?.[0];
@@ -50,14 +58,20 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
                 // 부모에게 파일만 전달하고, yPosition은 0으로 고정합니다.
                 onCropComplete(croppedFile, 0);
             } else {
-                console.error("이미지 자르기에 실패했습니다.");
-                alert("이미지 처리에 실패했습니다. 다른 이미지를 시도해주세요.");
+                console.error("Failed to crop image.");
+                alert("Image processing failed. Please try a different image.");
             }
         }, 'image/jpeg', 0.95);
     };
 
+    // ✅ [수정] 이미지가 있을 때만 스크롤과 최대 높이를 적용하기 위한 동적 스타일
+    const bodyStyle = imageSrc ? {
+        maxHeight: '70vh', // 이미지가 있을 때만 최대 높이 제한
+        overflowY: 'auto', // 이미지가 있을 때만 세로 스크롤 허용
+    } : {}; // 이미지가 없으면 아무 스타일도 적용하지 않음
+
     return (
-        <ImageModal isOpen={isOpen} onClose={onClose} title="배너 이미지 편집">
+        <ImageModal isOpen={isOpen} onClose={onClose} title="Edit Banner Image">
             {/* 숨겨진 파일 입력 필드 */}
             <input
                 type="file"
@@ -67,8 +81,10 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
                 onChange={handleFileChange}
             />
 
-            <ModalBody>
-                <CropArea>
+            {/* ✅ [수정] 동적으로 생성된 스타일을 ModalBody에 적용합니다. */}
+            <ModalBody style={bodyStyle}>
+                {/* ✅ [수정] 이미지가 없을 때만 CropArea의 높이를 200px로 설정합니다. */}
+                <CropArea style={!imageSrc ? { height: '200px' } : {}}>
                     {imageSrc ? (
                         <Cropper
                             ref={cropperRef}
@@ -83,18 +99,29 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
                             autoCropArea={1}
                         />
                     ) : (
-                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#888' }}>
-                            배너로 사용할 이미지를 선택해주세요.
+                        <div
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                // ✅ [수정] 초기 placeholder의 높이를 고정값으로 변경하여 줄입니다.
+                                height: '100%',
+                                color: '#888',
+                                cursor: 'pointer' // 마우스를 올리면 클릭 가능함을 표시
+                            }}
+                            onClick={handleUploadButtonClick} // 클릭 시 파일 선택창을 띄우는 함수 연결
+                        >
+                            Please select an image for the banner.
                         </div>
                     )}
                 </CropArea>
                 {!imageSrc && (
-                    <ActionButtonGroup><SubmitButton onClick={handleUploadButtonClick}>이미지 선택</SubmitButton></ActionButtonGroup>
+                    <ActionButtonGroup><SubmitButton onClick={handleUploadButtonClick}>Select Image</SubmitButton></ActionButtonGroup>
                 )}
             </ModalBody>
             <ModalFooter>
-                <CancelButton onClick={onClose}>취소</CancelButton>
-                <SubmitButton onClick={handleCrop} disabled={!imageSrc}>적용</SubmitButton>
+                <CancelButton onClick={onClose}>Cancel</CancelButton>
+                <SubmitButton onClick={handleCrop} disabled={!imageSrc}>Apply</SubmitButton>
             </ModalFooter>
         </ImageModal>
     );

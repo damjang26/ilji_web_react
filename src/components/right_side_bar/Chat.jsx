@@ -29,7 +29,7 @@ const Chat = ({roomId}) => {
 
         api.get(`/api/chat/messages/${roomId}`)
             .then(res => setMessages(res.data))
-            .catch(err => console.error("기존 메시지 로드 실패:", err));
+            .catch(err => console.error("Failed to load existing message:", err));
 
         socketRef.current = io('http://localhost:9092', {withCredentials: false});
 
@@ -86,7 +86,7 @@ const Chat = ({roomId}) => {
                 <MessageInput
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="메시지를 입력하세요"
+                    placeholder="Please enter your message."
                 />
                 <SendButton type="submit"><FaPaperPlane/></SendButton>
             </MessageForm>

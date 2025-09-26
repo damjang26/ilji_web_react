@@ -57,8 +57,8 @@ const ScheduleEdit = ({item, onSave, tags: tagsFromProp}) => {
     const handleSave = () => {
         const { id, title, description, allDay, startDate, startTime, endDate, endTime, location, tagId, calendarId, rrule } = form;
 
-        // 제목이 비어있으면 "새 일정"으로 기본값을 설정합니다.
-        const finalTitle = title.trim() ? title : "새 일정";
+        // 제목이 비어있으면 "New Schedule"으로 기본값을 설정합니다.
+        const finalTitle = title.trim() ? title : "New Schedule";
 
         // FullCalendar가 이해할 수 있는 형식으로 start, end 값을 조립합니다.
         const finalStart = allDay ? startDate : `${startDate}T${startTime}`;
@@ -95,17 +95,17 @@ const ScheduleEdit = ({item, onSave, tags: tagsFromProp}) => {
         <FormWrapper ref={formRef}>
             <FormBody>
                 <FieldSet>
-                    <Label htmlFor="title">제목</Label>
-                    <Input id="title" placeholder="일정 제목" value={form.title} onChange={set("title")} />
+                    <Label htmlFor="title">Title</Label>
+                    <Input id="title" placeholder="Schedule Title" value={form.title} onChange={set("title")} />
                 </FieldSet>
 
                 <CheckboxWrapper>
                     <CustomCheckbox id="all-day" checked={form.allDay} onChange={set("allDay")} />
-                    <Label htmlFor="all-day" style={{fontWeight: 'normal', cursor: 'pointer'}}>하루 종일</Label>
+                    <Label htmlFor="all-day" style={{fontWeight: 'normal', cursor: 'pointer'}}>All day</Label>
                 </CheckboxWrapper>
 
                 <FieldSet>
-                    <Label>시작</Label>
+                    <Label>Start</Label>
                     <DateTimeRow>
                         <Input type="date" value={form.startDate} onChange={set("startDate")} />
                         {!form.allDay && <Input type="time" value={form.startTime} onChange={set("startTime")} />}
@@ -113,7 +113,7 @@ const ScheduleEdit = ({item, onSave, tags: tagsFromProp}) => {
                 </FieldSet>
 
                 <FieldSet>
-                    <Label>종료</Label>
+                    <Label>End</Label>
                     <DateTimeRow>
                         <Input type="date" value={form.endDate} min={form.startDate} onChange={set("endDate")} />
                         {!form.allDay && <Input type="time" value={form.endTime} min={form.startDate === form.endDate ? form.startTime : undefined} onChange={set("endTime")} />}
@@ -121,16 +121,16 @@ const ScheduleEdit = ({item, onSave, tags: tagsFromProp}) => {
                 </FieldSet>
 
                 <FieldSet>
-                    <Label htmlFor="location">장소</Label>
-                    <Input id="location" placeholder="장소" value={form.location} onChange={set("location")} />
+                    <Label htmlFor="location">Location</Label>
+                    <Input id="location" placeholder="Location" value={form.location} onChange={set("location")} />
                 </FieldSet>
 
                 {/* 태그 입력을 Select로 변경 */}
                 <FieldSet>
-                    <Label htmlFor="tags">태그</Label>
+                    <Label htmlFor="tags">Tag</Label>
                     <Select
                         id="tags"
-                        placeholder="태그 선택"
+                        placeholder="Select a tag"
                         value={form.tagId}
                         onChange={set("tagId")}
                         options={tagOptions}
@@ -141,19 +141,19 @@ const ScheduleEdit = ({item, onSave, tags: tagsFromProp}) => {
                 </FieldSet>
 
                 <FieldSet>
-                    <Label>반복</Label>
+                    <Label>Repeat</Label>
                     <RRuleSummary rrule={form.rrule} onClick={openSidebarForRRule} />
                 </FieldSet>
 
                 <FieldSet>
-                    <Label htmlFor="description">설명</Label>
-                    <Input as="textarea" id="description" rows="5" placeholder="설명" value={form.description} onChange={set("description")} />
+                    <Label htmlFor="description">Description</Label>
+                    <Input as="textarea" id="description" rows="5" placeholder="Description" value={form.description} onChange={set("description")} />
                 </FieldSet>
             </FormBody>
 
             <ActionButtons>
-                <Button className="secondary" onClick={goBackInSidebar}>취소</Button>
-                <Button className="primary" onClick={handleSave}>저장</Button>
+                <Button className="secondary" onClick={goBackInSidebar}>Cancel</Button>
+                <Button className="primary" onClick={handleSave}>Save</Button>
             </ActionButtons>
         </FormWrapper>
     )

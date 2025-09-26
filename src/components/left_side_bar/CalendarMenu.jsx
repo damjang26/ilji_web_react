@@ -257,25 +257,25 @@ const CalendarMenu = () => {
             </S.TagListContainer>
 
             <Modal
-                title={modalMode === 'add' ? '새 태그 추가' : '태그 수정'}
+                title={modalMode === 'add' ? 'Add a new tag' : 'Edit tag'}
                 open={isModalOpen}
                 onOk={handleOk}
                 onCancel={handleCancel}
             >
                 <Form form={form} layout="vertical" name="form_in_modal">
-                    <Form.Item name="label" label="태그 이름" rules={[{required: true, message: "태그 이름을 입력해주세요!"}]}>
+                    <Form.Item name="label" label="tag name" rules={[{required: true, message: "Please enter your tag name!"}]}>
                         <Input/>
                     </Form.Item>
-                    <Form.Item name="color" label="색상" rules={[{required: true, message: "색상을 선택해주세요!"}]}
+                    <Form.Item name="color" label="color" rules={[{required: true, message: "Please choose a color!"}]}
                                initialValue="#ffadad">
                         <ColorPicker showText/>
                     </Form.Item>
-                    <Form.Item name="scope" label="공개 범위" initialValue="PRIVATE"
-                               rules={[{required: true, message: "공개 범위를 선택해주세요!"}]}>
-                        <Select options={[{value: 'PRIVATE', label: '비공개 (나만 보기)'}, {
+                    <Form.Item name="scope" label="disclosure range" initialValue="PRIVATE"
+                               rules={[{required: true, message: "Please select a disclosure range!"}]}>
+                        <Select options={[{value: 'PRIVATE', label:'Private (only visible to me)'}, {
                             value: 'MUTUAL_FRIENDS',
-                            label: '맞팔로우에게만 공개'
-                        }, {value: 'PUBLIC', label: '전체 공개'}]}/>
+                            label: 'Revealed only to a follower'
+                        }, {value: 'PUBLIC', label: 'full disclosure'}]}/>
                     </Form.Item>
                 </Form>
             </Modal>
