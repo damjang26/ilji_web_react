@@ -480,13 +480,14 @@ export function ScheduleProvider({children}) {
         let view;
 
         if (event) { // Case 1: 이벤트 클릭 시
-            title = '일정 상세 정보';
+            title = 'Schedule Details';
             view = 'list'; // ScheduleTab이 상세보기를 포함하므로, list view를 띄움
         } else if (diffInDays > 1) { // Case 2: 여러 날 드래그
-            title = `새 일정`;
+            title = `New schedule`;
             view = 'form';
         } else { // Case 3: 하루 클릭
-            title = `${start.getMonth() + 1}월 ${start.getDate()}일`;
+            // [수정] 날짜 제목을 'Month Day' 형식의 영어로 변경합니다.
+            title = start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
             view = 'list';
         }
 
