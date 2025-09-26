@@ -64,7 +64,7 @@ const LikeList = () => {
     // 이렇게 하면 전체 목록을 다시 불러오는 API 호출 없이도 수정된 내용이 바로 반영됩니다.
     useEffect(() => {
         const handleJournalUpdate = (event) => {
-            const { updatedJournal } = event.detail;
+            const {updatedJournal} = event.detail;
             if (updatedJournal) {
                 setPosts(prevPosts =>
                     prevPosts.map(p =>
@@ -81,10 +81,11 @@ const LikeList = () => {
     return (
         <div>
             <SortOptionsContainer>
-                <SortButton $active={sortBy === 'liked_at'} onClick={() => setSortBy('liked_at')}>좋아요 누른 순</SortButton>
-                <SortButton $active={sortBy === 'uploaded_at'} onClick={() => setSortBy('uploaded_at')}>일기 작성
-                    순</SortButton>
-                <SortButton $active={sortBy === 'popular'} onClick={() => setSortBy('popular')}>인기 순</SortButton>
+                <SortButton $active={sortBy === 'liked_at'} onClick={() => setSortBy('liked_at')}>Newest
+                    Likes</SortButton>
+                <SortButton $active={sortBy === 'uploaded_at'}
+                            onClick={() => setSortBy('uploaded_at')}>Newest upload</SortButton>
+                <SortButton $active={sortBy === 'popular'} onClick={() => setSortBy('popular')}>Popular</SortButton>
             </SortOptionsContainer>
 
             {/* ✅ [수정] prop 이름을 journals -> posts로 변경하고, 필요한 모든 props 전달 */}
