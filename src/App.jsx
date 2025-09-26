@@ -30,6 +30,7 @@ import ScheduleTab from "./components/right_side_bar/ScheduleTab.jsx";
 import ChatRoomList from "./components/right_side_bar/ChatRoomList.jsx";
 import Chat from "./components/right_side_bar/Chat.jsx";
 import JournalDatePicker from "./components/right_side_bar/JournalDatePicker.jsx"; // ✅ [추가]
+import SharedJournalPage from "./components/main/journal/SharedJournalPage.jsx"; // ✅ [추가] 공유 페이지
 
 const AppWrapper = styled.div`
     display: flex;
@@ -134,6 +135,7 @@ const AppContent = () => {
                     <Routes>
                         <Route path="/journal/write" element={<JournalWriteModal/>}/>
                         <Route path="/journals/:journalId" element={<JournalViewModal/>}/>
+                        <Route path="/share/:shareId" element={<SharedJournalPage/>}/>
                     </Routes>
                 )}
             </ContentWrapper>
@@ -190,7 +192,7 @@ const AppContent = () => {
             {/* ============================ */}
 
             {/* 일정 관리를 위한 동적 위치 모달 */}
-            <ScheduleModal />
+            <ScheduleModal/>
 
         </AppWrapper>
     ) : (
