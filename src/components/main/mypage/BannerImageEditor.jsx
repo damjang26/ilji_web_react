@@ -83,7 +83,8 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
 
             {/* ✅ [수정] 동적으로 생성된 스타일을 ModalBody에 적용합니다. */}
             <ModalBody style={bodyStyle}>
-                <CropArea>
+                {/* ✅ [수정] 이미지가 없을 때만 CropArea의 높이를 200px로 설정합니다. */}
+                <CropArea style={!imageSrc ? { height: '200px' } : {}}>
                     {imageSrc ? (
                         <Cropper
                             ref={cropperRef}
@@ -103,6 +104,7 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
                                 display: 'flex',
                                 justifyContent: 'center',
                                 alignItems: 'center',
+                                // ✅ [수정] 초기 placeholder의 높이를 고정값으로 변경하여 줄입니다.
                                 height: '100%',
                                 color: '#888',
                                 cursor: 'pointer' // 마우스를 올리면 클릭 가능함을 표시
