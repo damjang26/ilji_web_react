@@ -1,27 +1,30 @@
 import {useEffect, useState, useRef} from "react";
-import {FaPenFancy} from "react-icons/fa";
+import {FaPencilAlt, FaPenFancy, FaPenNib} from "react-icons/fa"; // ✅ [추가] 필압 브러시 아이콘
 import {BiSolidSprayCan} from "react-icons/bi";
+import {BsCircle} from "react-icons/bs"; // ✅ [추가] 원 브러시 아이콘
 import {
     EditDrawBrushWidthBtn,
     EditDrawBrushWidthList,
     EditDrawColor, ColorPickerInput, ColorPickerLabel,
-    EditDrawColorList,
+    EditDrawColorList, BrushWidthInput, BrushWidthInputContainer,
     EditDrawPenButton
 } from "../../../../../styled_components/main/journal/JournalWriteStyled.jsx";
 import * as fabric from 'fabric';
+import {PSBrush} from "@arch-inc/fabricjs-psbrush"; // ✅ [추가] 필압 브러시 라이브러리 import
 import {TiDelete} from "react-icons/ti";
 
 // 나중에 펜 종류를 쉽게 추가할 수 있도록 상수로 관리합니다.
-const PEN_TYPES = {
+export const PEN_TYPES = { // ✅ [수정] FabricEditor에서 import할 수 있도록 export 합니다.
     PENCIL: 'Pencil',
     SPRAY: 'Spray',
+    CIRCLE: 'Circle', // ✅ [추가] 원 브러시 타입
+    PRESSURE: 'Pressure', // ✅ [추가] 필압 브러시 타입
 };
-const BRUSH_WIDTHS = [3, 5, 10, 15];
-const COLORS = ['#000000', '#E53E3E', '#3182CE', '#38A169', '#D69E2E', '#ffffff', '#7b5fff'];
+const BRUSH_WIDTHS = [3, 5, 10]; // ✅ [수정] 15px를 제거합니다.
+const COLORS = ['#000000', '#FF6B6B', '#4F9DFF', '#6BCB77', '#FFD93D', '#ffffff', '#7b5fff'];
 
-const Draw = ({canvas}) => {
-    // 현재 활성화된 펜(도구)을 관리합니다. null이면 비활성화(선택 모드) 상태입니다.
-    const [activeTool, setActiveTool] = useState(PEN_TYPES.PENCIL);
+const Draw = ({canvas, activeTool, setActiveTool}) => { // ✅ [수정] activeTool 상태를 props로 받습니다.
+    // ❌ [제거] 더 이상 자체적으로 activeTool 상태를 관리하지 않습니다.
     const [brushWidth, setBrushWidth] = useState(3);
     const [brushColor, setBrushColor] = useState('#000000');
     const [selectedObj, setSelectedObj] = useState(null);
@@ -37,7 +40,8 @@ const Draw = ({canvas}) => {
         brushesRef.current = {
             [PEN_TYPES.PENCIL]: new fabric.PencilBrush(canvas),
             [PEN_TYPES.SPRAY]: new fabric.SprayBrush(canvas),
-            // 나중에 여기에 new fabric.CircleBrush(canvas) 등을 추가하면 됩니다.
+            [PEN_TYPES.CIRCLE]: new fabric.CircleBrush(canvas), // ✅ [추가] 원 브러시 생성
+            [PEN_TYPES.PRESSURE]: new PSBrush(canvas), // ✅ [추가] 필압 브러시 생성
         };
     }, [canvas]);
 
@@ -74,6 +78,28 @@ const Draw = ({canvas}) => {
     const handleToolSelect = (tool) => {
         // 같은 도구를 다시 클릭하면 비활성화(선택 모드), 다른 도구를 클릭하면 전환합니다.
         setActiveTool(prev => (prev === tool ? null : tool));
+    };
+
+    // ✅ [추가] 커스텀 브러시 크기 입력 핸들러
+    const handleBrushWidthChange = (e) => {
+        let newWidth = parseInt(e.target.value, 10);
+        // 숫자가 아니거나 1보다 작으면 1로 강제합니다.
+        if (isNaN(newWidth) || newWidth < 1) {
+            newWidth = 1;
+        }
+        setBrushWidth(newWidth);
+    };
+
+    // ✅ [추가] 마우스 휠로 브러시 크기 조절하는 핸들러 (크롬 개발자 도구처럼)
+    const handleBrushWidthWheel = (e) => {
+        // 기본 스크롤 동작을 막습니다.
+        e.preventDefault();
+        setBrushWidth(prev => {
+            // 휠을 위로 올리면(e.deltaY < 0) 크기 증가, 아래로 내리면 크기 감소
+            const newWidth = e.deltaY < 0 ? prev + 1 : prev - 1;
+            // 크기는 최소 1을 보장합니다.
+            return Math.max(1, newWidth);
+        });
     };
 
     useEffect(() => {
@@ -136,6 +162,12 @@ const Draw = ({canvas}) => {
                     onClick={() => handleToolSelect(PEN_TYPES.PENCIL)}
                     $active={activeTool === PEN_TYPES.PENCIL}
                 >
+                    <FaPencilAlt/>
+                </EditDrawPenButton>
+                <EditDrawPenButton
+                    onClick={() => handleToolSelect(PEN_TYPES.PRESSURE)}
+                    $active={activeTool === PEN_TYPES.PRESSURE}
+                >
                     <FaPenFancy/>
                 </EditDrawPenButton>
                 <EditDrawPenButton
@@ -144,18 +176,38 @@ const Draw = ({canvas}) => {
                 >
                     <BiSolidSprayCan/>
                 </EditDrawPenButton>
+                {/* ✅ [추가] 원 브러시 선택 버튼 */}
+                <EditDrawPenButton
+                    onClick={() => handleToolSelect(PEN_TYPES.CIRCLE)}
+                    $active={activeTool === PEN_TYPES.CIRCLE}
+                >
+                    <BsCircle/>
+                </EditDrawPenButton>
             </div>
             <EditDrawBrushWidthList>
                 {BRUSH_WIDTHS.map(width => (
                     <EditDrawBrushWidthBtn
                         key={width}
                         onClick={() => setBrushWidth(width)}
-                        $active={activeTool && brushWidth === width}
+                        // ✅ [수정] 현재 브러시 너비가 프리셋 값과 일치할 때만 활성화
+                        $active={activeTool && brushWidth === width && BRUSH_WIDTHS.includes(brushWidth)}
                         disabled={!activeTool}
                     >
                         {width}px
                     </EditDrawBrushWidthBtn>
                 ))}
+                {/* ✅ [추가] 커스텀 브러시 크기 입력 필드 */}
+                <BrushWidthInputContainer>
+                    <BrushWidthInput
+                        type="number"
+                        value={brushWidth}
+                        onChange={handleBrushWidthChange}
+                        onWheel={handleBrushWidthWheel}
+                        min="1"
+                        disabled={!activeTool}
+                    />
+                    <span>px</span>
+                </BrushWidthInputContainer>
             </EditDrawBrushWidthList>
             <EditDrawColorList>
                 {COLORS.map(color => (

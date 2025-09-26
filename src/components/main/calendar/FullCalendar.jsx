@@ -395,13 +395,13 @@ export default function FullCalendarExample() {
                                     }
                                 }}
                             >
-                                <FaBookOpen/> 일기 보기
+                                <FaBookOpen/> Open i-log
                             </DiaryPopoverButton>
                             <DiaryPopoverButton onClick={handleDeleteJournal}>
-                                <FaTrash/> 일기 삭제
+                                <FaTrash/> Delete i-log
                             </DiaryPopoverButton>
                             <DiaryPopoverButton>
-                                <FaShareAlt/> 일기 공유
+                                <FaShareAlt/> Share i-log
                             </DiaryPopoverButton>
                         </>
                     ) : (
@@ -415,7 +415,7 @@ export default function FullCalendarExample() {
                                 });
                             }}
                         >
-                            <RiQuillPenAiFill style={{fontSize: "17px", verticalAlign: "bottom"}}/> 일기 작성
+                            <RiQuillPenAiFill style={{fontSize: "17px", verticalAlign: "bottom"}}/> Write i-log
                         </DiaryPopoverButton>
                     )}
                 </DiaryPopoverContainer>,

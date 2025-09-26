@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // [추가] 페이지 이동을 위해 useNavigate import
-import { Button, Col, message, Row } from 'antd'; // [추가] 닉네임 중복 확인 UI를 위해 import
+import { message } from 'antd'; // [수정] antd Row, Col 제거
 import styled from 'styled-components';
 import { useMyPage } from '../../../contexts/MyPageContext';
 import ImageBox from './ImageBox';
@@ -21,8 +21,16 @@ import {
     FormCheckbox,
     SettingsTitle, SubmitButton,
     ButtonGroup,
-    CancelButton
+    CancelButton,
+    CheckButton // ✅ [추가] 중복 확인 버튼 스타일
 } from '../../../styled_components/main/mypage/MyPageSetStyled';
+
+// ✅ [추가] 입력 필드와 버튼을 가로로 묶기 위한 컨테이너
+const InputWithButtonContainer = styled.div`
+    display: flex;
+    flex-grow: 1;
+    gap: 8px;
+`;
 
 // [추가] 닉네임 유효성 검사 메시지를 위한 스타일 컴포넌트
 const ValidationMessage = styled.div`
@@ -68,7 +76,7 @@ const MyPageSet = () => {
         if (name === 'nickname') {
             if (value !== originalNickname) {
                 setIsNicknameChecked(false);
-                setNicknameMessage({ text: '닉네임 중복 확인이 필요합니다.', color: 'red' });
+                setNicknameMessage({ text: 'Nickname check is required.', color: 'red' });
             } else {
                 // 원래 닉네임으로 돌아오면 '확인된' 상태로 복구
                 setIsNicknameChecked(true);
@@ -95,7 +103,7 @@ const MyPageSet = () => {
 
             await updateProfile({}, imageOptions);
             handleCancel(); // [추가] 이미지 업데이트 성공 후, MyPage로 돌아가기 위해 상태 변경
-            alert('이미지가 성공적으로 업데이트되었습니다.');
+            alert('Image updated successfully.');
             setIsModalOpen(false); // 성공 시 모달 닫기
         } catch (err) {
             console.error("이미지 업데이트 실패:", err);
@@ -105,12 +113,12 @@ const MyPageSet = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!localProfile) {
-            alert('사용자 정보가 없어 저장할 수 없습니다.');
+            alert('User information is missing. Cannot save.');
             return;
         }
         // [추가] 닉네임이 변경되었지만 중복 확인을 하지 않은 경우
         if (localProfile.nickname !== originalNickname && !isNicknameChecked) {
-            message.warning('변경된 닉네임의 중복 확인을 해주세요.');
+            message.warning('Please check the new nickname for duplication.');
             return;
         }
         try {
@@ -127,7 +135,7 @@ const MyPageSet = () => {
             };
             // 텍스트 정보만 업데이트하므로 두 번째 인자는 빈 객체({})
             await updateProfile(profileDataForServer, {});
-            alert('프로필이 성공적으로 업데이트되었습니다.');
+            alert('Profile updated successfully.');
             // [수정] 저장 성공 후, MyPage로 돌아가기 위해 handleCancel을 호출합니다.
             handleCancel();
         } catch (err) {
@@ -140,29 +148,29 @@ const MyPageSet = () => {
         const newNickname = localProfile.nickname;
 
         if (!newNickname || newNickname.trim() === '') {
-            message.warning('닉네임을 입력해주세요.');
+            message.warning('Please enter a nickname.');
             return;
         }
         setIsCheckingNickname(true);
         try {
             await api.get(`/api/user/profile/check-nickname?nickname=${newNickname}`);
             // 성공(200 OK) 시: catch 블록을 건너뛰고 이 코드가 실행됩니다.
-            message.success('사용 가능한 닉네임입니다.');
+            message.success('This nickname is available.');
             setIsNicknameChecked(true);
-            setNicknameMessage({ text: '사용 가능한 닉네임입니다.', color: 'green' });
+            setNicknameMessage({ text: 'This nickname is available.', color: 'green' });
         } catch (error) {
             // 실패(409 Conflict) 시: 이 코드가 실행됩니다.
-            message.error(error.response?.data?.message || '이미 사용 중인 닉네임입니다.');
+            message.error(error.response?.data?.message || 'This nickname is already in use.');
             setIsNicknameChecked(false);
-            setNicknameMessage({ text: '이미 사용 중인 닉네임입니다.', color: 'red' });
+            setNicknameMessage({ text: 'This nickname is already in use.', color: 'red' });
         } finally {
             setIsCheckingNickname(false);
         }
     };
 
-    if (loading && !localProfile) return <div>로딩 중...</div>;
+    if (loading && !localProfile) return <div>Loading...</div>;
     if (error) return <div style={{ color: 'red' }}>{error}</div>;
-    if (!localProfile) return <div>프로필 정보를 불러오는 중입니다...</div>;
+    if (!localProfile) return <div>Loading profile information...</div>;
 
     return (
         <MyPageContainer>
@@ -178,79 +186,75 @@ const MyPageSet = () => {
                 <MyPageMain>
                     <FeatureContent>
                         <SettingsForm onSubmit={handleSubmit}>
-                            <SettingsTitle>프로필 수정</SettingsTitle>
+                            <SettingsTitle>Edit Profile</SettingsTitle>
 
                             <FormGroup>
-                                <FormLabel htmlFor="email">이메일</FormLabel>
+                                <FormLabel htmlFor="email">Email</FormLabel>
                                 <FormInput id="email" type="email" value={localProfile.email || ''} disabled />
                             </FormGroup>
 
                             <FormGroup>
-                                <FormLabel htmlFor="nickname">닉네임</FormLabel>
-                                {/* [수정] 중복 확인 버튼을 위해 Row, Col 사용 */}
-                                <Row gutter={8}>
-                                    <Col flex="auto">
-                                        <FormInput id="nickname" type="text" name="nickname" value={localProfile.nickname || ''} onChange={handleInputChange} />
-                                    </Col>
-                                    <Col flex="100px">
-                                        <Button
-                                            style={{ width: '100%', height: '40px' }}
+                                <FormLabel htmlFor="nickname">Nickname</FormLabel>
+                                {/* ✅ [수정] 구조 단순화 */}
+                                <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                                    <InputWithButtonContainer>
+                                        <FormInput id="nickname" type="text" name="nickname" value={localProfile.nickname || ''} onChange={handleInputChange}/>
+                                        <CheckButton
+                                            type="button"
                                             onClick={handleCheckDuplicate}
-                                            loading={isCheckingNickname}
-                                            disabled={isNicknameChecked}
+                                            disabled={isNicknameChecked || isCheckingNickname}
                                         >
-                                            중복 확인
-                                        </Button>
-                                    </Col>
-                                </Row>
-                                {/* [추가] 닉네임 유효성 검사 메시지 표시 */}
-                                <ValidationMessage color={nicknameMessage.color}>{nicknameMessage.text}</ValidationMessage>
+                                            {isCheckingNickname ? 'Checking...' : 'Check'}
+                                        </CheckButton>
+                                    </InputWithButtonContainer>
+                                    <ValidationMessage color={nicknameMessage.color}>{nicknameMessage.text}</ValidationMessage>
+                                </div>
                             </FormGroup>
 
                             <FormGroup>
-                                <FormLabel htmlFor="birthdate">생년월일</FormLabel>
+                                <FormLabel htmlFor="birthdate">Birthdate</FormLabel>
                                 <FormInput id="birthdate" type="date" name="birthdate" value={localProfile.birthdate || ''} onChange={handleInputChange} />
                             </FormGroup>
 
                             <FormGroup>
-                                <FormLabel htmlFor="phoneNumber">연락처</FormLabel>
-                                <FormInput id="phoneNumber" type="tel" name="phoneNumber" value={localProfile.phoneNumber || ''} onChange={handleInputChange} placeholder="010-1234-5678" />
+                                <FormLabel htmlFor="phoneNumber">Phone</FormLabel>
+                                <FormInput id="phoneNumber" type="tel" name="phoneNumber" value={localProfile.phoneNumber || ''} onChange={handleInputChange} placeholder="e.g., 010-1234-5678" />
                             </FormGroup>
 
                             <FormGroup>
-                                <FormLabel htmlFor="gender">성별</FormLabel>
+                                <FormLabel htmlFor="gender">Gender</FormLabel>
                                 <FormSelect id="gender" name="gender" value={localProfile.gender || ''} onChange={handleInputChange}>
-                                    <option value="">선택안함</option>
-                                    <option value="M">남성</option>
-                                    <option value="F">여성</option>
-                                    <option value="O">기타</option>
+                                    <option value="">Not specified</option>
+                                    <option value="M">Male</option>
+                                    <option value="F">Female</option>
+                                    <option value="O">Other</option>
                                 </FormSelect>
                             </FormGroup>
 
                             <FormGroup>
-                                <FormLabel htmlFor="region">지역</FormLabel>
+                                <FormLabel htmlFor="region">Region</FormLabel>
                                 <FormInput id="region" type="text" name="region" value={localProfile.region || ''} onChange={handleInputChange} />
                             </FormGroup>
 
                             <FormGroup>
-                                <FormLabel htmlFor="bio">자기소개</FormLabel>
+                                <FormLabel htmlFor="bio">Bio</FormLabel>
                                 <FormTextarea id="bio" name="bio" value={localProfile.bio || ''} onChange={handleInputChange} />
                             </FormGroup>
 
                             <FormGroup>
-                                <FormLabel htmlFor="interests">관심사</FormLabel>
-                                <FormInput id="interests" type="text" name="interests" value={localProfile.interests || ''} onChange={handleInputChange} placeholder="쉼표(,)로 구분하여 입력" />
+                                <FormLabel htmlFor="interests">Interests</FormLabel>
+                                <FormInput id="interests" type="text" name="interests" value={localProfile.interests || ''} onChange={handleInputChange} placeholder="Enter with commas (,) to separate" />
                             </FormGroup>
 
 
                             <ButtonGroup>
                                 {/* [수정] 취소 버튼 클릭 시 handleCancel을 호출하여 MyPage로 돌아갑니다. */}
                                 <CancelButton type="button" onClick={handleCancel}>
-                                    취소
+                                    Cancel
                                 </CancelButton>
                                 {/* [수정] 닉네임이 변경되었지만 확인되지 않았다면 저장 버튼 비활성화 */}
                                 <SubmitButton type="submit" disabled={localProfile.nickname !== originalNickname && !isNicknameChecked}>
-                                    저장
+                                    Save
                                 </SubmitButton>
                             </ButtonGroup>
                         </SettingsForm>
