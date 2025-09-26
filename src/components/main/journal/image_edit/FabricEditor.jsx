@@ -56,7 +56,7 @@ const FabricEditor = forwardRef(({croppedImage}, ref) => {
             // console.log('croppedImage (type, length):', typeof croppedImage, croppedImage?.slice?.(0, 2000));
 
             if (!container || container.clientWidth === 0) {
-                console.error("FabricEditor의 부모 컨테이너를 찾거나 크기를 계산할 수 없습니다.");
+                console.error("Could not find or calculate the size of FabricEditor's parent container.");
                 return;
             }
 
@@ -102,7 +102,7 @@ const FabricEditor = forwardRef(({croppedImage}, ref) => {
                     // 원본 크기 저장해두기 (저장 시 사용)
                     fabricRef.current._originalSize = {width: img.width, height: img.height};
                 } catch (error) {
-                    console.error("❌ Fabric.js 이미지 로딩 실패:", error);
+                    console.error("❌ Fabric.js image loading failed:", error);
                 }
             };
 

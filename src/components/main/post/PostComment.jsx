@@ -50,8 +50,8 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
                     const response = await getComments(journal.id, {sortBy: commentSortBy});
                     setComments(response.data);
                 } catch (error) {
-                    console.error("댓글을 불러오는 데 실패했습니다.", error);
-                    message.error("댓글을 불러오는 데 실패했습니다.");
+                    console.error("Failed to load comments.", error);
+                    message.error("Failed to load comments.");
                 } finally {
                     setLoading(false);
                 }
@@ -117,8 +117,8 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
                 return c;
             }));
         } catch (error) {
-            console.error("댓글 등록에 실패했습니다.", error);
-            message.error("댓글 등록에 실패했습니다.");
+            console.error("Failed to add comment.", error);
+            message.error("Failed to add comment.");
             // 4. 실패 시 롤백: 추가했던 임시 댓글을 제거
             setComments(prev => prev
                 .map(c => ({...c, replies: c.replies?.filter(r => r.commentId !== tempId)})) // 답글 롤백
@@ -151,8 +151,8 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
             // 2. API 요청
             await toggleCommentLike(commentId);
         } catch (error) {
-            console.error("댓글 좋아요 처리에 실패했습니다.", error);
-            message.error("좋아요 처리에 실패했습니다.");
+            console.error("Failed to process comment like.", error);
+            message.error("Failed to process like.");
             // 3. 실패 시 롤백
             // [개선] 낙관적 업데이트 로직을 재사용하여 롤백
             // isLiked와 likeCount를 다시 한번 반전시켜 원래 상태로 되돌립니다.
@@ -187,10 +187,10 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
         try {
             // 2. API 요청
             await deleteComment(commentId);
-            message.success("댓글이 삭제되었습니다.");
+            message.success("Comment deleted successfully.");
         } catch (error) {
-            console.error("댓글 삭제에 실패했습니다.", error);
-            message.error("댓글 삭제에 실패했습니다.");
+            console.error("Failed to delete comment.", error);
+            message.error("Failed to delete comment.");
             // 3. 실패 시 롤백
             setComments(originalComments);
             // [안전장치] onCommentCountChange가 함수일 때만 호출합니다.
@@ -211,8 +211,8 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
             const response = await getCommentLikers(commentId);
             setLikersList(response.data);
         } catch (error) {
-            console.error("좋아요 목록을 불러오는 데 실패했습니다.", error);
-            message.error("좋아요 목록을 불러오는 데 실패했습니다.");
+            console.error("Failed to load likers list.", error);
+            message.error("Failed to load likers list.");
             setLikersModalOpen(false);
         } finally {
             setIsLikersLoading(false);
@@ -264,7 +264,7 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
                     <PostCommentInputContainer>
                         <ProfileImg
                             src={user?.picture || 'https://api.dicebear.com/7.x/miniavs/svg'}
-                            alt="내 프로필"
+                            alt="My profile"
                             referrerPolicy="no-referrer"
                         />
                         <PostCommentForm onSubmit={(e) => {
@@ -283,7 +283,7 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
                         users={likersList}
                         loading={isLikersLoading}
                         onUpdate={refreshLikersList}
-                        title="댓글을 좋아한 사람"
+                        title="People who liked this comment"
                     />
                 </PostCommentContentWrapper>
             ) : (

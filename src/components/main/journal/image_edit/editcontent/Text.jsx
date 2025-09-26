@@ -37,7 +37,7 @@ const Text = ({canvas}) => {
     const addText = () => {
         if (!canvas) return;
 
-        const iText = new fabric.IText('텍스트를 입력하세요', {
+        const iText = new fabric.IText('Please enter text', {
             left: canvas.width / 2,
             top: canvas.height / 2,
             originX: 'center',

@@ -50,14 +50,14 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
                 // 부모에게 파일만 전달하고, yPosition은 0으로 고정합니다.
                 onCropComplete(croppedFile, 0);
             } else {
-                console.error("이미지 자르기에 실패했습니다.");
-                alert("이미지 처리에 실패했습니다. 다른 이미지를 시도해주세요.");
+                console.error("Failed to crop image.");
+                alert("Image processing failed. Please try a different image.");
             }
         }, 'image/jpeg', 0.95);
     };
 
     return (
-        <ImageModal isOpen={isOpen} onClose={onClose} title="배너 이미지 편집">
+        <ImageModal isOpen={isOpen} onClose={onClose} title="Edit Banner Image">
             {/* 숨겨진 파일 입력 필드 */}
             <input
                 type="file"
@@ -84,17 +84,17 @@ const BannerImageEditor = ({ isOpen, onClose, onCropComplete }) => {
                         />
                     ) : (
                         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#888' }}>
-                            배너로 사용할 이미지를 선택해주세요.
+                            Please select an image for the banner.
                         </div>
                     )}
                 </CropArea>
                 {!imageSrc && (
-                    <ActionButtonGroup><SubmitButton onClick={handleUploadButtonClick}>이미지 선택</SubmitButton></ActionButtonGroup>
+                    <ActionButtonGroup><SubmitButton onClick={handleUploadButtonClick}>Select Image</SubmitButton></ActionButtonGroup>
                 )}
             </ModalBody>
             <ModalFooter>
-                <CancelButton onClick={onClose}>취소</CancelButton>
-                <SubmitButton onClick={handleCrop} disabled={!imageSrc}>적용</SubmitButton>
+                <CancelButton onClick={onClose}>Cancel</CancelButton>
+                <SubmitButton onClick={handleCrop} disabled={!imageSrc}>Apply</SubmitButton>
             </ModalFooter>
         </ImageModal>
     );

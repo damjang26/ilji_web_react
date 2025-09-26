@@ -33,7 +33,7 @@ const Sticker = ({canvas}) => {
             canvas.setActiveObject(img); // 추가된 스티커를 바로 활성화합니다.
             canvas.renderAll();
         } catch (error) {
-            console.error("스티커를 추가하는 데 실패했습니다:", error);
+            console.error("Failed to add stickers:", error);
         }
     };
 

@@ -19,12 +19,12 @@ export const useUserActions = (onActionComplete) => {
     const handleFollow = useCallback(async (targetUserId) => {
         try {
             await followUser(targetUserId);
-            message.success("팔로우했습니다.");
+            message.success("Followed successfully.");
             await fetchMyFollowing(); // 내 팔로잉 목록 갱신
             onActionComplete?.(); // 콜백 함수가 있으면 실행
         } catch (error) {
             console.error("Follow failed:", error);
-            message.error("팔로우에 실패했습니다.");
+            message.error("Failed to follow.");
         }
     }, [fetchMyFollowing, onActionComplete]);
 
@@ -34,12 +34,12 @@ export const useUserActions = (onActionComplete) => {
     const handleUnfollow = useCallback(async (targetUserId) => {
         try {
             await unfollowUser(targetUserId);
-            message.success("언팔로우했습니다.");
+            message.success("Unfollowed successfully.");
             await fetchMyFollowing(); // 내 팔로잉 목록 갱신
             onActionComplete?.(); // 콜백 함수가 있으면 실행
         } catch (error) {
             console.error("Unfollow failed:", error);
-            message.error("언팔로우에 실패했습니다.");
+            message.error("Failed to unfollow.");
         }
     }, [fetchMyFollowing, onActionComplete]);
 

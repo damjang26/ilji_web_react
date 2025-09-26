@@ -92,7 +92,7 @@ const transformEventToFormState = (event) => {
                 rruleValue = mainRruleObject.toString();
             }
         } catch (e) {
-            console.error("내부 rrule 구조를 파싱하는 중 오류가 발생했습니다:", e);
+            console.error("Error parsing internal rrule structure:", e);
         }
     }
 
@@ -298,7 +298,7 @@ export function ScheduleProvider({children}) {
                     setError(null);
                 }
             } catch (err) {
-                console.error("일정 로딩 실패:", err);
+                console.error("Failed to load schedules:", err);
                 setError(err);
             } finally {
                 if (showLoading) setLoading(false);
@@ -363,9 +363,9 @@ export function ScheduleProvider({children}) {
                 );
             } catch (err) {
                 // 실패 시, UI를 원래 상태로 되돌립니다 (롤백).
-                console.error("일정 생성 실패 (롤백 실행):", err);
+                console.error("Schedule creation failed (rolling back):", err);
                 setEvents(originalEvents);
-                // TODO: 사용자에게 "생성에 실패했습니다"와 같은 알림을 보여주면 더 좋습니다.
+                // TODO: It would be better to show a notification to the user like "Failed to create schedule".
             }
         },
         [user, events]
@@ -375,7 +375,7 @@ export function ScheduleProvider({children}) {
         async (eventData) => {
             const eventToUpdate = events.find(e => String(e.id) === String(eventData.id));
             if (eventToUpdate && eventToUpdate.extendedProps.calendarId !== user.id) {
-                message.error('자신이 생성한 일정만 수정할 수 있습니다.');
+                message.error('You can only edit schedules you created.');
                 return;
             }
 
@@ -404,7 +404,7 @@ export function ScheduleProvider({children}) {
                 const updatedEvent = formatEventForCalendar(response.data);
                 setEvents(prev => prev.map(e => (String(e.id) === String(updatedEvent.id) ? updatedEvent : e)));
             } catch (err) {
-                console.error("일정 업데이트 실패:", err);
+                console.error("Schedule update failed:", err);
             }
         },
         [events, user]
@@ -413,7 +413,7 @@ export function ScheduleProvider({children}) {
     const deleteEvent = useCallback(async (eventId) => {
         const eventToDelete = events.find(e => String(e.id) === String(eventId));
         if (eventToDelete && eventToDelete.extendedProps.calendarId !== user.id) {
-            message.error('자신이 생성한 일정만 삭제할 수 있습니다.');
+            message.error('You can only delete schedules you created.');
             return;
         }
 
@@ -421,7 +421,7 @@ export function ScheduleProvider({children}) {
             setEvents((prev) => prev.filter((e) => String(e.id) !== String(eventId)));
             await api.delete(`/api/schedules/${eventId}`);
         } catch (err) {
-            console.error("일정 삭제 실패:", err);
+            console.error("Schedule deletion failed:", err);
         }
     }, [events, user]);
     // --- UI 제어 함수 ---
@@ -714,9 +714,9 @@ export function ScheduleProvider({children}) {
                     isOpen={deleteModalState.isOpen}
                     onClose={cancelDeleteConfirmation}
                     onConfirm={confirmDelete}
-                    title="일정 삭제"
+                    title="Delete Schedule"
                 >
-                    정말로 이 일정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                    Are you sure you want to delete this schedule? This action cannot be undone.
                 </ConfirmModal>
             </ModalWrapper>
         </ScheduleContext.Provider>

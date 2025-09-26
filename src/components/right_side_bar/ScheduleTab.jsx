@@ -48,7 +48,7 @@ const ScheduleTab = ({ isInsideModal = false, initialEvent = null }) => {
 
     // 상세 보기의 삭제/수정 처리 (Context의 함수를 호출하고 목록으로 돌아감)
     const handleDelete = useCallback(async (eventId) => {
-        if (window.confirm("정말로 이 일정을 삭제하시겠습니까?")) {
+        if (window.confirm("Are you sure you want to delete this schedule?")) {
             // await deleteSchedule(eventId); // context의 삭제 함수 호출
             handleBackToList(); // 목록으로 돌아가기
         }

@@ -1,9 +1,9 @@
-const WEEKDAYS_MAP = { MO: '월', TU: '화', WE: '수', TH: '목', FR: '금', SA: '토', SU: '일' };
+const WEEKDAYS_MAP = { MO: 'Mon', TU: 'Tue', WE: 'Wed', TH: 'Thu', FR: 'Fri', SA: 'Sat', SU: 'Sun' };
 const WEEKDAYS_ORDER = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
 
 export const rruleToText = (rrule) => {
     if (!rrule) {
-        return '반복 안 함';
+        return 'Does not repeat';
     }
 
     const rules = rrule.split(';').reduce((acc, rule) => {
@@ -19,31 +19,31 @@ export const rruleToText = (rrule) => {
     const interval = parseInt(INTERVAL, 10) || 1;
     switch (FREQ) {
         case 'DAILY':
-            summary = interval > 1 ? `${interval}일마다` : '매일';
+            summary = interval > 1 ? `Every ${interval} days` : 'Daily';
             break;
         case 'WEEKLY':
-            summary = interval > 1 ? `${interval}주마다` : '매주';
+            summary = interval > 1 ? `Every ${interval} weeks` : 'Weekly';
             if (BYDAY) {
                 const days = BYDAY.split(',').sort((a, b) => WEEKDAYS_ORDER.indexOf(a) - WEEKDAYS_ORDER.indexOf(b)).map(day => WEEKDAYS_MAP[day]).join(', ');
-                summary += ` ${days}요일`;
+                summary += ` on ${days}`;
             }
             break;
         case 'MONTHLY':
-            summary = interval > 1 ? `${interval}개월마다` : '매월';
+            summary = interval > 1 ? `Every ${interval} months` : 'Monthly';
             break;
         case 'YEARLY':
-            summary = interval > 1 ? `${interval}년마다` : '매년';
+            summary = interval > 1 ? `Every ${interval} years` : 'Annually';
             break;
         default:
-            return '반복 안 함';
+            return 'Does not repeat';
     }
 
     // 2. Termination
     if (COUNT) {
-        summary += `, ${COUNT}회`;
+        summary += `, ${COUNT} times`;
     } else if (UNTIL) {
         const date = UNTIL.substring(0, 8).replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3');
-        summary += `, ${date}까지`;
+        summary += `, until ${date}`;
     }
 
     return summary;

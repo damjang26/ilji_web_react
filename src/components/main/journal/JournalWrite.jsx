@@ -159,17 +159,17 @@ const JournalWrite = ({
         'PUBLIC': {
             icon: <LuGlobe/>,
             text: 'Public',
-            description: '모든 사람이 내 일기를 볼 수 있습니다.'
+            description: 'Everyone can see my journal.'
         },
         'FRIENDS_ONLY': {
             icon: <LuUsers/>,
             text: 'Friends',
-            description: '나와 내 친구들만 볼 수 있습니다.'
+            description: 'Only you and your friends can see it.'
         },
         'PRIVATE': {
             icon: <LuLock/>,
             text: 'Private',
-            description: '이 일기는 나만 볼 수 있습니다.'
+            description: 'Only you can see this journal.'
         }
     }), []);
 
@@ -196,13 +196,13 @@ const JournalWrite = ({
         // 1. 허용되지 않는 파일 형식을 먼저 걸러냅니다.
         const invalidFiles = allFiles.filter(file => !allowedTypes.includes(file.type));
         if (invalidFiles.length > 0) {
-            alert(`지원하지 않는 파일 형식입니다. JPG, PNG 파일만 업로드할 수 있습니다.`);
+            alert(`Unsupported file format. Only JPG and PNG files can be uploaded.`);
             return; // 유효하지 않은 파일이 있으면 함수를 중단합니다.
         }
 
         // 2. 허용된 파일들로만 개수 제한을 확인합니다.
         if (images.length + allFiles.length > MAX_IMAGE_LIMIT) {
-            alert(`사진은 최대 ${MAX_IMAGE_LIMIT}개까지 추가할 수 있습니다.`);
+            alert(`You can add up to ${MAX_IMAGE_LIMIT} photos.`);
             return;
         }
 
@@ -254,8 +254,8 @@ const JournalWrite = ({
             const blobUrl = URL.createObjectURL(file); // Canvas용 URL 생성
             setEditingImageInfo({image: {...image, file, preview: blobUrl}, index});
         } catch (err) {
-            console.error("이미지 편집 준비 실패:", err);
-            alert("이미지를 편집할 수 없습니다. 다시 시도해주세요.");
+            console.error("Failed to prepare image for editing:", err);
+            alert("Cannot edit the image. Please try again.");
         }
     };
 
@@ -346,7 +346,7 @@ const JournalWrite = ({
 
         setImages(newImages);
         setEditingImageInfo(null); // 모든 편집 모드 종료
-        alert('이미지가 성공적으로 편집되었습니다.');
+        alert('Image edited successfully.');
     };
 
     // 일기 저장
@@ -374,21 +374,21 @@ const JournalWrite = ({
                 // ✅ [수정] 수정이 성공하면, 전역 이벤트를 발생시켜 다른 컴포넌트에게 알립니다.
                 // 이벤트의 detail에 수정된 '전체 일기 객체'를 담아 보냅니다.
                 window.dispatchEvent(new CustomEvent('journal:updated', {detail: {updatedJournal}}));
-                alert('일기가 성공적으로 수정되었습니다!');
+                alert('Journal updated successfully!');
                 // [수정] 게시물 변경 신호를 보냅니다.
                 triggerPostChange();
             } else {
                 // ✅ 생성 모드일 경우
                 const createPayload = {...journalPayload, logDate: selectedDate};
                 await createJournalEntry(createPayload);
-                alert('일기가 성공적으로 저장되었습니다!');
+                alert('Journal saved successfully!');
                 // [핵심 추가] 생성 성공 후에도 게시물 변경 신호를 보냅니다.
                 triggerPostChange();
             }
         } catch (error) {
-            console.error("일기 저장 실패:", error);
+            console.error("Failed to save journal:", error);
             // 서버에서 보낸 에러 메시지가 있다면 보여주는 것이 더 좋습니다.
-            alert(error.response?.data?.message || '일기 저장에 실패했습니다.');
+            alert(error.response?.data?.message || 'Failed to save journal.');
         } finally {
             setIsSubmitting(false); // 제출 상태 해제
             onClose(); // 모든 작업 후 모달 닫기
@@ -501,7 +501,7 @@ const JournalWrite = ({
                         </VisibilitySelector>
                         <PostButton onClick={onSubmit}
                                     disabled={(!content.trim() && images.length === 0) || isSubmitting}>
-                            {isSubmitting ? (isEditMode ? '수정 중...' : '저장 중...') : (isEditMode ? 'edit' : 'upload')}
+                            {isSubmitting ? (isEditMode ? 'Updating...' : 'Saving...') : (isEditMode ? 'Edit' : 'Upload')}
                         </PostButton>
                     </ActionBar>
                 </FormContent>
