@@ -68,7 +68,7 @@ const MyPage = () => {
 
     // [추가] 드롭다운 메뉴 아이템 정의
     const menuItems = [
-        {key: "logout", label: "로그아웃"},
+        {key: "logout", label: "logout"},
         // 다른 메뉴 아이템 추가 가능
     ];
 
@@ -99,8 +99,7 @@ const MyPage = () => {
             await fetchMyFollowing();
             await refetchProfile(userId); // [추가] 팔로워 수 등을 업데이트하기 위해 프로필 정보를 다시 불러옵니다.
         } catch (err) {
-            console.error('팔로우 상태 변경에 실패했습니다.', err);
-            // 필요하다면 사용자에게 에러 메시지를 보여줄 수 있습니다.
+            console.error('Failed to change follow status.', err);
         }
     }, [isFollowing, userId, loggedInUser, isOwner, fetchMyFollowing, refetchProfile]);
 
@@ -160,7 +159,7 @@ const MyPage = () => {
     // 로딩/에러 처리
     if (loading) return <div>로딩 중...</div>;
     if (error) return <div style={{color: "red"}}>{error}</div>;
-    if (!loading && !profile) return <div>프로필 정보가 없습니다.</div>;
+    if (!loading && !profile) return <div>There is no profile information.</div>;
     return (
         <MyPageContainer>
             <MypageImg

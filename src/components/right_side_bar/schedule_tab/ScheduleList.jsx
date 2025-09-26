@@ -18,9 +18,9 @@ import {
 import { api } from "../../../api.js";
 
 const FILTERS = {
-  all: { icon: FaInfinity, label: "전체 일정" },
-  month: { icon: FaCalendarWeek, label: "이번 달 일정" },
-  today: { icon: FaCalendarDay, label: "오늘 일정" },
+  all: { icon: FaInfinity, label: "Full schedule" },
+  month: { icon: FaCalendarWeek, label: "This month's schedule" },
+  today: { icon: FaCalendarDay, label: "Today's schedule" },
 };
 
 // 1. 개별 일정 아이템을 별도의 메모이즈된 컴포넌트로 분리합니다.
@@ -170,12 +170,12 @@ const ScheduleList = ({
           ))}
         </EventList>
       ) : (
-        <NoEventsMessage>등록된 일정이 없습니다.</NoEventsMessage>
+        <NoEventsMessage>There is no registered schedule.</NoEventsMessage>
       )}
 
       <ActionButtons>
         <Button className="primary" onClick={onAdd}>
-          일정 추가
+          Add Schedule
         </Button>
       </ActionButtons>
     </ListWrapper>
