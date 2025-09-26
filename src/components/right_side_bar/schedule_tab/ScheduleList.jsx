@@ -26,7 +26,7 @@ const FILTERS = {
 // 1. 개별 일정 아이템을 별도의 메모이즈된 컴포넌트로 분리합니다.
 const ScheduleEventItem = React.memo(({ event, onDetail }) => {
   return (
-    <Tooltip title="클릭하면 상세 보기" placement="left">
+    <Tooltip title="Click to see details" placement="left">
       <EventItem onClick={() => {
         onDetail(event);
       }}>{event.title}</EventItem>
@@ -79,18 +79,18 @@ const ScheduleList = ({
   const title = useMemo(() => {
     // 1. 특정 날짜가 선택된 경우
     if (selectedDate) {
-      const date = new Date(selectedDate + "T00:00:00Z");
-      if (isNaN(date.getTime())) return "날짜 정보";
+      const date = new Date(selectedDate + "T00:00:00"); // Use local timezone for consistency
+      if (isNaN(date.getTime())) return "Date Information";
 
-      const month = date.getUTCMonth() + 1;
-      const day = date.getUTCDate();
-      const dayOfWeek = ["일", "월", "화", "수", "목", "금", "토"][
-        date.getUTCDay()
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      const dayOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][
+        date.getDay()
       ];
-      return `${month} / ${day} ${dayOfWeek}요일`;
+      return `${month} / ${day} (${dayOfWeek})`;
     }
     // 2. 필터 모드에 따른 제목
-    return FILTERS[filterMode]?.label || "일정";
+    return FILTERS[filterMode]?.label || "Schedules";
   }, [selectedDate, filterMode]);
 
   const handleFilterClick = (mode) => {
@@ -136,7 +136,7 @@ const ScheduleList = ({
   };
   const uploadHandler = async () => {
     if (!file) {
-      alert("파일을 선택하세요.");
+      alert("Please select a file.");
       return;
     }
 
@@ -149,10 +149,10 @@ const ScheduleList = ({
           "Content-Type": "multipart/form-data",
         },
       });
-      alert("업로드 성공: " + response.data);
+      alert("Upload successful: " + response.data);
     } catch (error) {
-      console.error("업로드 실패", error);
-      alert("업로드 실패");
+      console.error("Upload failed", error);
+      alert("Upload failed");
     }
   };
   return (

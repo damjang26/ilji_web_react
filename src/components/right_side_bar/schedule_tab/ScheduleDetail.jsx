@@ -21,7 +21,7 @@ const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete}) => {
     console.log("ScheduleDetail - user from useAuth():", user);
 
     if (!event) {
-        return <div>일정을 선택해주세요.</div>;
+        return <div>Please select an event.</div>;
     }
 
     // 현재 일정의 tagId에 해당하는 태그 객체를 찾습니다。
@@ -35,7 +35,7 @@ const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete}) => {
 
     // 날짜와 시간을 상황에 맞게 표시하는 함수
     const formatDateRange = () => {
-        if (!event.start) return "날짜 정보 없음";
+        if (!event.start) return "No date information";
 
         const start = new Date(event.start);
         const end = event.end ? new Date(event.end) : start; // end가 없으면 start로 대체
@@ -47,8 +47,8 @@ const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete}) => {
             const inclusiveEnd = new Date(end.getTime());
             inclusiveEnd.setDate(inclusiveEnd.getDate() - 1);
 
-            const startDateStr = start.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-            const inclusiveEndDateStr = inclusiveEnd.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+            const startDateStr = start.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            const inclusiveEndDateStr = inclusiveEnd.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
             // 시작일과 (보정된)종료일이 같으면 날짜 하나만 표시
             if (startDateStr === inclusiveEndDateStr) {
@@ -59,11 +59,11 @@ const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete}) => {
         }
 
         // Case 2: 시간 지정 일정
-        const startDateStr = start.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-        const startTimeStr = start.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const startDateStr = start.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const startTimeStr = start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-        const endDateStr = end.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-        const endTimeStr = end.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const endDateStr = end.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const endTimeStr = end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
         // 같은 날에 시작하고 끝나는 경우
         if (startDateStr === endDateStr) {
@@ -80,7 +80,7 @@ const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete}) => {
     return (
         <DetailWrapper>
             <DetailHeader>
-                <BackButton onClick={onCancel}>← 목록으로</BackButton>
+                <BackButton onClick={onCancel}>← Back to list</BackButton>
                 {/* ✅ [수정] 헤더 오른쪽에 날짜를 표시합니다. */}
                 {displayDate && <HeaderDate>{displayDate}</HeaderDate>}
             </DetailHeader>
@@ -89,27 +89,27 @@ const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete}) => {
 
             <InfoSection>
                 <div>
-                    <InfoLabel>날짜</InfoLabel>
+                    <InfoLabel>Date</InfoLabel>
                     <InfoValue>{formatDateRange()}</InfoValue>
                 </div>
                 {event.extendedProps?.location && <div>
-                    <InfoLabel>장소</InfoLabel>
+                    <InfoLabel>Location</InfoLabel>
                     <InfoValue>{event.extendedProps.location}</InfoValue>
                 </div>}
                 {currentTag && <div>
-                    <InfoLabel>태그</InfoLabel>
+                    <InfoLabel>Tag</InfoLabel>
                     <InfoValue>{currentTag.label}</InfoValue>
                 </div>}
                 {event.extendedProps?.description && <div>
-                    <InfoLabel>설명</InfoLabel>
+                    <InfoLabel>Description</InfoLabel>
                     <InfoValue>{event.extendedProps.description}</InfoValue>
                 </div>}
             </InfoSection>
 
             {isOwner && (
                 <ActionButtons>
-                    <Button className="secondary" onClick={() => onDelete(event.id)}>삭제</Button>
-                    <Button className="primary" onClick={() => onEdit(event)}>수정</Button>
+                    <Button className="secondary" onClick={() => onDelete(event.id)}>Delete</Button>
+                    <Button className="primary" onClick={() => onEdit(event)}>Edit</Button>
                 </ActionButtons>
             )}
         </DetailWrapper>
