@@ -158,17 +158,17 @@ const JournalWrite = ({
     const visibilityOptions = useMemo(() => ({
         'PUBLIC': {
             icon: <LuGlobe/>,
-            text: '전체 공개',
+            text: 'Public',
             description: '모든 사람이 내 일기를 볼 수 있습니다.'
         },
         'FRIENDS_ONLY': {
             icon: <LuUsers/>,
-            text: '친구 공개',
+            text: 'Friends',
             description: '나와 내 친구들만 볼 수 있습니다.'
         },
         'PRIVATE': {
             icon: <LuLock/>,
-            text: '나만 보기',
+            text: 'Private',
             description: '이 일기는 나만 볼 수 있습니다.'
         }
     }), []);
@@ -465,12 +465,12 @@ const JournalWrite = ({
                                 accept="image/jpeg, image/png"
                                 style={{display: 'none'}}
                             />
-                            <IconButton data-tooltip="이미지 추가" onClick={handleImageButtonClick}
+                            <IconButton data-tooltip="Add image" onClick={handleImageButtonClick}
                                         disabled={images.length >= MAX_IMAGE_LIMIT}>
                                 <FaImage/>
                             </IconButton>
                             <ActionButtonWrapper ref={emojiPickerContainerRef}>
-                                <IconButton data-tooltip="이모지 추가" onClick={handleEmojiIconClick}>
+                                <IconButton data-tooltip="Add emoji" onClick={handleEmojiIconClick}>
                                     <FaSmile/>
                                 </IconButton>
                                 {showEmojiPicker && (
@@ -501,7 +501,7 @@ const JournalWrite = ({
                         </VisibilitySelector>
                         <PostButton onClick={onSubmit}
                                     disabled={(!content.trim() && images.length === 0) || isSubmitting}>
-                            {isSubmitting ? (isEditMode ? '수정 중...' : '저장 중...') : (isEditMode ? '수정하기' : '게시하기')}
+                            {isSubmitting ? (isEditMode ? '수정 중...' : '저장 중...') : (isEditMode ? 'edit' : 'upload')}
                         </PostButton>
                     </ActionBar>
                 </FormContent>

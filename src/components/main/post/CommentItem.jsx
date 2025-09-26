@@ -42,6 +42,10 @@ const CommentItem = ({comment, isReply = false, onLike, onLikeCountClick, onDele
     const menuRef = useRef(null);
     const [isReplyFormOpen, setReplyFormOpen] = useState(false);
     const [replyContent, setReplyContent] = useState('');
+    // ✅ [추가] 낙관적 업데이트를 위한 로컬 상태
+    const [likedStatus, setLikedStatus] = useState(comment.isLiked);
+    const [currentLikeCount, setCurrentLikeCount] = useState(comment.likeCount);
+
     // ✅ [추가] 답글 목록을 보여줄지 여부를 관리하는 상태
     const [showReplies, setShowReplies] = useState(false);
 
@@ -59,6 +63,13 @@ const CommentItem = ({comment, isReply = false, onLike, onLikeCountClick, onDele
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+
+    // ✅ [추가] comment prop이 변경될 때마다 로컬 좋아요 상태를 동기화
+    useEffect(() => {
+        setLikedStatus(comment.isLiked);
+        setCurrentLikeCount(comment.likeCount);
+    }, [comment.isLiked, comment.likeCount]);
+
 
     const handleProfileClick = () => {
         if (comment.writer?.userId) { // ✅ [수정] writer 객체 내부의 userId 사용
@@ -84,6 +95,26 @@ const CommentItem = ({comment, isReply = false, onLike, onLikeCountClick, onDele
         }
     }, [replyContent, comment.commentId, onSubmitReply]);
 
+    // ✅ [추가] 좋아요 버튼 클릭 핸들러 (낙관적 업데이트 포함)
+    const handleLikeClick = async () => {
+        // 이전 상태 저장 (실패 시 롤백용)
+        const prevLikedStatus = likedStatus;
+        const prevLikeCount = currentLikeCount;
+
+        // 낙관적 업데이트: UI를 즉시 변경
+        setLikedStatus(prev => !prev);
+        setCurrentLikeCount(prev => prevLikedStatus ? prev - 1 : prev + 1);
+
+        try {
+            // 실제 서버 요청 (부모 컴포넌트의 onLike 함수 호출)
+            await onLike(comment.commentId);
+        } catch (error) {
+            // 서버 요청 실패 시 상태 롤백
+            console.error("Failed to update like status on server:", error);
+            setLikedStatus(prevLikedStatus);
+            setCurrentLikeCount(prevLikeCount);
+        }
+    };
 
     return (
         <CommentItemWrapper isReply={isReply}>
@@ -100,12 +131,12 @@ const CommentItem = ({comment, isReply = false, onLike, onLikeCountClick, onDele
                     </CommentHeader>
                     <CommentText>{comment.content}</CommentText>
                     <CommentActions>
-                        <CommentActionButton onClick={() => onLike(comment.commentId)}>
-                            {comment.isLiked ? <FaThumbsUp color="#0a66c2"/> : <FaRegThumbsUp/>}
+                        <CommentActionButton onClick={handleLikeClick}>
+                            {likedStatus ? <FaThumbsUp color="#0a66c2"/> : <FaRegThumbsUp/>}
                         </CommentActionButton>
-                        {comment.likeCount > 0 && (
+                        {currentLikeCount > 0 && (
                             <CommentLikeCount
-                                onClick={() => onLikeCountClick(comment.commentId)}>{comment.likeCount}</CommentLikeCount>
+                                onClick={() => onLikeCountClick(comment.commentId)}>{currentLikeCount}</CommentLikeCount>
                         )}
                         {!isReply && (
                             <CommentActionButton onClick={() => setReplyFormOpen(prev => !prev)}>
@@ -149,18 +180,18 @@ const CommentItem = ({comment, isReply = false, onLike, onLikeCountClick, onDele
             )}
 
             {/* ✅ [수정] 답글(대댓글) 렌더링 로직 변경 */}
-            {comment.replies && comment.replies.length > 0 && (
+            {comment.children && comment.children.length > 0 && (
                 <>
                     <ReplyToggleContainer>
                         <ReplyToggleButton onClick={() => setShowReplies(prev => !prev)}>
                             <span className="line"></span>
-                            {showReplies ? 'Hide replies' : `View replies (${comment.replies.length})`}
+                            {showReplies ? 'Hide replies' : `View replies (${comment.children.length})`}
                         </ReplyToggleButton>
                     </ReplyToggleContainer>
 
                     {showReplies && (
                         <div className="replies-section">
-                            {comment.replies.map(reply => (
+                            {comment.children.map(reply => (
                                 <CommentItem
                                     key={reply.commentId}
                                     comment={reply}

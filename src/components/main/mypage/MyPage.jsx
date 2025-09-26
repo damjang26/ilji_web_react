@@ -1,7 +1,7 @@
 import {Link, useParams} from "react-router-dom"; // [추가] useParams import
 import React, {useState, useCallback, useEffect} from "react";
-import { EllipsisOutlined } from "@ant-design/icons"; // [추가] antd 아이콘
-import { Dropdown } from "antd"; // [추가] antd 드롭다운
+import {EllipsisOutlined} from "@ant-design/icons"; // [추가] antd 아이콘
+import {Dropdown} from "antd"; // [추가] antd 드롭다운
 import ImageBox from "./ImageBox";
 import BannerImageEditor from "./BannerImageEditor.jsx";
 import {followUser, unfollowUser} from "../../../api"; // [추가]
@@ -41,9 +41,9 @@ import defaultProfileImage from '../../../static/image/default-profile.png';
  */
 // [되돌리기] MyPageContent의 이름을 MyPage로 변경하고, MyPageWrapper가 이 컴포넌트를 렌더링하도록 구조를 변경합니다.
 const MyPage = () => {
-    const { userId } = useParams(); // [추가] URL에서 userId를 가져옵니다.
+    const {userId} = useParams(); // [추가] URL에서 userId를 가져옵니다.
     // [수정] AuthContext에서 전역 상태를 가져옵니다.
-    const { user: loggedInUser, following: myFollowing, fetchMyFollowing, logout, postChangeSignal } = useAuth(); // [추가] postChangeSignal 가져오기
+    const {user: loggedInUser, following: myFollowing, fetchMyFollowing, logout, postChangeSignal} = useAuth(); // [추가] postChangeSignal 가져오기
     const {
         profile,
         loading,
@@ -68,12 +68,12 @@ const MyPage = () => {
 
     // [추가] 드롭다운 메뉴 아이템 정의
     const menuItems = [
-        { key: "logout", label: "로그아웃" },
+        {key: "logout", label: "로그아웃"},
         // 다른 메뉴 아이템 추가 가능
     ];
 
     // [추가] 드롭다운 메뉴 클릭 핸들러
-    const handleMenuClick = ({ key }) => {
+    const handleMenuClick = ({key}) => {
         if (key === "logout") {
             logout();
         }
@@ -149,8 +149,8 @@ const MyPage = () => {
         async (croppedFile, yPosition) => {
             // [수정] BannerImageEditor가 이제 완성된 이미지를 생성하므로,yPosition은 항상 0으로 고정하여 저장
             await updateProfile(
-                { bannerPositionY: 0 }, // 위치 조정값은 0
-                { bannerImageFile: croppedFile } // 완성된 이미지 파일
+                {bannerPositionY: 0}, // 위치 조정값은 0
+                {bannerImageFile: croppedFile} // 완성된 이미지 파일
             );
             setIsBannerEditorOpen(false);
         },
@@ -169,6 +169,7 @@ const MyPage = () => {
             >
                 {/* [수정] MypageImg 내부에 BannerImage를 렌더링 */}
                 {profile.bannerImage && <BannerImage src={profile.bannerImage} yPosition={profile.bannerPositionY} alt="배너 이미지" />}
+
             </MypageImg>
             <ContentBox>
                 <MyPageHeader>
@@ -195,18 +196,16 @@ const MyPage = () => {
                         </UserInfo>
 
                         <UserActions>
-                            {/* [수정] isOwner에 따라 다른 버튼 그룹을 렌더링 */}
                             {isOwner ? (
                                 // 내 페이지일 경우
                                 <ButtonGroup>
-                                    {/* 3) 버튼 클릭 핸들러 교체: 이제 버튼은 Context에서 직접 가져온 올바른 handleEdit 함수를 호출 */}
-                                    <button onClick={handleEdit}>정보수정</button>
+                                    <button onClick={handleEdit}>Edit Profile</button>
                                     <IconContainer>
                                         <Dropdown
-                                            menu={{ items: menuItems, onClick: handleMenuClick }}
+                                            menu={{items: menuItems, onClick: handleMenuClick}}
                                             trigger={["click"]}
                                         >
-                                            <EllipsisOutlined style={{ fontSize: "20px", cursor: "pointer" }} />
+                                            <EllipsisOutlined style={{fontSize: "20px", cursor: "pointer"}}/>
                                         </Dropdown>
                                     </IconContainer>
                                 </ButtonGroup>

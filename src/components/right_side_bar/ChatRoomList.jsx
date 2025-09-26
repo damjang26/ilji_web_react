@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import { api, leaveChatRoom } from "../../api.js";
-import { useAuth } from "../../AuthContext.jsx";
+import {useEffect, useState} from "react";
+import {api, leaveChatRoom} from "../../api.js";
+import {useAuth} from "../../AuthContext.jsx";
 import CreateChatRoomModal from "./CreateChatRoomModal.jsx";
-import { Dropdown, Menu, message } from "antd";
+import {Dropdown, Menu, message} from "antd";
 import {
     AddButton,
     BackButton,
@@ -16,11 +16,11 @@ import {
     ParticipantAvatarsContainer, // 추가
     AvatarImage, // 추가
 } from "../../styled_components/right_side_bar/ChatRoomListStyled.jsx";
-import { FaChevronLeft } from "react-icons/fa";
-import { BsThreeDotsVertical } from "react-icons/bs";
+import {BsThreeDotsVertical} from "react-icons/bs";
+import {FiPlus} from "react-icons/fi";
 
-const ChatRoomList = ({ onBack, chatRoom }) => {
-    const { user } = useAuth();
+const ChatRoomList = ({onBack, chatRoom}) => {
+    const {user} = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [roomList, setRoomList] = useState([]);
 
@@ -89,15 +89,15 @@ const ChatRoomList = ({ onBack, chatRoom }) => {
                             <RoomName onClick={() => chatRoom(room.roomId)}>
                                 {getRoomDisplayName(room, user)}
                             </RoomName>
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <div style={{display: 'flex', alignItems: 'center'}}>
                                 <ParticipantAvatarsContainer>
                                     {otherParticipants.slice(0, 3).map(p => (
-                                        <AvatarImage key={p.user.id} src={p.user.profile_image_url} alt={p.user.name} />
+                                        <AvatarImage key={p.user.id} src={p.user.profile_image_url} alt={p.user.name}/>
                                     ))}
                                 </ParticipantAvatarsContainer>
                                 <Dropdown menu={getMenu(room.roomId)} trigger={['click']} placement="bottomRight">
                                     <MenuButton onClick={e => e.stopPropagation()}>
-                                        <BsThreeDotsVertical />
+                                        <BsThreeDotsVertical/>
                                     </MenuButton>
                                 </Dropdown>
                             </div>
@@ -106,7 +106,7 @@ const ChatRoomList = ({ onBack, chatRoom }) => {
                 })}
             </RoomList>
 
-            <AddButton onClick={() => setIsModalOpen(true)}>+</AddButton>
+            <AddButton onClick={() => setIsModalOpen(true)}><FiPlus/></AddButton>
 
             <CreateChatRoomModal
                 open={isModalOpen}
