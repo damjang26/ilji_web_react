@@ -637,3 +637,50 @@ export const Description = styled.p`
     text-align: center;
     margin-top: 20px;
 `;
+
+// ✅ [추가] 커스텀 브러시 크기 입력 필드 스타일
+export const BrushWidthInputContainer = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0 8px;
+    background-color: #fff;
+    
+    /* ✅ [수정] 부모 flex 컨테이너의 높이에 맞춰 늘어나도록 설정합니다. */
+    align-self: stretch;
+
+    & > span {
+        color: #888;
+        font-size: 14px;
+    }
+`;
+
+export const BrushWidthInput = styled.input`
+    width: 40px;
+    border: none;
+    outline: none;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    background-color: transparent;
+
+    // 브라우저 기본 스피너(화살표) 숨기기
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    &[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    &:disabled {
+        background-color: transparent;
+        color: #ccc;
+        cursor: not-allowed;
+    }
+`;

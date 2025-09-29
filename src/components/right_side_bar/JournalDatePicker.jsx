@@ -69,7 +69,12 @@ const JournalDatePicker = ({onDateSelect}) => { // onDateSelect는 패널을 닫
                     inline
                 />
             </DatePickerWrapper>
-            <Button className="primary" onClick={() => onDateSelect(selectedDate)} style={{width: '100%'}}>
+            {/* ✅ [수정] isDateDisabled 함수를 사용하여 선택된 날짜에 일기가 이미 있으면 버튼을 비활성화합니다. */}
+            <Button
+                className="primary"
+                onClick={() => onDateSelect(selectedDate)}
+                disabled={isDateDisabled(selectedDate)} // ✅ [추가] disabled 속성 추가
+                style={{width: '100%'}}>
                 Write i-log
             </Button>
         </DatePickerContainer>

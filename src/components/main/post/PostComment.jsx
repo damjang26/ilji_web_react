@@ -156,7 +156,11 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
             // 3. 실패 시 롤백
             // [개선] 낙관적 업데이트 로직을 재사용하여 롤백
             // isLiked와 likeCount를 다시 한번 반전시켜 원래 상태로 되돌립니다.
-            setComments(currentComments => updateCommentInTree(currentComments, commentId, c => ({...c, isLiked: !c.isLiked, likeCount: c.isLiked ? c.likeCount - 1 : c.likeCount + 1})));
+            setComments(currentComments => updateCommentInTree(currentComments, commentId, c => ({
+                ...c,
+                isLiked: !c.isLiked,
+                likeCount: c.isLiked ? c.likeCount - 1 : c.likeCount + 1
+            })));
         }
     }, []);
 
@@ -283,7 +287,7 @@ const PostComment = ({journal, isOpen, onToggle, onCommentCountChange}) => {
                         users={likersList}
                         loading={isLikersLoading}
                         onUpdate={refreshLikersList}
-                        title="People who liked this comment"
+                        title="like comment"
                     />
                 </PostCommentContentWrapper>
             ) : (

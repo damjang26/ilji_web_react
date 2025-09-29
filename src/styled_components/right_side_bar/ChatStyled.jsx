@@ -23,6 +23,7 @@ export const HeaderIconButton = styled.button`
     ${commonButtonStyle}
     font-size: 18px; /* Slightly larger for header icons */
     padding: 6px; /* Adjust padding for icon size */
+
     svg {
         font-size: 18px;
     }
@@ -104,6 +105,7 @@ export const MessageForm = styled.form`
     padding: 15px;
     border-top: 1px solid #e9ecef;
     background-color: #fff;
+    gap: 10px;
 `;
 
 export const MessageInput = styled.input`
@@ -121,10 +123,17 @@ export const MessageInput = styled.input`
 `;
 
 export const SendButton = styled.button`
-    ${commonButtonStyle}
-    margin-left: 10px;
+    height: 40px; /* ✅ 세로 높이 */
+    width: 40px; /* ✅ 세로와 동일한 가로 너비 설정 */
+    border: none;
     background-color: #7b5fff;
-    color: #fff;
+    color: white;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0; /* ✅ 버튼 크기가 줄어들지 않도록 설정 */
 
     &:hover {
         background-color: #6a4fe9;
