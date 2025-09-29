@@ -103,7 +103,7 @@ export default function FullCalendarExample() {
                         }
                     } catch (error) {
                         console.error("Error fetching journal by ID:", error);
-                        alert("일기 정보를 불러오는 데 실패했습니다.");
+                        alert("Failed to load journal information.");
                     }
                 }
             }
@@ -125,21 +125,21 @@ export default function FullCalendarExample() {
         // 1. 팝오버의 날짜를 이용해 삭제할 일기 객체를 가져옵니다. (id를 알아내기 위함)
         const journalToDelete = getJournal(diaryPopover.date);
         if (!journalToDelete) {
-            alert("삭제할 일기를 찾을 수 없습니다.");
+            alert("Could not find the journal to delete.");
             return;
         }
 
         // 2. 사용자에게 정말 삭제할 것인지 확인받습니다.
-        if (window.confirm("정말로 이 일기를 삭제하시겠습니까?")) {
+        if (window.confirm("Are you sure you want to delete this journal?")) {
             try {
                 // 3. Context의 deleteJournal 함수를 호출합니다. (id와 날짜를 넘겨줍니다)
                 await deleteJournal(journalToDelete.id, diaryPopover.date);
-                alert("일기가 삭제되었습니다.");
+                alert("Journal deleted successfully.");
                 // 4. 성공적으로 삭제되면 팝오버를 닫습니다.
                 setDiaryPopover((p) => ({...p, visible: false}));
             } catch (error) {
                 console.error("일기 삭제 실패:", error);
-                alert("일기 삭제에 실패했습니다.");
+                alert("Failed to delete the journal.");
             }
         }
     };
@@ -386,7 +386,7 @@ export default function FullCalendarExample() {
                                     // ✅ [수정] getJournal로 일기 데이터를 가져와 state에 담아 전달합니다.
                                     const journal = getJournal(diaryPopover.date);
                                     if (journal) {
-                                        navigate(`/journals/${journal.id}`, {
+                                        navigate(`/myi-log/${journal.id}`, {
                                             state: {
                                                 backgroundLocation: location,
                                                 journalData: journal,
@@ -407,7 +407,7 @@ export default function FullCalendarExample() {
                     ) : (
                         <DiaryPopoverButton
                             onClick={() => {
-                                navigate("/journal/write", {
+                                navigate("/i-log/write", {
                                     state: {
                                         backgroundLocation: location,
                                         selectedDate: diaryPopover.date,

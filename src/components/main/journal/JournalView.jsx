@@ -44,7 +44,7 @@ const JournalView = () => {
             setIsCommentOpen(true);
 
             // 플래그 사용 후 location.state에서 제거하여 재실행 방지
-            const { openCommentSection, ...restJournalData } = journal;
+            const {openCommentSection, ...restJournalData} = journal;
             navigate(location.pathname, {
                 state: {
                     ...location.state,
@@ -67,11 +67,11 @@ const JournalView = () => {
     // ✅ [추가] 'journal:updated' 이벤트를 감지하여 현재 뷰의 데이터를 업데이트합니다.
     useEffect(() => {
         const handleJournalUpdate = (event) => {
-            const { updatedJournal } = event.detail;
+            const {updatedJournal} = event.detail;
             // 수정된 일기가 현재 보고 있는 일기와 동일한 경우에만 상태를 업데이트합니다.
             if (updatedJournal && journal && updatedJournal.id === journal.id) {
                 // 기존 journal 데이터에 수정된 데이터를 덮어씁니다.
-                setJournal(prevJournal => ({ ...prevJournal, ...updatedJournal }));
+                setJournal(prevJournal => ({...prevJournal, ...updatedJournal}));
             }
         };
 
@@ -110,7 +110,7 @@ const JournalView = () => {
 
     // ✅ [추가] 수정 버튼 클릭 핸들러
     const handleEdit = useCallback((journalToEdit) => {
-        navigate('/journal/write', {
+        navigate('/i-log/write', {
             state: {
                 journalToEdit: journalToEdit,
                 // ✅ [수정] 현재 location이 아닌, 이전 페이지에서 전달받은 backgroundLocation을 다시 전달합니다.
@@ -182,7 +182,8 @@ const JournalView = () => {
     }, [currentPostId, handleLikeCountClick]);
 
     if (!journal) {
-        return <ViewContainer className="no-image"><p>Could not load journal information. Please try again from the list.</p>
+        return <ViewContainer className="no-image"><p>Could not load journal information. Please try again from the
+            list.</p>
         </ViewContainer>
     }
 

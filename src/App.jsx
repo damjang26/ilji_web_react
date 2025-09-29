@@ -103,7 +103,7 @@ const AppContent = () => {
     const handleDateSelectForJournal = (date) => {
         // 패널을 닫고, 일기 작성 모달로 이동
         setActivePanel(null);
-        navigate("/journal/write", {
+        navigate("/i-log/write", {
             state: {
                 backgroundLocation: location,
                 selectedDate: date,
@@ -128,15 +128,14 @@ const AppContent = () => {
             <ContentWrapper>
                 <Routes location={background || location}>
                     <Route path="/set-nickname" element={<SetNicknamePage/>}/>
-                    {/* ✅ [수정] 공유 페이지 라우트를 메인 라우트로 이동시켜 직접 접속이 가능하게 합니다. */}
-                    <Route path="/share/:shareId" element={<SharedJournalPage />} />
+                    <Route path="/i-log/:shareId" element={<SharedJournalPage/>}/>
                     <Route path="/*" element={<Main/>}/>
                 </Routes>
 
                 {background && (
                     <Routes>
-                        <Route path="/journal/write" element={<JournalWriteModal/>}/>
-                        <Route path="/journals/:journalId" element={<JournalViewModal/>}/>
+                        <Route path="/i-log/write" element={<JournalWriteModal/>}/>
+                        <Route path="/myi-log/:journalId" element={<JournalViewModal/>}/>
                     </Routes>
                 )}
             </ContentWrapper>

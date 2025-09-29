@@ -107,11 +107,23 @@ export const UserActions = styled.div`
     gap: 15px; /* 아래 StatsGroup과 위 ButtonGroup 사이의 수직 간격 조정 */
 `;
 
+export const NicknameContainer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+`;
+
+export const Nickname = styled.div`
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+`;
+
 //  '정보수정' 버튼과 '...' 아이콘을 묶는 그룹
 export const ButtonGroup = styled.div`
     display: flex;
     position: relative;
-    top: -50px;
     align-items: center;
     gap: 20px; /* '정보수정' 버튼과 '...' 아이콘 사이의 간격 조정 */
     /* UserActions 내부의 모든 button에 대한 공통 스타일 */
@@ -127,6 +139,8 @@ export const ButtonGroup = styled.div`
         cursor: pointer;
         transition: background-color 0.2s;
         font-size: 0.9rem;
+        position: relative;
+        top: 1px;
 
         &:hover {
             background-color: #f0f2f5;

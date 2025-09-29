@@ -2,7 +2,6 @@ import React, {useCallback, useState, useEffect, useMemo} from 'react';
 import {
     FeedContainer,
     FindFriendsButton,
-    PostActions,
     PostContainer,
     PostContent,
     PostHeader,
@@ -37,7 +36,8 @@ import {TbShare3} from "react-icons/tb"; // ✅ [수정] 아이콘 변경
 import PostComment from "./PostComment.jsx";
 import PostLikersModal from "./PostLikersModal.jsx"; // 좋아요 목록 모달 임포트
 import FriendManagementModal from "../../friends/FriendManagementModal.jsx";
-import {message, Modal, Spin} from "antd"; // antd 메시지 임포트
+import {message, Modal, Spin} from "antd";
+import {BiSolidShareAlt} from "react-icons/bi"; // antd 메시지 임포트
 
 export const JournalItem = ({
                                 journal,
@@ -110,7 +110,7 @@ export const JournalItem = ({
             }
 
             // 2. 공유할 URL을 생성합니다.
-            const shareUrl = `${window.location.origin}/share/${shareId}`;
+            const shareUrl = `${window.location.origin}/i-log/${shareId}`;
             const shareTitle = `"${journal.writerNickname}"님의 일기`;
             const shareText = `[일지]에서 ${shareTitle}를 확인해보세요!`;
 
@@ -219,7 +219,7 @@ export const JournalItem = ({
                 <IndexTabsContainer>
                     {/* ✅ [수정] onClick 핸들러에서 불필요한 화살표 함수를 제거하고, handleShare를 직접 호출하도록 변경합니다. */}
                     <IndexTabActions type="share" onClick={handleShare}>
-                        <button data-tooltip="Share"><TbShare3/></button>
+                        <button data-tooltip="Share"><BiSolidShareAlt/></button>
                     </IndexTabActions>
                     {user?.id === journal.writerId && (
                         <>
@@ -294,7 +294,7 @@ export const JournalItem = ({
             <IndexTabsContainer>
                 {/* ✅ [수정] onClick 핸들러에서 불필요한 화살표 함수를 제거하고, handleShare를 직접 호출하도록 변경합니다. */}
                 <IndexTabActions type="share" onClick={handleShare}>
-                    <button data-tooltip="Share"><TbShare3/></button>
+                    <button data-tooltip="Share"><BiSolidShareAlt/></button>
                 </IndexTabActions>
                 {user?.id === journal.writerId && (
                     <>
@@ -383,7 +383,7 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
     }, [deleteJournal, setPosts]);
 
     const handleEdit = useCallback((journalToEdit) => {
-        navigate('/journal/write', {
+        navigate('/i-log/write', {
             state: {
                 journalToEdit: journalToEdit, // 수정할 일기 데이터를 전달합니다.
                 backgroundLocation: location, // 모달 뒤에 현재 페이지를 배경으로 유지합니다.
