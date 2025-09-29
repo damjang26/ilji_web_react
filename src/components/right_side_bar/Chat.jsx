@@ -15,11 +15,20 @@ import {
     SystemMessage
 } from "../../styled_components/right_side_bar/ChatStyled.jsx";
 import { FaPaperPlane } from "react-icons/fa";
+import { getAiTagSuggestion } from "../../api.js";
+import ScheduleModal from "../common/ScheduleModal.jsx";
+import {
+    SuggestedTag,
+    SuggestedTagButton
+} from "../../styled_components/right_side_bar/ChatStyled.jsx";
 
 const Chat = ({roomId}) => {
     const [username, setUsername] = useState('');
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
+    const [suggestedTag, setSuggestedTag] = useState(null); // AI 추천 태그
+    const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+    const [initialScheduleData, setInitialScheduleData] = useState(null);
     const socketRef = useRef(null);
     const messagesEndRef = useRef(null);
     const {user} = useAuth();
@@ -50,7 +59,7 @@ const Chat = ({roomId}) => {
         messagesEndRef.current?.scrollIntoView({behavior: "smooth"});
     }, [messages]);
 
-    const handleMessageSubmit = (e) => {
+    const handleMessageSubmit = async (e) => {
         e.preventDefault();
         if (message.trim() && username.trim()) {
             const chatMessage = {
@@ -61,8 +70,27 @@ const Chat = ({roomId}) => {
                 messageType: 'NORMAL'
             };
             socketRef.current.emit('chatMessage', chatMessage);
+
+            // AI 태그 추천 요청
+            console.log('Calling getAiTagSuggestion with message:', message);
+            const tag = await getAiTagSuggestion(message);
+            console.log('AI tag suggestion result:', tag);
+            setSuggestedTag(tag);
+            console.log('Updated suggestedTag state:', tag);
+
             setMessage('');
         }
+    };
+
+    const handleOpenScheduleModal = () => {
+        setInitialScheduleData({ title: suggestedTag });
+        setIsScheduleModalOpen(true);
+    };
+
+    const handleCloseScheduleModal = () => {
+        setIsScheduleModalOpen(false);
+        setInitialScheduleData(null);
+        setSuggestedTag(null); // 모달 닫으면 추천 태그도 숨김
     };
 
     return (
@@ -90,6 +118,21 @@ const Chat = ({roomId}) => {
                 />
                 <SendButton type="submit"><FaPaperPlane/></SendButton>
             </MessageForm>
+            {suggestedTag && (
+                <SuggestedTag>
+                    <span>추천 태그:</span>
+                    <SuggestedTagButton onClick={handleOpenScheduleModal}>
+                        {suggestedTag}
+                    </SuggestedTagButton>
+                </SuggestedTag>
+            )}
+            {isScheduleModalOpen && (
+                <ScheduleModal
+                    isOpen={isScheduleModalOpen}
+                    onClose={handleCloseScheduleModal}
+                    initialData={initialScheduleData}
+                />
+            )}
         </ChatContainer>
     );
 };

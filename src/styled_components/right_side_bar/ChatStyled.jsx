@@ -136,7 +136,34 @@ export const SendButton = styled.button`
     flex-shrink: 0; /* ✅ 버튼 크기가 줄어들지 않도록 설정 */
 
     &:hover {
-        background-color: #6a4fe9;
-        color: #fff;
+        background-color: #45a049;
+    }
+`;
+
+export const SuggestedTag = styled.div`
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #555;
+
+    span {
+        margin-right: 8px;
+    }
+`;
+
+export const SuggestedTagButton = styled.button`
+    padding: 6px 12px;
+    border-radius: 16px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+
+    &:hover {
+        background-color: #e0e0e0;
+        border-color: #bbb;
     }
 `;

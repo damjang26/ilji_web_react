@@ -16,7 +16,7 @@ import {api} from "../api"; // axios 대신 우리가 만든 api 인스턴스를
 import ConfirmModal from "../components/common/ConfirmModal.jsx";
 import {useAuth} from "../AuthContext.jsx";
 import {NO_TAG_ID} from "./TagContext.jsx";
-
+import { message } from "antd"
 const ModalWrapper = styled.div`
     /*
       z-index를 명시적으로 관리하여 모달이 다른 UI 요소(팝업 등) 위에

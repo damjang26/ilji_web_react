@@ -206,13 +206,9 @@ export default function App() {
             <BrowserRouter>
                 <JournalProvider>
                     <MyPageProvider>
-                        <ScheduleProvider>
-                            <TagProvider>
-                                <NotificationsProvider>
-                                    <AppContent/>
-                                </NotificationsProvider>
-                            </TagProvider>
-                        </ScheduleProvider>
+                        <NotificationsProvider>
+                            <AppContent/>
+                        </NotificationsProvider>
                     </MyPageProvider>
                 </JournalProvider>
             </BrowserRouter>
