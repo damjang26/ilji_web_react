@@ -190,7 +190,7 @@ const AppContent = () => {
             {/* ============================ */}
 
             {/* 일정 관리를 위한 동적 위치 모달 */}
-            <ScheduleModal />
+            <ScheduleModal/>
 
         </AppWrapper>
     ) : (
@@ -204,13 +204,9 @@ export default function App() {
             <BrowserRouter>
                 <JournalProvider>
                     <MyPageProvider>
-                        <ScheduleProvider>
-                            <TagProvider>
-                                <NotificationsProvider>
-                                    <AppContent/>
-                                </NotificationsProvider>
-                            </TagProvider>
-                        </ScheduleProvider>
+                        <NotificationsProvider>
+                            <AppContent/>
+                        </NotificationsProvider>
                     </MyPageProvider>
                 </JournalProvider>
             </BrowserRouter>

@@ -18,6 +18,10 @@ export default defineConfig({
                 target: 'http://localhost:8090', // 백엔드 서버 주소
                 changeOrigin: true,
             },
+            '/ai': {
+                target: 'http://localhost:8090', // AI 백엔드 서버 주소
+                changeOrigin: true,
+            },
             // [2025-09-15 Gemini] WebSocket proxy for notifications
             // To rollback, remove the '/ws' block below.
             '/ws': {
