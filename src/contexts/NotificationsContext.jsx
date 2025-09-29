@@ -31,7 +31,7 @@ const mapItem = (n) => {
     return {
         id: n.id, // 백엔드 필드명 `id` 사용
         type: n.type,
-        title: n.title || n.message_title || '내용 없는 알림', // `title`과 `message_title` 필드를 모두 지원하여 안정성 확보
+        title: n.title || n.message_title || 'Untitled Notification', // `title`과 `message_title` 필드를 모두 지원하여 안정성 확보
         body: n.body || n.message_body || '', // `body`와 `message_body` 필드를 모두 지원
         linkUrl: n.linkUrl, // 백엔드에서 제공하는 `linkUrl` 사용
         status: n.status, // 백엔드 필드명 `status` 사용
@@ -84,18 +84,18 @@ export function NotificationsProvider({ children }) {
         const socket = io(SOCKET_SERVER_URL);
 
         socket.on('connect', () => {
-            console.log('Socket.IO 서버에 연결되었습니다.');
+            console.log('Connected to Socket.IO server.');
             // 알림을 위한 사용자별 룸 참여
             socket.emit('join', { userId: user.id });
         });
 
         socket.on('disconnect', () => {
-            console.log('Socket.IO 서버에서 연결이 끊어졌습니다.');
+            console.log('Disconnected from Socket.IO server.');
         });
 
         // 알림 이벤트 수신 대기
         socket.on('notification', (notificationData) => {
-            console.log('새 알림 수신:', notificationData);
+            console.log('New notification received:', notificationData);
             const newItem = mapItem(notificationData);
             // 목록의 맨 위에 새 알림 추가
             setNotifications(prev => [newItem, ...prev]);
@@ -104,11 +104,11 @@ export function NotificationsProvider({ children }) {
         });
 
         socket.on('error', (error) => {
-            console.error('Socket.IO 오류:', error);
+            console.error('Socket.IO error:', error);
         });
 
         return () => {
-            console.log('Socket.IO 연결을 해제합니다.');
+            console.log('Disconnecting from Socket.IO.');
             socket.disconnect();
         };
     }, [user?.id]);
@@ -123,7 +123,7 @@ export function NotificationsProvider({ children }) {
             } catch (error) {
                 console.error("Failed to poll unread count:", error);
             }
-        }, 60000); // 60초마다 실행
+        }, 60000); // Executes every 60 seconds
 
         return () => clearInterval(interval);
     }, [user?.id]);

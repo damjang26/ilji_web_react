@@ -2,7 +2,6 @@ import React, {useCallback, useState, useEffect, useMemo} from 'react';
 import {
     FeedContainer,
     FindFriendsButton,
-    PostActions,
     PostContainer,
     PostContent,
     PostHeader,
@@ -28,29 +27,30 @@ import {FaRegHeart, FaHeart, FaChevronLeft, FaChevronRight} from "react-icons/fa
 import {formatRelativeTime} from '../../../utils/timeFormatter.js';
 import {TbNotebook} from "react-icons/tb";
 import {useAuth} from "../../../AuthContext.jsx";
-import {toggleLike, getPostLikers} from "../../../api.js"; // getPostLikers 임포트
+import {getOrCreateShareId, getPostLikers, toggleLike} from "../../../api.js"; // ✅ [수정] getOrCreateShareId 임포트
 import {HiPencilAlt} from "react-icons/hi";
 import {MdDeleteForever} from "react-icons/md";
 import {useNavigate, useLocation} from "react-router-dom";
 import {useJournal} from "../../../contexts/JournalContext.jsx";
-import {BiSolidShareAlt} from "react-icons/bi";
+import {TbShare3} from "react-icons/tb"; // ✅ [수정] 아이콘 변경
 import PostComment from "./PostComment.jsx";
 import PostLikersModal from "./PostLikersModal.jsx"; // 좋아요 목록 모달 임포트
 import FriendManagementModal from "../../friends/FriendManagementModal.jsx";
-import {message, Modal, Spin} from "antd"; // antd 메시지 임포트
+import {message, Modal, Spin} from "antd";
+import {BiSolidShareAlt} from "react-icons/bi"; // antd 메시지 임포트
 
-const JournalItem = ({
-                         journal,
-                         lastJournalElementRef,
-                         onDelete,
-                         handleEdit,
-                         user,
-                         handleLikeClick,
-                         onLikeCountClick,
-                         onCommentCountChange,
-                         onProfileClick, // ✅ [추가] 프로필 클릭 핸들러 prop
-                         onImageClick // ✅ [추가] 이미지 클릭 핸들러 prop
-                     }) => {
+export const JournalItem = ({
+                                journal,
+                                lastJournalElementRef,
+                                onDelete,
+                                handleEdit,
+                                user,
+                                handleLikeClick,
+                                onLikeCountClick,
+                                onCommentCountChange,
+                                onProfileClick, // ✅ [추가] 프로필 클릭 핸들러 prop
+                                onImageClick // ✅ [추가] 이미지 클릭 핸들러 prop
+                            }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     // ✅ [추가] 이미지가 가로로 긴지 여부를 저장하는 상태
     const [isLandscape, setIsLandscape] = useState(false);
@@ -96,19 +96,39 @@ const JournalItem = ({
         setCurrentImageIndex((prevIndex) => (prevIndex - 1 + imageUrls.length) % imageUrls.length);
     }, [imageUrls.length]);
 
+    // ✅ [수정] 공유 버튼 로직 전체 변경
     const handleShare = useCallback(async () => {
-        const shareUrl = window.location.href;
-        const shareTitle = `"${journal.writerNickname}"님의 일기`;
+        if (!journal?.id) return;
 
         try {
-            // Web Share API를 사용하여 네이티브 공유 UI를 엽니다.
-            await navigator.share({
-                title: shareTitle,
-                text: `[일지]에서 ${shareTitle}를 확인해보세요!`,
-                url: shareUrl,
-            });
+            // 1. 백엔드에 이 일기의 공유 ID를 요청합니다. (없으면 생성됨)
+            const response = await getOrCreateShareId(journal.id);
+            const shareId = response.data.shareId;
+
+            if (!shareId) {
+                throw new Error("공유 ID를 받아오지 못했습니다.");
+            }
+
+            // 2. 공유할 URL을 생성합니다.
+            const shareUrl = `${window.location.origin}/i-log/${shareId}`;
+            const shareTitle = `"${journal.writerNickname}"님의 일기`;
+            const shareText = `[일지]에서 ${shareTitle}를 확인해보세요!`;
+
+            // 3. Web Share API (모바일)를 우선적으로 시도합니다.
+            if (navigator.share) {
+                await navigator.share({
+                    title: shareTitle,
+                    text: shareText,
+                    url: shareUrl,
+                });
+            } else {
+                // 4. Web Share API가 없으면 (PC 등) 클립보드에 복사합니다.
+                await navigator.clipboard.writeText(shareUrl);
+                message.success("일기 주소가 클립보드에 복사되었습니다!");
+            }
         } catch (error) {
-            console.log("공유 기능이 지원되지 않거나 사용자가 취소했습니다.", error);
+            console.error("공유 처리 중 오류 발생:", error);
+            message.error("공유 링크를 생성하는 데 실패했습니다.");
         }
     }, [journal]);
 
@@ -158,7 +178,7 @@ const JournalItem = ({
                                         <div>
                                             {/* ✅ [수정] 닉네임 클릭 이벤트 추가 */}
                                             <span className="username"
-                                                  onClick={() => onProfileClick(journal.writerId)}>{journal.writerNickname || '사용자'}</span>
+                                                  onClick={() => onProfileClick(journal.writerId)}>{journal.writerNickname || 'User'}</span>
                                             <span className="date">{formatRelativeTime(journal.createdAt)}</span>
                                         </div>
                                         <ActionItem>
@@ -199,16 +219,16 @@ const JournalItem = ({
                 <IndexTabsContainer>
                     {/* ✅ [수정] onClick 핸들러에서 불필요한 화살표 함수를 제거하고, handleShare를 직접 호출하도록 변경합니다. */}
                     <IndexTabActions type="share" onClick={handleShare}>
-                        <button data-tooltip="공유"><BiSolidShareAlt/></button>
+                        <button data-tooltip="Share"><BiSolidShareAlt/></button>
                     </IndexTabActions>
                     {user?.id === journal.writerId && (
                         <>
                             <IndexTabActions type="edit" onClick={() => handleEdit(journal)}>
-                                <button data-tooltip="수정"><HiPencilAlt/></button>
+                                <button data-tooltip="Edit"><HiPencilAlt/></button>
                             </IndexTabActions>
                             <IndexTabActions type="delete"
                                              onClick={() => onDelete(journal.id, journal.logDate.split('T')[0])}>
-                                <button data-tooltip="삭제">
+                                <button data-tooltip="Delete">
                                     <MdDeleteForever/></button>
                             </IndexTabActions>
                         </>
@@ -234,7 +254,7 @@ const JournalItem = ({
                             <div>
                                 {/* ✅ [수정] 닉네임 클릭 이벤트 추가 */}
                                 <span className="username"
-                                      onClick={() => onProfileClick(journal.writerId)}>{journal.writerNickname || '사용자'}</span>
+                                      onClick={() => onProfileClick(journal.writerId)}>{journal.writerNickname || 'User'}</span>
                                 <span className="date">{formatRelativeTime(journal.createdAt)}</span>
                             </div>
 
@@ -274,16 +294,16 @@ const JournalItem = ({
             <IndexTabsContainer>
                 {/* ✅ [수정] onClick 핸들러에서 불필요한 화살표 함수를 제거하고, handleShare를 직접 호출하도록 변경합니다. */}
                 <IndexTabActions type="share" onClick={handleShare}>
-                    <button data-tooltip="공유"><BiSolidShareAlt/></button>
+                    <button data-tooltip="Share"><BiSolidShareAlt/></button>
                 </IndexTabActions>
                 {user?.id === journal.writerId && (
                     <>
                         <IndexTabActions type="edit" onClick={() => handleEdit(journal)}>
-                            <button data-tooltip="수정"><HiPencilAlt/></button>
+                            <button data-tooltip="Edit"><HiPencilAlt/></button>
                         </IndexTabActions>
                         <IndexTabActions type="delete"
                                          onClick={() => onDelete(journal.id, journal.logDate.split('T')[0])}>
-                            <button data-tooltip="삭제">
+                            <button data-tooltip="Delete">
                                 <MdDeleteForever/></button>
                         </IndexTabActions>
                     </>
@@ -346,24 +366,24 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
     // ✅ [수정] handleDelete 함수를 useCallback으로 감싸 불필요한 재생성을 방지합니다.
     const handleDelete = useCallback(async (journalId, journalDate) => {
         // 사용자가 정말 삭제할 것인지 확인
-        if (window.confirm("정말로 이 일기를 삭제하시겠습니까?")) {
+        if (window.confirm("Are you sure you want to delete this journal?")) {
             // ✅ [수정] 삭제 성공 시 실행될 콜백 함수 정의
             const onUpdate = (deletedId) => {
                 setPosts(prev => prev.filter(p => p.id !== deletedId));
-                alert("일기가 삭제되었습니다.");
+                alert("Journal deleted successfully.");
             };
 
             try {
                 // ✅ [수정] Context의 deleteJournal 함수에 콜백 전달
                 await deleteJournal(journalId, journalDate, onUpdate);
             } catch (error) {
-                alert("일기 삭제 중 오류가 발생했습니다.");
+                alert("An error occurred while deleting the journal.");
             }
         }
     }, [deleteJournal, setPosts]);
 
     const handleEdit = useCallback((journalToEdit) => {
-        navigate('/journal/write', {
+        navigate('/i-log/write', {
             state: {
                 journalToEdit: journalToEdit, // 수정할 일기 데이터를 전달합니다.
                 backgroundLocation: location, // 모달 뒤에 현재 페이지를 배경으로 유지합니다.
@@ -403,9 +423,9 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
             await toggleLike(postId, user?.id);
             // 성공 시: 이미 UI가 변경되었으므로 아무것도 하지 않습니다.
         } catch (error) {
-            console.error("좋아요 처리 중 오류 발생:", error);
+            console.error("Error processing like:", error);
             // 3. 실패 시: UI를 원래 상태로 되돌립니다.
-            message.error("좋아요 처리에 실패했습니다.");
+            message.error("Failed to process like.");
             setPosts(currentPosts =>
                 currentPosts.map(p => {
                     if (p.id === postId) {
@@ -429,13 +449,10 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
 
         try {
             const response = await getPostLikers(postId);
-            // ✅ [수정] console.log에서 쉼표(,)를 사용하거나 response.data를 직접 확인합니다.
-            console.log("좋아요 목록 응답 객체:", response);
-            console.log("좋아요 목록 데이터 (배열):", response.data);
             setLikersList(response.data);
         } catch (error) {
-            console.error("좋아요 목록을 불러오는 데 실패했습니다.", error);
-            message.error("좋아요 목록을 불러오는 데 실패했습니다.");
+            console.error("Failed to load likers list.", error);
+            message.error("Failed to load likers list.");
             setLikersModalOpen(false); // ✅ [추가] 에러 발생 시 모달을 닫습니다.
         } finally {
             setIsLikersLoading(false); // ✅ [추가] 성공/실패 여부와 관계없이 로딩 상태를 해제합니다.
@@ -452,7 +469,7 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
     const handleCommentCountChange = useCallback((postId, changeAmount) => {
         setPosts(currentPosts =>
             currentPosts.map(p =>
-                p.id === postId ? { ...p, commentCount: p.commentCount + changeAmount } : p
+                p.id === postId ? {...p, commentCount: p.commentCount + changeAmount} : p
             )
         );
     }, [setPosts]);
@@ -506,7 +523,7 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
                     );
                 })}
                 {/* 데이터 로딩 중일 때 스피너를 보여줍니다. */}
-                {loading && <div style={{ textAlign: 'center', padding: '20px' }}><Spin /></div>}
+                {loading && <div style={{textAlign: 'center', padding: '20px'}}><Spin/></div>}
                 {/* 더 이상 불러올 데이터가 없을 때 메시지를 보여줍니다. */}
                 {!loading && !hasMore && posts.length > 0 && (
                     <EndOfFeed>

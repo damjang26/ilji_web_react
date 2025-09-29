@@ -139,21 +139,6 @@ const Filter = ({canvas}) => {
     const selectedFilter = PRESET_FILTERS.find(f => f.type === activePreset);
 
     useEffect(() => {
-        const handleKeyDown = (e) => {
-            if ((e.key === "Delete" || e.key === "Backspace") && canvas) {
-                const activeObject = canvas.getActiveObject();
-                if (activeObject) {
-                    canvas.remove(activeObject);
-                    canvas.discardActiveObject();
-                    canvas.requestRenderAll();
-                }
-            }
-        };
-        window.addEventListener("keydown", handleKeyDown);
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [canvas]);
-
-    useEffect(() => {
         if (!canvas) return;
 
         const updateDeleteBtnPos = (target) => {

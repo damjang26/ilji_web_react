@@ -22,10 +22,10 @@ import {
     JournalItemLayoutContainer, LikeCountSpan,
     JournalItemContentContainer,
     ImageSliderContainer, OriginalImage, JournalDateHeading,
-    ImageSlide, SliderArrow, JournalEntryDate, CommentPlaceholder, SpringBinder, SpringBinder2,
+    ImageSlide, SliderArrow, JournalEntryDate, CommentPlaceholder, SpringBinder, SpringBinder2
 } from "../../../../styled_components/main/post/PostListStyled.jsx";
 import {SortOptionsContainer, SortButton} from '../../../../styled_components/main/mypage/MyPageStyled';
-import {FaChevronLeft, FaChevronRight, FaRegHeart} from "react-icons/fa"; // ✅ [추가] 화살표 아이콘
+import {FaChevronLeft, FaChevronRight, FaRegHeart, FaHeart} from "react-icons/fa"; // ✅ [추가] FaHeart 아이콘
 import {HiPencilAlt} from "react-icons/hi";
 import {MdDeleteForever} from "react-icons/md";
 import {RiQuillPenAiLine} from "react-icons/ri";
@@ -37,7 +37,16 @@ import {parseString} from "rrule/dist/esm/parsestring.js";
 
 // ✅ [신규] 각 일기 항목을 렌더링하는 컴포넌트
 // 각 아이템이 독립적인 이미지 슬라이더 상태를 갖도록 분리합니다.
-const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit, onImageClick, onLikeCountClick}) => {
+const JournalItem = ({
+                         journal,
+                         lastJournalElementRef,
+                         onDelete,
+                         onEdit,
+                         onImageClick,
+                         onLikeCountClick,
+                         user,
+                         handleLikeClick
+                     }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     // ✅ [추가] 이미지가 가로로 긴지 여부를 저장하는 상태
     const [isLandscape, setIsLandscape] = useState(false);
@@ -87,18 +96,18 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit, onImageC
     }, []);
 
     const handleShare = useCallback(async () => {
-        const shareUrl = window.location.href;
-        const shareTitle = `"${journal.writerNickname}"님의 일기`;
+        const shareUrl = `${window.location.origin}/journal/${journal.id}`;
+        const shareTitle = `Journal by "${journal.writerNickname}"`;
 
         try {
             // Web Share API를 사용하여 네이티브 공유 UI를 엽니다.
             await navigator.share({
                 title: shareTitle,
-                text: `[일지]에서 ${shareTitle}를 확인해보세요!`,
+                text: `Check out ${shareTitle} on [Ilji]!`,
                 url: shareUrl,
             });
         } catch (error) {
-            console.log("공유 기능이 지원되지 않거나 사용자가 취소했습니다.", error);
+            console.log("Web Share API not supported or share canceled by user.", error);
         }
     }, [journal]);
 
@@ -136,7 +145,7 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit, onImageC
                                     <div>
                                         {/* ✅ [수정] username과 date를 div로 묶음 */}
                                         <div>
-                                            <span className="username">{journal.writerNickname || '사용자'}</span>
+                                            <span className="username">{journal.writerNickname || 'User'}</span>
                                             <span className="date">{formatRelativeTime(journal.createdAt)}</span>
                                         </div>
 
@@ -149,7 +158,17 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit, onImageC
                                                     {journal.likeCount}
                                                 </LikeCountSpan>
                                             )}
-                                            <button><FaRegHeart size={24}/></button>
+                                            {/* ✅ [수정] PostList와 동일한 '좋아요' 버튼 로직 적용 */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleLikeClick(journal.id);
+                                                }}
+                                                disabled={journal.writerId === user?.id}
+                                                aria-label={journal.liked ? 'Unlike' : 'Like'}
+                                            >
+                                                {journal.liked ? <FaHeart color="red"/> : <FaRegHeart/>}
+                                            </button>
                                         </ActionItem>
                                     </div>
                                 </UserInfo>
@@ -167,13 +186,13 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit, onImageC
                 </PostContainer>
                 <IndexTabsContainer>
                     <IndexTabActions type="share" onClick={handleShare}>
-                        <button data-tooltip="공유"><BiSolidShareAlt/></button>
+                        <button data-tooltip="Share"><BiSolidShareAlt/></button>
                     </IndexTabActions>
                     <IndexTabActions type="edit" onClick={() => onEdit(journal)}>
-                        <button data-tooltip="수정"><HiPencilAlt/></button>
+                        <button data-tooltip="Edit"><HiPencilAlt/></button>
                     </IndexTabActions>
                     <IndexTabActions type="delete" onClick={() => onDelete(journal.id, journal.logDate.split('T')[0])}>
-                        <button data-tooltip="삭제">
+                        <button data-tooltip="Delete">
                             <MdDeleteForever/></button>
                     </IndexTabActions>
                 </IndexTabsContainer>
@@ -194,12 +213,11 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit, onImageC
                         <div>
                             {/* ✅ [수정] username과 date를 div로 묶음 */}
                             <div>
-                                <span className="username">{journal.writerNickname || '사용자'}</span>
+                                <span className="username">{journal.writerNickname || 'User'}</span>
                                 <span className="date">{formatRelativeTime(journal.createdAt)}</span>
                             </div>
 
                             <ActionItem>
-                                <button><FaRegHeart size={24}/></button>
                                 {journal.likeCount > 0 && (
                                     <LikeCountSpan onClick={(e) => {
                                         e.stopPropagation();
@@ -208,6 +226,17 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit, onImageC
                                         {journal.likeCount}
                                     </LikeCountSpan>
                                 )}
+                                {/* ✅ [수정] PostList와 동일한 '좋아요' 버튼 로직 적용 */}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleLikeClick(journal.id);
+                                    }}
+                                    disabled={journal.writerId === user?.id}
+                                    aria-label={journal.liked ? 'Unlike' : 'Like'}
+                                >
+                                    {journal.liked ? <FaHeart color="red"/> : <FaRegHeart/>}
+                                </button>
                             </ActionItem>
                         </div>
                     </UserInfo>
@@ -223,13 +252,13 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit, onImageC
             </PostContainer>
             <IndexTabsContainer>
                 <IndexTabActions type="share" onClick={handleShare}>
-                    <button data-tooltip="공유"><BiSolidShareAlt/></button>
+                    <button data-tooltip="Share"><BiSolidShareAlt/></button>
                 </IndexTabActions>
                 <IndexTabActions type="edit" onClick={() => onEdit(journal)}>
-                    <button data-tooltip="수정"><HiPencilAlt/></button>
+                    <button data-tooltip="Edit"><HiPencilAlt/></button>
                 </IndexTabActions>
                 <IndexTabActions type="delete" onClick={() => onDelete(journal.id, journal.logDate.split('T')[0])}>
-                    <button data-tooltip="삭제">
+                    <button data-tooltip="Delete">
                         <MdDeleteForever/></button>
                 </IndexTabActions>
             </IndexTabsContainer>
@@ -237,10 +266,11 @@ const JournalItem = ({journal, lastJournalElementRef, onDelete, onEdit, onImageC
     );
 };
 
-const JournalList = () => {
+// [수정] 부모 컴포넌트로부터 onPostChange 함수를 props로 받습니다.
+const JournalList = ({onPostChange}) => {
     // ✅ [수정] Context에서는 '수정/삭제' 기능만 가져옵니다. 데이터는 직접 관리합니다.
-    const {deleteJournal} = useJournal();
-    const {user: currentUser} = useAuth(); // 현재 로그인한 사용자 정보
+    const {deleteJournalEntryForList} = useJournal(); // [수정] 새로 만든 함수를 사용합니다.
+    const {user: currentUser, postChangeSignal, triggerPostChange} = useAuth(); // [수정] triggerPostChange를 가져옵니다.
     const {userId} = useParams();
     const navigate = useNavigate(); // ✅ navigate 함수 가져오기
     const location = useLocation(); // ✅ 모달 네비게이션의 배경 위치를 위해 추가합니다.
@@ -271,9 +301,7 @@ const JournalList = () => {
         const targetUserId = userId || currentUser?.id;
         if (!targetUserId) return; // 조회할 ID가 없으면 중단
 
-
         const currentPage = isNewSort ? 0 : page;
-        console.log("마이페이지 일기")
 
         try {
             const response = await getPagedJournals({
@@ -291,12 +319,12 @@ const JournalList = () => {
                 setPage(currentPage + 1);
             }
         } catch (error) {
-            console.error("일기 목록을 불러오는 데 실패했습니다.", error);
-            message.error("목록을 불러오는 데 실패했습니다.");
+            console.error("Failed to load journals.", error);
+            message.error("Failed to load the list.");
         } finally {
             setLoading(false);
         }
-    }, [userId, currentUser, sortBy, page, loading]); // ✅ [수정] 의존성 배열 변경
+    }, [userId, currentUser, sortBy, page]); // ✅ [수정] 의존성 배열에서 loading을 제거합니다.
 
     // ✅ [신규] 정렬 기준 변경 시, 데이터 새로고침 (LikeList와 동일)
     useEffect(() => {
@@ -317,10 +345,21 @@ const JournalList = () => {
         }
     }, [inView, hasMore, loading, fetchJournals]);
 
+    // [핵심 수정] AuthContext의 postChangeSignal을 감지하여 일기 목록을 새로고침합니다.
+    useEffect(() => {
+        // postChangeSignal이 0보다 클 때만 (초기 렌더링 방지) 실행합니다.
+        if (postChangeSignal > 0) {
+            // 현재 JournalList가 보여주는 사용자의 목록만 갱신합니다.
+            const targetUserId = userId || currentUser?.id;
+            if (targetUserId) fetchJournals(true);
+        }
+        // postChangeSignal이 바뀔 때마다 fetchJournals 함수를 실행합니다.
+    }, [postChangeSignal, fetchJournals]);
+
     // ✅ [수정] 'journal:updated' 전역 이벤트를 감지하여, 목록 전체를 다시 불러오는 대신 수정된 항목만 교체합니다.
     useEffect(() => {
         const handleJournalUpdate = (event) => {
-            const { updatedJournal } = event.detail;
+            const {updatedJournal} = event.detail;
             if (updatedJournal) {
                 setJournals(prevJournals =>
                     prevJournals.map(j =>
@@ -338,21 +377,19 @@ const JournalList = () => {
     // ✅ [수정] handleDelete 함수를 useCallback으로 감싸 불필요한 재생성을 방지합니다.
     const handleDelete = useCallback(async (journalId, journalDate) => {
         // 사용자가 정말 삭제할 것인지 확인
-        if (window.confirm("정말로 이 일기를 삭제하시겠습니까?")) {
-            // ✅ [수정] 삭제 성공 시 실행될 콜백 함수 정의
-            const onUpdate = (deletedId) => {
-                setJournals(prev => prev.filter(j => j.id !== deletedId));
-                alert("일기가 삭제되었습니다.");
-            };
-
+        if (window.confirm("Are you sure you want to delete this journal?")) {
             try {
-                // ✅ [수정] Context의 deleteJournal 함수에 콜백 전달
-                await deleteJournal(journalId, journalDate, onUpdate);
+                // 1. Context의 새 함수를 호출하여 서버에서 삭제합니다.
+                await deleteJournalEntryForList(journalId);
+                alert("Journal deleted successfully.");
+                // 2. [핵심] 삭제 성공 후, 전역 신호를 발생시킵니다.
+                triggerPostChange();
             } catch (error) {
-                alert("일기 삭제 중 오류가 발생했습니다.");
+                console.error("Error deleting journal", error);
+                alert("Failed to delete the journal.");
             }
         }
-    }, [deleteJournal]); // setJournals는 의존성에 필요 없습니다. onUpdate 콜백이 클로저를 통해 접근합니다.
+    }, [deleteJournalEntryForList, triggerPostChange]); // [수정] 의존성 배열을 새 함수에 맞게 변경합니다.
 
     // ✅ [추가] 수정 버튼 클릭 핸들러
     const handleEdit = useCallback((journalToEdit) => {
@@ -381,8 +418,8 @@ const JournalList = () => {
             const response = await getPostLikers(postId);
             setLikersList(response.data);
         } catch (error) {
-            console.error("좋아요 목록을 불러오는 데 실패했습니다.", error);
-            message.error("좋아요 목록을 불러오는 데 실패했습니다.");
+            console.error("Failed to load the list of likers.", error);
+            message.error("Failed to load the list of likers.");
             setLikersModalOpen(false);
         } finally {
             setIsLikersLoading(false);
@@ -396,10 +433,45 @@ const JournalList = () => {
         }
     }, [currentPostId, handleLikeCountClick]);
 
+    // ✅ [추가] PostList와 동일한 '좋아요' 클릭 핸들러
+    const handleLikeClick = useCallback(async (postId) => {
+        // 1. 낙관적 업데이트
+        setJournals(currentJournals =>
+            currentJournals.map(j => {
+                if (j.id === postId) {
+                    const newIsLiked = !j.liked;
+                    const newLikeCount = newIsLiked ? j.likeCount + 1 : j.likeCount - 1;
+                    return {...j, liked: newIsLiked, likeCount: newLikeCount};
+                }
+                return j;
+            })
+        );
+
+        try {
+            // 2. 서버에 API 요청
+            await toggleLike(postId, currentUser?.id);
+        } catch (error) {
+            console.error("Error processing like:", error);
+            message.error("Failed to process like.");
+            // 3. 실패 시 UI 롤백
+            setJournals(currentJournals =>
+                currentJournals.map(j => {
+                    if (j.id === postId) {
+                        // isLiked 상태와 likeCount를 원래대로 되돌립니다.
+                        const originalIsLiked = !j.liked;
+                        const originalLikeCount = originalIsLiked ? j.likeCount + 1 : j.likeCount - 1;
+                        return {...j, liked: originalIsLiked, likeCount: originalLikeCount};
+                    }
+                    return j;
+                })
+            );
+        }
+    }, [currentUser?.id, setJournals]);
+
 
     // 초기 로딩 중이거나, 작성된 일기가 없을 때의 UI 처리
     if (loading && journals.length === 0 && !hasMore) { // hasMore가 false가 되어야 최종적으로 없다고 판단
-        return <div>일기를 불러오는 중...</div>;
+        return <div>Loading journals...</div>;
     }
     if (!loading && journals.length === 0) {
         return (
@@ -422,9 +494,9 @@ const JournalList = () => {
         <div>
             {/* ✅ [신규] 정렬 탭 (LikeList와 동일) */}
             <SortOptionsContainer>
-                <SortButton $active={sortBy === 'latest'} onClick={() => setSortBy('latest')}>최신순</SortButton>
-                <SortButton $active={sortBy === 'popular'} onClick={() => setSortBy('popular')}>인기순</SortButton>
-                <SortButton $active={sortBy === 'oldest'} onClick={() => setSortBy('oldest')}>오래된순</SortButton>
+                <SortButton $active={sortBy === 'latest'} onClick={() => setSortBy('latest')}>Newest</SortButton>
+                <SortButton $active={sortBy === 'popular'} onClick={() => setSortBy('popular')}>Popular</SortButton>
+                <SortButton $active={sortBy === 'oldest'} onClick={() => setSortBy('oldest')}>Oldest</SortButton>
             </SortOptionsContainer>
 
             <FeedContainer>
@@ -440,6 +512,8 @@ const JournalList = () => {
                             onEdit={handleEdit}
                             onImageClick={handleImageClick}
                             onLikeCountClick={handleLikeCountClick}
+                            user={currentUser} // ✅ [추가] 현재 사용자 정보 전달
+                            handleLikeClick={handleLikeClick} // ✅ [추가] 좋아요 핸들러 전달
                         />
                     );
                 })}
@@ -454,7 +528,7 @@ const JournalList = () => {
                 footer={null}
                 centered
                 width="auto"
-                styles={{ body: { padding: 0, background: 'none' } }}
+                styles={{body: {padding: 0, background: 'none'}}}
             >
                 <OriginalImage src={selectedImageUrl} alt="Original post image"/>
             </Modal>

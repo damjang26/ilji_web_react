@@ -835,11 +835,14 @@ export const CommentLikeCount = styled.span`
     color: #8e8e8e;
     font-weight: 500;
     cursor: pointer;
+    padding: 2px;
+    border-radius: 3px;
 
     &:hover {
         text-decoration: underline;
         font-weight: 600; /* bold 스타일 */
-        background-color: #cccccc; /* 연한 회색 배경 */
+        color: #555;
+        background-color: #f0f2f5;
     }
 `;
 

@@ -30,6 +30,7 @@ import ScheduleTab from "./components/right_side_bar/ScheduleTab.jsx";
 import ChatRoomList from "./components/right_side_bar/ChatRoomList.jsx";
 import Chat from "./components/right_side_bar/Chat.jsx";
 import JournalDatePicker from "./components/right_side_bar/JournalDatePicker.jsx"; // ✅ [추가]
+import SharedJournalPage from "./components/main/journal/SharedJournalPage.jsx"; // ✅ [추가] 공유 페이지
 
 const AppWrapper = styled.div`
     display: flex;
@@ -57,17 +58,17 @@ const ContentWrapper = styled.div`
 const getSchedulePanelTitle = (type) => {
     switch (type) {
         case 'new':
-            return '새 일정 추가';
+            return 'Add new schedule';
         case 'edit':
-            return '일정 수정';
+            return 'Edit schedule';
         case 'detail':
-            return '일정 상세 정보';
+            return 'Schedule Details';
         // case 'list_for_date':
         //     return '선택한 날짜의 일정';
         case 'rrule_form':
-            return '반복 설정';
+            return 'Repeat settings';
         default:
-            return '일정';
+            return 'Schedule';
     }
 }
 
@@ -102,7 +103,7 @@ const AppContent = () => {
     const handleDateSelectForJournal = (date) => {
         // 패널을 닫고, 일기 작성 모달로 이동
         setActivePanel(null);
-        navigate("/journal/write", {
+        navigate("/i-log/write", {
             state: {
                 backgroundLocation: location,
                 selectedDate: date,
@@ -127,13 +128,14 @@ const AppContent = () => {
             <ContentWrapper>
                 <Routes location={background || location}>
                     <Route path="/set-nickname" element={<SetNicknamePage/>}/>
+                    <Route path="/i-log/:shareId" element={<SharedJournalPage/>}/>
                     <Route path="/*" element={<Main/>}/>
                 </Routes>
 
                 {background && (
                     <Routes>
-                        <Route path="/journal/write" element={<JournalWriteModal/>}/>
-                        <Route path="/journals/:journalId" element={<JournalViewModal/>}/>
+                        <Route path="/i-log/write" element={<JournalWriteModal/>}/>
+                        <Route path="/myi-log/:journalId" element={<JournalViewModal/>}/>
                     </Routes>
                 )}
             </ContentWrapper>

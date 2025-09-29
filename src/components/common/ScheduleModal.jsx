@@ -85,7 +85,7 @@ const ScheduleModal = () => {
                 onMouseDown={(e) => e.stopPropagation()}
             >
                 <ModalHeader ref={headerRef}>
-                    <h2>{title || "일정 관리"}</h2>
+                    <h2>{title || "schedule management"}</h2>
                     <CloseButton onClick={closeScheduleModal}>&times;</CloseButton>
                 </ModalHeader>
                 <ModalContent>
