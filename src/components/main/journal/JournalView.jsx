@@ -2,7 +2,7 @@ import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
 import {useJournal} from '../../../contexts/JournalContext';
 import {message} from "antd";
-import {getPostLikers} from "../../../api.js";
+import {getPostLikers, toggleLike} from "../../../api.js";
 import {
     JournalViewWrapper,
     ViewContainer,
@@ -24,7 +24,8 @@ import {FaChevronLeft, FaChevronRight, FaRegHeart} from "react-icons/fa";
 import {useAuth} from "../../../AuthContext.jsx";
 import {BiSolidShareAlt} from "react-icons/bi";
 import PostLikersModal from "../post/PostLikersModal.jsx";
-import PostComment from "../post/PostComment.jsx"; // ✅ [추가] PostComment 컴포넌트 임포트
+import PostComment from "../post/PostComment.jsx";
+import {shareJournal} from "../../../utils/shareUtils.js"; // ✅ [추가] 공유 부품 임포트
 
 const JournalView = () => {
     const {user} = useAuth();
@@ -119,21 +120,9 @@ const JournalView = () => {
         });
     }, [navigate, location.state?.backgroundLocation]);
 
-    // ✅ [신규] 공유 버튼 클릭 핸들러
-    const handleShare = useCallback(async () => {
-        const shareUrl = window.location.href;
-        const shareTitle = `Journal by "${journal.writerNickname}"`;
-
-        try {
-            // Web Share API를 사용하여 네이티브 공유 UI를 엽니다.
-            await navigator.share({
-                title: shareTitle,
-                text: `Check out ${shareTitle} on [Ilji]!`,
-                url: shareUrl,
-            });
-        } catch (error) {
-            console.log("Web Share API not supported or share canceled by user.", error);
-        }
+    // ✅ [수정] 공유 로직을 외부 유틸리티 함수로 대체
+    const handleShare = useCallback(() => {
+        shareJournal(journal);
     }, [journal]);
 
     const handleNextImage = useCallback(() => {

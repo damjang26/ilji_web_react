@@ -2,7 +2,7 @@ import React, {useState, useEffect, useMemo, useCallback} from 'react';
 import {useJournal} from "../../../../contexts/JournalContext.jsx";
 import {useAuth} from "../../../../AuthContext.jsx";
 import {message, Modal, Spin} from "antd";
-import {getPostLikers, getPagedJournals} from "../../../../api.js";
+import {getPagedJournals, getPostLikers, toggleLike} from "../../../../api.js";
 import {useInView} from "react-intersection-observer";
 import {useNavigate, useLocation, useParams} from "react-router-dom"; // ✅ 페이지 이동을 위해 추가
 import {
@@ -33,7 +33,7 @@ import {formatRelativeTime} from "../../../../utils/timeFormatter.js";
 import {BiSolidShareAlt} from "react-icons/bi";
 import PostLikersModal from "../../post/PostLikersModal.jsx";
 import PostComment from "../../post/PostComment.jsx";
-import {parseString} from "rrule/dist/esm/parsestring.js";
+import {shareJournal} from "../../../../utils/shareUtils.js"; // ✅ [추가] 공유 부품 임포트
 
 // ✅ [신규] 각 일기 항목을 렌더링하는 컴포넌트
 // 각 아이템이 독립적인 이미지 슬라이더 상태를 갖도록 분리합니다.
@@ -45,7 +45,9 @@ const JournalItem = ({
                          onImageClick,
                          onLikeCountClick,
                          user,
-                         handleLikeClick
+                         handleLikeClick,
+                         onCommentCountChange, // ✅ [추가] 댓글 개수 변경 핸들러 prop
+                         onProfileClick
                      }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     // ✅ [추가] 이미지가 가로로 긴지 여부를 저장하는 상태
@@ -95,20 +97,9 @@ const JournalItem = ({
         setIsCommentOpen(prev => !prev);
     }, []);
 
-    const handleShare = useCallback(async () => {
-        const shareUrl = `${window.location.origin}/journal/${journal.id}`;
-        const shareTitle = `Journal by "${journal.writerNickname}"`;
-
-        try {
-            // Web Share API를 사용하여 네이티브 공유 UI를 엽니다.
-            await navigator.share({
-                title: shareTitle,
-                text: `Check out ${shareTitle} on [Ilji]!`,
-                url: shareUrl,
-            });
-        } catch (error) {
-            console.log("Web Share API not supported or share canceled by user.", error);
-        }
+    // ✅ [수정] 공유 로직을 외부 유틸리티 함수로 대체
+    const handleShare = useCallback(() => {
+        shareJournal(journal);
     }, [journal]);
 
     // 이미지가 있는 경우: 2단 레이아웃 (슬라이더 포함)
@@ -139,13 +130,16 @@ const JournalItem = ({
                         <JournalItemContentContainer>
                             <PostHeader>
                                 <ProfileImage
+                                    onClick={() => onProfileClick(journal.writerId)}
                                     src={journal.writerProfileImage || '/path/to/default/profile.png'}
                                     alt={`${journal.writerNickname} profile`}/>
                                 <UserInfo>
                                     <div>
                                         {/* ✅ [수정] username과 date를 div로 묶음 */}
                                         <div>
-                                            <span className="username">{journal.writerNickname || 'User'}</span>
+                                            <span className="username"
+                                                  onClick={() => onProfileClick(journal.writerId)}
+                                            >{journal.writerNickname || 'User'}</span>
                                             <span className="date">{formatRelativeTime(journal.createdAt)}</span>
                                         </div>
 
@@ -182,7 +176,9 @@ const JournalItem = ({
                         </JournalItemContentContainer>
                     </JournalItemLayoutContainer>
                     <CommentPlaceholder/>
-                    <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}/>
+                    {/* ✅ [수정] onCommentCountChange prop을 전달합니다. */}
+                    <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}
+                                 onCommentCountChange={onCommentCountChange}/>
                 </PostContainer>
                 <IndexTabsContainer>
                     <IndexTabActions type="share" onClick={handleShare}>
@@ -207,13 +203,16 @@ const JournalItem = ({
             <SpringBinder2 src={spring} alt="Spring binder"/>
             <PostContainer className="not-has-image" isCommentOpen={isCommentOpen}>
                 <PostHeader>
-                    <ProfileImage src={journal.writerProfileImage || '/path/to/default/profile.png'}
-                                  alt={`${journal.writerNickname} profile`}/>
+                    <ProfileImage
+                        onClick={() => onProfileClick(journal.writerId)}
+                        src={journal.writerProfileImage || '/path/to/default/profile.png'}
+                        alt={`${journal.writerNickname} profile`}/>
                     <UserInfo>
                         <div>
                             {/* ✅ [수정] username과 date를 div로 묶음 */}
                             <div>
-                                <span className="username">{journal.writerNickname || 'User'}</span>
+                                <span className="username"
+                                      onClick={() => onProfileClick(journal.writerId)}>{journal.writerNickname || 'User'}</span>
                                 <span className="date">{formatRelativeTime(journal.createdAt)}</span>
                             </div>
 
@@ -248,7 +247,9 @@ const JournalItem = ({
                     {journal.content}
                 </PostContent>
                 <CommentPlaceholder/>
-                <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}/>
+                {/* ✅ [수정] onCommentCountChange prop을 전달합니다. */}
+                <PostComment journal={journal} isOpen={isCommentOpen} onToggle={toggleCommentView}
+                             onCommentCountChange={onCommentCountChange}/>
             </PostContainer>
             <IndexTabsContainer>
                 <IndexTabActions type="share" onClick={handleShare}>
@@ -299,7 +300,11 @@ const JournalList = ({onPostChange}) => {
 
         // ✅ [수정] 조회 대상 userId 결정. URL에 userId가 없으면 내 ID를 사용합니다.
         const targetUserId = userId || currentUser?.id;
-        if (!targetUserId) return; // 조회할 ID가 없으면 중단
+        if (!targetUserId) { // 조회할 ID가 없으면 중단
+            setLoading(false);
+            setHasMore(false); // 더 이상 로드할 데이터가 없음을 명시
+            return;
+        }
 
         const currentPage = isNewSort ? 0 : page;
 
@@ -328,15 +333,19 @@ const JournalList = ({onPostChange}) => {
 
     // ✅ [신규] 정렬 기준 변경 시, 데이터 새로고침 (LikeList와 동일)
     useEffect(() => {
-        // ✅ [수정] 조회 대상 ID가 확정되면 데이터를 불러옵니다.
+        // ✅ [수정] 조회 대상 ID(내 ID 또는 다른 사용자 ID)가 확정되어야만 API를 호출합니다.
+        // AuthContext에서 currentUser 정보가 로드될 때까지 기다리는 효과가 있습니다.
         const targetUserId = userId || currentUser?.id;
-        if (targetUserId) {
-            setJournals([]);
-            setPage(0);
-            setHasMore(true);
-            fetchJournals(true);
+        if (!targetUserId) {
+            return; // ID가 없으면 아무 작업도 하지 않고 종료합니다.
         }
-    }, [sortBy, userId, currentUser]); // ✅ [수정] 의존성 배열 변경
+
+        setJournals([]);
+        setPage(0);
+        setHasMore(true);
+        fetchJournals(true);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sortBy, userId, currentUser?.id]); // ✅ [수정] 의존성을 currentUser.id로 명시하고, fetchJournals를 제거합니다.
 
     // ✅ [신규] 무한 스크롤 트리거 (LikeList와 동일)
     useEffect(() => {
@@ -391,9 +400,16 @@ const JournalList = ({onPostChange}) => {
         }
     }, [deleteJournalEntryForList, triggerPostChange]); // [수정] 의존성 배열을 새 함수에 맞게 변경합니다.
 
+    // ✅ [추가] 프로필 클릭 핸들러
+    const handleProfileClick = useCallback((writerId) => {
+        if (writerId) {
+            navigate(`/mypage/${writerId}`);
+        }
+    }, [navigate]);
+
     // ✅ [추가] 수정 버튼 클릭 핸들러
     const handleEdit = useCallback((journalToEdit) => {
-        navigate('/journal/write', {
+        navigate('/i-log/write', {
             state: {
                 journalToEdit: journalToEdit, // 수정할 일기 데이터를 전달합니다.
                 backgroundLocation: location, // 모달 뒤에 현재 페이지를 배경으로 유지합니다.
@@ -468,27 +484,15 @@ const JournalList = ({onPostChange}) => {
         }
     }, [currentUser?.id, setJournals]);
 
-
-    // 초기 로딩 중이거나, 작성된 일기가 없을 때의 UI 처리
-    if (loading && journals.length === 0 && !hasMore) { // hasMore가 false가 되어야 최종적으로 없다고 판단
-        return <div>Loading journals...</div>;
-    }
-    if (!loading && journals.length === 0) {
-        return (
-            <EmptyFeedContainer>
-                <RiQuillPenAiLine size={64}/>
-                <h2>Nothing here yet...</h2>
-                <EmptyFeedText>
-                    Be the first to share your story today!
-                </EmptyFeedText>
-                <WriteJournalButton onClick={() => navigate('/journal/write', {
-                    state: {backgroundLocation: location}
-                })}>
-                    Write Now
-                </WriteJournalButton>
-            </EmptyFeedContainer>
+    // ✅ [추가] PostList와 동일한 댓글 개수 변경 핸들러
+    const handleCommentCountChange = useCallback((postId, changeAmount) => {
+        setJournals(currentJournals =>
+            currentJournals.map(j =>
+                j.id === postId ? {...j, commentCount: j.commentCount + changeAmount} : j
+            )
         );
-    }
+    }, [setJournals]);
+
 
     return (
         <div>
@@ -499,27 +503,50 @@ const JournalList = ({onPostChange}) => {
                 <SortButton $active={sortBy === 'oldest'} onClick={() => setSortBy('oldest')}>Oldest</SortButton>
             </SortOptionsContainer>
 
-            <FeedContainer>
-                {journals.map((journal, index) => {
-                    // 현재 렌더링하는 요소가 마지막 요소인지 확인
-                    const isLastElement = journals.length === index + 1;
-                    return (
-                        <JournalItem
-                            key={journal.id}
-                            journal={journal}
-                            lastJournalElementRef={isLastElement ? ref : null} // ✅ [수정] useInView의 ref 전달
-                            onDelete={handleDelete}
-                            onEdit={handleEdit}
-                            onImageClick={handleImageClick}
-                            onLikeCountClick={handleLikeCountClick}
-                            user={currentUser} // ✅ [추가] 현재 사용자 정보 전달
-                            handleLikeClick={handleLikeClick} // ✅ [추가] 좋아요 핸들러 전달
-                        />
-                    );
-                })}
-            </FeedContainer>
-
-            {loading && <div style={{textAlign: 'center', padding: '20px'}}><Spin/></div>}
+            {/* ✅ [수정] 로딩 및 데이터 상태에 따라 다른 컨텐츠를 렌더링합니다. */}
+            {loading && journals.length === 0 ? (
+                // 1. 초기 로딩 시: 중앙 스피너
+                <div style={{textAlign: 'center', padding: '40px'}}><Spin size="large"/></div>
+            ) : !loading && journals.length === 0 ? (
+                // 2. 로딩 완료 후 데이터가 없을 시: '일기 없음' 화면
+                <EmptyFeedContainer>
+                    <RiQuillPenAiLine size={64}/>
+                    <h2>Nothing here yet...</h2>
+                    <EmptyFeedText>
+                        Be the first to share your story today!
+                    </EmptyFeedText>
+                    <WriteJournalButton onClick={() => navigate('/journal/write', {
+                        state: {backgroundLocation: location}
+                    })}>
+                        Write Now
+                    </WriteJournalButton>
+                </EmptyFeedContainer>
+            ) : (
+                // 3. 데이터가 있을 시: 일기 목록
+                <>
+                    <FeedContainer>
+                        {journals.map((journal, index) => {
+                            const isLastElement = journals.length === index + 1;
+                            return (
+                                <JournalItem
+                                    key={journal.id}
+                                    journal={journal}
+                                    lastJournalElementRef={isLastElement ? ref : null}
+                                    onDelete={handleDelete}
+                                    onEdit={handleEdit}
+                                    onImageClick={handleImageClick}
+                                    onLikeCountClick={handleLikeCountClick}
+                                    user={currentUser}
+                                    handleLikeClick={handleLikeClick}
+                                    onProfileClick={handleProfileClick}
+                                    onCommentCountChange={(amount) => handleCommentCountChange(journal.id, amount)}
+                                />
+                            );
+                        })}
+                    </FeedContainer>
+                    {loading && <div style={{textAlign: 'center', padding: '20px'}}><Spin/></div>}
+                </>
+            )}
 
             {/* ✅ [추가] 이미지 원본 보기 모달 */}
             <Modal
