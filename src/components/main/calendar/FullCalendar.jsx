@@ -23,6 +23,7 @@ import {
     LuBookLock,
     LuBookUser,
 } from "react-icons/lu"; // 날짜 옆 상태 아이콘
+import {shareJournal} from "../../../utils/shareUtils.js"; // ✅ [추가] 공유 부품 임포트
 import {useNavigate, useLocation} from "react-router-dom";
 
 import {RiQuillPenAiFill} from "react-icons/ri";
@@ -79,7 +80,7 @@ export default function FullCalendarExample() {
         const handleAction = async () => {
             if (action === 'openJournalModal') {
                 const dateFromState = restState?.date;
-                navigate("/journal/write", {
+                navigate("/i-log/write", {
                     state: {
                         backgroundLocation: cleanBackgroundLocation, // 깨끗한 location 전달
                         selectedDate: dateFromState ? new Date(dateFromState) : new Date(),
@@ -400,7 +401,14 @@ export default function FullCalendarExample() {
                             <DiaryPopoverButton onClick={handleDeleteJournal}>
                                 <FaTrash/> Delete i-log
                             </DiaryPopoverButton>
-                            <DiaryPopoverButton>
+                            {/* ✅ [수정] 공유 버튼에 onClick 핸들러를 추가합니다. */}
+                            <DiaryPopoverButton onClick={() => {
+                                const journal = getJournal(diaryPopover.date);
+                                if (journal) {
+                                    shareJournal(journal);
+                                    setDiaryPopover(p => ({...p, visible: false})); // 공유 후 팝오버 닫기
+                                }
+                            }}>
                                 <FaShareAlt/> Share i-log
                             </DiaryPopoverButton>
                         </>

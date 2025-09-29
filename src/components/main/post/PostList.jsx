@@ -27,17 +27,17 @@ import {FaRegHeart, FaHeart, FaChevronLeft, FaChevronRight} from "react-icons/fa
 import {formatRelativeTime} from '../../../utils/timeFormatter.js';
 import {TbNotebook} from "react-icons/tb";
 import {useAuth} from "../../../AuthContext.jsx";
-import {getOrCreateShareId, getPostLikers, toggleLike} from "../../../api.js"; // ✅ [수정] getOrCreateShareId 임포트
+import {getPostLikers, toggleLike} from "../../../api.js";
 import {HiPencilAlt} from "react-icons/hi";
 import {MdDeleteForever} from "react-icons/md";
 import {useNavigate, useLocation} from "react-router-dom";
 import {useJournal} from "../../../contexts/JournalContext.jsx";
-import {TbShare3} from "react-icons/tb"; // ✅ [수정] 아이콘 변경
 import PostComment from "./PostComment.jsx";
 import PostLikersModal from "./PostLikersModal.jsx"; // 좋아요 목록 모달 임포트
 import FriendManagementModal from "../../friends/FriendManagementModal.jsx";
 import {message, Modal, Spin} from "antd";
 import {BiSolidShareAlt} from "react-icons/bi"; // antd 메시지 임포트
+import {shareJournal} from "../../../utils/shareUtils.js"; // ✅ [추가] 공유 부품 임포트
 
 export const JournalItem = ({
                                 journal,
@@ -96,40 +96,9 @@ export const JournalItem = ({
         setCurrentImageIndex((prevIndex) => (prevIndex - 1 + imageUrls.length) % imageUrls.length);
     }, [imageUrls.length]);
 
-    // ✅ [수정] 공유 버튼 로직 전체 변경
-    const handleShare = useCallback(async () => {
-        if (!journal?.id) return;
-
-        try {
-            // 1. 백엔드에 이 일기의 공유 ID를 요청합니다. (없으면 생성됨)
-            const response = await getOrCreateShareId(journal.id);
-            const shareId = response.data.shareId;
-
-            if (!shareId) {
-                throw new Error("공유 ID를 받아오지 못했습니다.");
-            }
-
-            // 2. 공유할 URL을 생성합니다.
-            const shareUrl = `${window.location.origin}/i-log/${shareId}`;
-            const shareTitle = `"${journal.writerNickname}"님의 일기`;
-            const shareText = `[일지]에서 ${shareTitle}를 확인해보세요!`;
-
-            // 3. Web Share API (모바일)를 우선적으로 시도합니다.
-            if (navigator.share) {
-                await navigator.share({
-                    title: shareTitle,
-                    text: shareText,
-                    url: shareUrl,
-                });
-            } else {
-                // 4. Web Share API가 없으면 (PC 등) 클립보드에 복사합니다.
-                await navigator.clipboard.writeText(shareUrl);
-                message.success("일기 주소가 클립보드에 복사되었습니다!");
-            }
-        } catch (error) {
-            console.error("공유 처리 중 오류 발생:", error);
-            message.error("공유 링크를 생성하는 데 실패했습니다.");
-        }
+    // ✅ [수정] 공유 로직을 외부 유틸리티 함수로 대체
+    const handleShare = useCallback(() => {
+        shareJournal(journal);
     }, [journal]);
 
     // ✅ [추가] 댓글 창을 토글하는 함수
@@ -527,8 +496,8 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
                 {/* 더 이상 불러올 데이터가 없을 때 메시지를 보여줍니다. */}
                 {!loading && !hasMore && posts.length > 0 && (
                     <EndOfFeed>
-                        일기장을 끝까지 펼쳐봤네요! 🌿<br/>
-                        새로운 친구를 팔로우해서 이야기를 이어가 보세요
+                        You’ve reached the last page 🌿<br/>
+                        Follow new friends and discover more stories!
                     </EndOfFeed>
                 )}
             </FeedContainer>

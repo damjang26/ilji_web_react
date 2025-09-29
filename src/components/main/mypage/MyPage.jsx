@@ -170,7 +170,7 @@ const MyPage = () => {
             >
                 {/* [수정] MypageImg 내부에 BannerImage를 렌더링 */}
                 {profile.bannerImage &&
-                    <BannerImage src={profile.bannerImage} yPosition={profile.bannerPositionY} alt="배너 이미지"/>}
+                    <BannerImage src={profile.bannerImage} alt="배너 이미지"/>}
 
             </MypageImg>
             <ContentBox>

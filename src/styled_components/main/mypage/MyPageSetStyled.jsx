@@ -128,7 +128,7 @@ const BaseButton = styled.button`
 export const SubmitButton = styled(BaseButton)`
     color: white;
     /* ✅ [적용] 요청하신 3색 그라데이션 배경 */
-    background: linear-gradient(45deg, #97c0ff, #7b5fff, #ff7eb9);
+    background: #7b5fff;
     box-shadow: 0 4px 15px rgba(123, 95, 255, 0.3);
 
     &:hover:not(:disabled) {
