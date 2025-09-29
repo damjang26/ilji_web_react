@@ -125,6 +125,14 @@ apiNoti.interceptors.request.use(
  */
 export const getFeed = (params) => api.get('/api/i-log/feed', {params});
 
+/**
+ * 특정 일기의 공유 ID를 가져오거나 생성합니다.
+ * @param {number} journalId - 일기의 ID
+ * @returns {Promise<AxiosResponse<any>>} - { shareId: "..." } 형태의 응답을 포함하는 Promise
+ */
+export const getOrCreateShareId = (journalId) => {
+    return api.post(`/api/i-log/${journalId}/share`);
+};
 // =================================
 // 좋아요 관련 API
 // =================================
@@ -156,7 +164,7 @@ export const getUserJournals = (userId) => api.get(`/api/i-log/user/${userId}`);
  */
 export const getPagedJournals = (params) => {
     // 예: /api/i-log/user/123?page=0&size=10&sort=logDate,desc
-    const { userId, page, size, sortBy } = params;
+    const {userId, page, size, sortBy} = params;
 
     let sortQuery;
     switch (sortBy) {
@@ -257,5 +265,5 @@ export const leaveChatRoom = (roomId) => {
  @param {number[]} userIds - 참여할 사용자들의 ID 배열
  @returns {Promise<axios.AxiosResponse<any>>}*/
 export const createChatRoom = (roomName, userIds) => {
-    return api.post("/api/chat/create", { roomName, userIds });
+    return api.post("/api/chat/create", {roomName, userIds});
 };

@@ -30,6 +30,7 @@ import ScheduleTab from "./components/right_side_bar/ScheduleTab.jsx";
 import ChatRoomList from "./components/right_side_bar/ChatRoomList.jsx";
 import Chat from "./components/right_side_bar/Chat.jsx";
 import JournalDatePicker from "./components/right_side_bar/JournalDatePicker.jsx"; // ✅ [추가]
+import SharedJournalPage from "./components/main/journal/SharedJournalPage.jsx"; // ✅ [추가] 공유 페이지
 
 const AppWrapper = styled.div`
     display: flex;
@@ -102,7 +103,7 @@ const AppContent = () => {
     const handleDateSelectForJournal = (date) => {
         // 패널을 닫고, 일기 작성 모달로 이동
         setActivePanel(null);
-        navigate("/journal/write", {
+        navigate("/i-log/write", {
             state: {
                 backgroundLocation: location,
                 selectedDate: date,
@@ -127,13 +128,14 @@ const AppContent = () => {
             <ContentWrapper>
                 <Routes location={background || location}>
                     <Route path="/set-nickname" element={<SetNicknamePage/>}/>
+                    <Route path="/i-log/:shareId" element={<SharedJournalPage/>}/>
                     <Route path="/*" element={<Main/>}/>
                 </Routes>
 
                 {background && (
                     <Routes>
-                        <Route path="/journal/write" element={<JournalWriteModal/>}/>
-                        <Route path="/journals/:journalId" element={<JournalViewModal/>}/>
+                        <Route path="/i-log/write" element={<JournalWriteModal/>}/>
+                        <Route path="/myi-log/:journalId" element={<JournalViewModal/>}/>
                     </Routes>
                 )}
             </ContentWrapper>
@@ -190,7 +192,7 @@ const AppContent = () => {
             {/* ============================ */}
 
             {/* 일정 관리를 위한 동적 위치 모달 */}
-            <ScheduleModal />
+            <ScheduleModal/>
 
         </AppWrapper>
     ) : (

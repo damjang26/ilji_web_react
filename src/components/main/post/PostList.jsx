@@ -2,7 +2,6 @@ import React, {useCallback, useState, useEffect, useMemo} from 'react';
 import {
     FeedContainer,
     FindFriendsButton,
-    PostActions,
     PostContainer,
     PostContent,
     PostHeader,
@@ -28,29 +27,30 @@ import {FaRegHeart, FaHeart, FaChevronLeft, FaChevronRight} from "react-icons/fa
 import {formatRelativeTime} from '../../../utils/timeFormatter.js';
 import {TbNotebook} from "react-icons/tb";
 import {useAuth} from "../../../AuthContext.jsx";
-import {toggleLike, getPostLikers} from "../../../api.js"; // getPostLikers 임포트
+import {getOrCreateShareId, getPostLikers, toggleLike} from "../../../api.js"; // ✅ [수정] getOrCreateShareId 임포트
 import {HiPencilAlt} from "react-icons/hi";
 import {MdDeleteForever} from "react-icons/md";
 import {useNavigate, useLocation} from "react-router-dom";
 import {useJournal} from "../../../contexts/JournalContext.jsx";
-import {BiSolidShareAlt} from "react-icons/bi";
+import {TbShare3} from "react-icons/tb"; // ✅ [수정] 아이콘 변경
 import PostComment from "./PostComment.jsx";
 import PostLikersModal from "./PostLikersModal.jsx"; // 좋아요 목록 모달 임포트
 import FriendManagementModal from "../../friends/FriendManagementModal.jsx";
-import {message, Modal, Spin} from "antd"; // antd 메시지 임포트
+import {message, Modal, Spin} from "antd";
+import {BiSolidShareAlt} from "react-icons/bi"; // antd 메시지 임포트
 
-const JournalItem = ({
-                         journal,
-                         lastJournalElementRef,
-                         onDelete,
-                         handleEdit,
-                         user,
-                         handleLikeClick,
-                         onLikeCountClick,
-                         onCommentCountChange,
-                         onProfileClick, // ✅ [추가] 프로필 클릭 핸들러 prop
-                         onImageClick // ✅ [추가] 이미지 클릭 핸들러 prop
-                     }) => {
+export const JournalItem = ({
+                                journal,
+                                lastJournalElementRef,
+                                onDelete,
+                                handleEdit,
+                                user,
+                                handleLikeClick,
+                                onLikeCountClick,
+                                onCommentCountChange,
+                                onProfileClick, // ✅ [추가] 프로필 클릭 핸들러 prop
+                                onImageClick // ✅ [추가] 이미지 클릭 핸들러 prop
+                            }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     // ✅ [추가] 이미지가 가로로 긴지 여부를 저장하는 상태
     const [isLandscape, setIsLandscape] = useState(false);
@@ -96,19 +96,39 @@ const JournalItem = ({
         setCurrentImageIndex((prevIndex) => (prevIndex - 1 + imageUrls.length) % imageUrls.length);
     }, [imageUrls.length]);
 
+    // ✅ [수정] 공유 버튼 로직 전체 변경
     const handleShare = useCallback(async () => {
-        const shareUrl = `${window.location.origin}/journal/${journal.id}`;
-        const shareTitle = `Journal by "${journal.writerNickname}"`;
+        if (!journal?.id) return;
 
         try {
-            // Web Share API를 사용하여 네이티브 공유 UI를 엽니다.
-            await navigator.share({
-                title: shareTitle,
-                text: `Check out ${shareTitle} on [Ilji]!`,
-                url: shareUrl, // 공유할 URL
-            });
+            // 1. 백엔드에 이 일기의 공유 ID를 요청합니다. (없으면 생성됨)
+            const response = await getOrCreateShareId(journal.id);
+            const shareId = response.data.shareId;
+
+            if (!shareId) {
+                throw new Error("공유 ID를 받아오지 못했습니다.");
+            }
+
+            // 2. 공유할 URL을 생성합니다.
+            const shareUrl = `${window.location.origin}/i-log/${shareId}`;
+            const shareTitle = `"${journal.writerNickname}"님의 일기`;
+            const shareText = `[일지]에서 ${shareTitle}를 확인해보세요!`;
+
+            // 3. Web Share API (모바일)를 우선적으로 시도합니다.
+            if (navigator.share) {
+                await navigator.share({
+                    title: shareTitle,
+                    text: shareText,
+                    url: shareUrl,
+                });
+            } else {
+                // 4. Web Share API가 없으면 (PC 등) 클립보드에 복사합니다.
+                await navigator.clipboard.writeText(shareUrl);
+                message.success("일기 주소가 클립보드에 복사되었습니다!");
+            }
         } catch (error) {
-            console.log("Web Share API not supported or share canceled by user.", error);
+            console.error("공유 처리 중 오류 발생:", error);
+            message.error("공유 링크를 생성하는 데 실패했습니다.");
         }
     }, [journal]);
 
@@ -363,7 +383,7 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
     }, [deleteJournal, setPosts]);
 
     const handleEdit = useCallback((journalToEdit) => {
-        navigate('/journal/write', {
+        navigate('/i-log/write', {
             state: {
                 journalToEdit: journalToEdit, // 수정할 일기 데이터를 전달합니다.
                 backgroundLocation: location, // 모달 뒤에 현재 페이지를 배경으로 유지합니다.
@@ -449,7 +469,7 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
     const handleCommentCountChange = useCallback((postId, changeAmount) => {
         setPosts(currentPosts =>
             currentPosts.map(p =>
-                p.id === postId ? { ...p, commentCount: p.commentCount + changeAmount } : p
+                p.id === postId ? {...p, commentCount: p.commentCount + changeAmount} : p
             )
         );
     }, [setPosts]);
@@ -503,7 +523,7 @@ const PostList = ({posts, setPosts, loading, hasMore, lastPostElementRef}) => {
                     );
                 })}
                 {/* 데이터 로딩 중일 때 스피너를 보여줍니다. */}
-                {loading && <div style={{ textAlign: 'center', padding: '20px' }}><Spin /></div>}
+                {loading && <div style={{textAlign: 'center', padding: '20px'}}><Spin/></div>}
                 {/* 더 이상 불러올 데이터가 없을 때 메시지를 보여줍니다. */}
                 {!loading && !hasMore && posts.length > 0 && (
                     <EndOfFeed>

@@ -110,7 +110,7 @@ const JournalView = () => {
 
     // ✅ [추가] 수정 버튼 클릭 핸들러
     const handleEdit = useCallback((journalToEdit) => {
-        navigate('/journal/write', {
+        navigate('/i-log/write', {
             state: {
                 journalToEdit: journalToEdit,
                 // ✅ [수정] 현재 location이 아닌, 이전 페이지에서 전달받은 backgroundLocation을 다시 전달합니다.
@@ -182,7 +182,8 @@ const JournalView = () => {
     }, [currentPostId, handleLikeCountClick]);
 
     if (!journal) {
-        return <ViewContainer className="no-image"><p>Could not load journal information. Please try again from the list.</p>
+        return <ViewContainer className="no-image"><p>Could not load journal information. Please try again from the
+            list.</p>
         </ViewContainer>
     }
 

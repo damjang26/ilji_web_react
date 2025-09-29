@@ -26,6 +26,8 @@ import {
     UserActions,
     ContentBox,
     UserInfo,
+    NicknameContainer, // ✅ [추가]
+    Nickname, // ✅ [추가]
 } from "../../../styled_components/main/mypage/MyPageStyled.jsx";
 import {MyPageProvider, useMyPage} from "../../../contexts/MyPageContext.jsx";
 import {useAuth} from "../../../AuthContext.jsx"; // [추가]
@@ -167,7 +169,8 @@ const MyPage = () => {
                 $isOwner={isOwner}
             >
                 {/* [수정] MypageImg 내부에 BannerImage를 렌더링 */}
-                {profile.bannerImage && <BannerImage src={profile.bannerImage} yPosition={profile.bannerPositionY} alt="배너 이미지" />}
+                {profile.bannerImage &&
+                    <BannerImage src={profile.bannerImage} yPosition={profile.bannerPositionY} alt="배너 이미지"/>}
 
             </MypageImg>
             <ContentBox>
@@ -183,10 +186,10 @@ const MyPage = () => {
                         />
                     </ImgWrapper>
                     {/* ✅ [수정] HeaderContent에 position: relative를 추가하여, 자식 요소의 절대 위치 기준점으로 만듭니다. */}
-                    <HeaderContent style={{ position: 'relative' }}>
+                    <HeaderContent style={{position: 'relative'}}>
                         {/* ✅ [수정] 로그아웃 버튼을 HeaderContent의 직접적인 자식으로 옮기고, 오른쪽 상단에 절대 위치로 고정합니다. */}
                         {isOwner && (
-                            <IconContainer style={{ position: 'absolute', top: '-40px', right: '-20px' }}>
+                            <IconContainer style={{position: 'absolute', top: '-40px', right: '-10px'}}>
                                 <Dropdown
                                     menu={{items: menuItems, onClick: handleMenuClick}}
                                     trigger={["click"]}
@@ -196,29 +199,26 @@ const MyPage = () => {
                             </IconContainer>
                         )}
                         <UserInfo>
-                            {/* ✅ [수정] 이름과 버튼을 한 줄로 묶고, 이름에 굵은 스타일을 직접 적용합니다. */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }} >
-                                {/* ✅ [수정] 이름 div에도 flex와 align-items를 적용하여 수직 중앙 정렬을 보장합니다. */}
-                                <div className="nickname" style={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+                            {/* ✅ [수정] 인라인 스타일을 제거하고 스타일 컴포넌트를 사용합니다. */}
+                            <NicknameContainer>
+                                <Nickname>
                                     {profile.nickname || "Guest"}
-                                </div>
+                                </Nickname>
                                 {isOwner ?
-                                    // ✅ [수정] 버튼에 다시 스타일을 적용하기 위해 ButtonGroup으로 감쌉니다.
-                                    <ButtonGroup style={{ position: 'relative', top: '1px' }}>
+                                    <ButtonGroup>
                                         <button onClick={handleEdit}>Edit Profile</button>
                                     </ButtonGroup>
                                     :
-                                    // ✅ [수정] 버튼에 다시 스타일을 적용하기 위해 ButtonGroup으로 감쌉니다.
-                                    <ButtonGroup style={{ position: 'relative', top: '1px' }}>
-                                        <button onClick={handleFollowToggle}>{isFollowing ? 'following' : 'follow'}</button>
+                                    <ButtonGroup>
+                                        <button
+                                            onClick={handleFollowToggle}>{isFollowing ? 'following' : 'follow'}</button>
                                     </ButtonGroup>
                                 }
-                            </div>
+                            </NicknameContainer>
                             {isOwner && <div className="email">{profile.email || "guest@example.com"}</div>}
                             <div>{profile.bio || ""}</div>
                         </UserInfo>
                         <UserActions>
-                            {/* ✅ [수정] 로그아웃 버튼이 분리되었으므로, StatsGroup만 남겨둡니다. */}
                             <StatsGroup>
                                 <StatItem>
                                     <div>post</div>
@@ -259,7 +259,7 @@ const MyPage = () => {
                         {/* JournalList를 JournalProvider로 감싸고 userId를 전달합 */}
                         {activeTab === "feature1" && (
                             // 게시물 데이터 변경 시 MyPage의 프로필을 다시 불러오도록 콜백 함수를 전달
-                            <JournalList onPostChange={() => refetchProfile(userId)} />
+                            <JournalList onPostChange={() => refetchProfile(userId)}/>
                         )}
                         {activeTab === "feature2" && (
                             <LikeList/>
@@ -324,8 +324,8 @@ const MyPageWrapper = () => {
 };
 
 const MyPageContent = () => {
-    const { isEditing } = useMyPage();
-    return isEditing ? <MyPageSet /> : <MyPage />;
+    const {isEditing} = useMyPage();
+    return isEditing ? <MyPageSet/> : <MyPage/>;
 }
 
 export default MyPageWrapper;
