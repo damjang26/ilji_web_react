@@ -17,6 +17,8 @@ import ConfirmModal from "../components/common/ConfirmModal.jsx";
 import {useAuth} from "../AuthContext.jsx";
 import {NO_TAG_ID} from "./TagContext.jsx";
 
+import {parseRruleString} from "../utils/rrule-parser.js";
+
 const ModalWrapper = styled.div`
     /*
       z-index를 명시적으로 관리하여 모달이 다른 UI 요소(팝업 등) 위에
@@ -186,7 +188,6 @@ export function ScheduleProvider({children}) {
             id: event.id,
             title: event.title,
             allDay: isAllDayEvent,
-            rrule: event.rrule || null,
             extendedProps: {
                 description: event.description,
                 location: event.location,
@@ -195,16 +196,39 @@ export function ScheduleProvider({children}) {
             },
         };
 
-        // Case 1: '하루 종일' 반복 일정 -> end 날짜를 제공하지 않음 (긴 막대 버그 방지)
-        if (event.rrule && isAllDayEvent) {
+        // Case 1: Recurring event (rrule is present)
+        if (event.rrule) {
+            const rruleObject = parseRruleString(event.rrule);
+
+            // Add dtstart, which is mandatory for rrule objects.
+            // For all-day events, just the date part is fine. For timed events, use the full ISO string.
+            rruleObject.dtstart = isAllDayEvent ? event.startTime.split('T')[0] : event.startTime;
+
+            // For timed recurring events, it's best to use duration instead of end.
+            if (!isAllDayEvent) {
+                const start = new Date(event.startTime);
+                const end = new Date(event.endTime);
+                const durationMs = end.getTime() - start.getTime();
+                const duration = {
+                    hours: Math.floor(durationMs / 3600000),
+                    minutes: Math.floor((durationMs % 3600000) / 60000)
+                };
+                return {
+                    ...commonProps,
+                    rrule: rruleObject,
+                    duration,
+                };
+            }
+
+            // For all-day recurring events, just the rrule object is needed.
             return {
                 ...commonProps,
-                start: event.startTime.split("T")[0],
+                rrule: rruleObject,
             };
         }
 
-        // Case 2: '하루 종일'이고 반복 없는 장기 일정
-        if (!event.rrule && isAllDayEvent) {
+        // Case 2: Non-recurring all-day event
+        if (isAllDayEvent) {
             const endDateStr = event.endTime.split("T")[0];
             const parts = endDateStr.split("-").map(Number);
             const exclusiveEndDate = new Date(
@@ -219,8 +243,12 @@ export function ScheduleProvider({children}) {
             };
         }
 
-        // Case 3: 시간이 지정된 모든 일정 (반복 여부 무관) -> start와 end를 그대로 사용
-        return {...commonProps, start: event.startTime, end: event.endTime};
+        // Case 3: Non-recurring timed event
+        return {
+            ...commonProps,
+            start: event.startTime,
+            end: event.endTime
+        };
     };
 
     /**

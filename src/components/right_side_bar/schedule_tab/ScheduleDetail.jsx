@@ -33,37 +33,40 @@ const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete}) => {
         if (!event.start) return "날짜 정보 없음";
 
         const start = new Date(event.start);
-        let end;
+        // Use the reliable end from the instance if available, otherwise fallback to event.end
+        const end = event._instance?.range?.end ? new Date(event._instance.range.end) :
+                    event.end ? new Date(event.end) : null;
 
-        // For recurring instances, _instance.range.end is the most reliable source.
-        if (event._instance?.range?.end) {
-            end = new Date(event._instance.range.end);
-        } else {
-            end = event.end ? new Date(event.end) : new Date(start);
-        }
-
-        const pad = (num) => String(num).padStart(2, "0");
         const toDateStr = (d) => d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-        const toTimeStr = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        const toTimeStr = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 
-        const startDateStr = toDateStr(start);
-
-        // Case 1: '하루 종일' 일정
+        // Case 1: '하루 종일' 일정 (allDay: true)
         if (event.allDay) {
-            // end가 exclusive이므로 하루를 빼서 inclusive로 만듭니다.
-            const inclusiveEnd = new Date(end.getTime() - (event.end ? 1 : 0));
-            const inclusiveEndDateStr = toDateStr(inclusiveEnd);
-
-            if (startDateStr === inclusiveEndDateStr) {
-                return startDateStr;
+            // If there's no end date, it's definitely a single day event.
+            if (!end) {
+                return toDateStr(start);
             }
-            return `${startDateStr} ~ ${inclusiveEndDateStr}`;
+
+            // FullCalendar's end is exclusive. To get the real last day, subtract a moment.
+            const inclusiveEnd = new Date(end.getTime() - 1000);
+
+            // Now compare the start date with the calculated inclusive end date.
+            if (start.getFullYear() === inclusiveEnd.getFullYear() &&
+                start.getMonth() === inclusiveEnd.getMonth() &&
+                start.getDate() === inclusiveEnd.getDate())
+            {
+                return toDateStr(start);
+            } else {
+                return `${toDateStr(start)} ~ ${toDateStr(inclusiveEnd)}`;
+            }
         }
 
-        // Case 2: 시간 지정 일정
+        // Case 2: 시간 지정 일정 (allDay: false)
+        const finalEnd = end || start; // If end is null, use start.
+        const startDateStr = toDateStr(start);
         const startTimeStr = toTimeStr(start);
-        const endDateStr = toDateStr(end);
-        const endTimeStr = toTimeStr(end);
+        const endDateStr = toDateStr(finalEnd);
+        const endTimeStr = toTimeStr(finalEnd);
 
         if (startDateStr === endDateStr) {
             return `${startDateStr} ${startTimeStr} - ${endTimeStr}`;

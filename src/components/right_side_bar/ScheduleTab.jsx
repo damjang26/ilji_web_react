@@ -25,8 +25,8 @@ const ScheduleTab = ({ isInsideModal = false, initialEvent = null }) => {
     }, [initialEvent]);
 
     const handleAdd = useCallback(() => {
-        const today = new Date().toISOString().split('T')[0];
-        const dateInfo = { startStr: today, endStr: today, allDay: true };
+        const dateStr = selectedInfo?.data?.startStr || new Date().toISOString().split('T')[0];
+        const dateInfo = { startStr: dateStr, endStr: dateStr, allDay: true };
 
         if (isInsideModal) {
             // 모달 안에서는 모달의 뷰를 '폼'으로 변경
@@ -35,7 +35,7 @@ const ScheduleTab = ({ isInsideModal = false, initialEvent = null }) => {
             // 사이드 패널에서는 기존 방식대로 패널 열기
             openSchedulePanelForNew(dateInfo);
         }
-    }, [isInsideModal, openSchedulePanelForNew, switchToModalFormView]);
+    }, [isInsideModal, openSchedulePanelForNew, switchToModalFormView, selectedInfo]);
 
     // 2. 목록에서 아이템 클릭 시, 전역 패널을 여는 대신 selectedEvent 상태를 업데이트합니다.
     const handleShowDetail = useCallback((event) => {
