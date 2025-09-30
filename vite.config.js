@@ -8,6 +8,14 @@ export default defineConfig({
     define: {
         global: 'window',
     },
+    optimizeDeps: {
+        include: ["fabric"]
+    },
+    build: {
+        commonjsOptions: {
+            transformMixedEsModules: true, // ← require()를 ESM으로 변환 허용
+        },
+    },
     server: {
         headers: {
             'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
