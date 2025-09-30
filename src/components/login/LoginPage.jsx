@@ -14,7 +14,7 @@ const LoginPage = () => {
                 <LogoImage src={logo} alt="Logo"/>
                 <SocialLogin/>
                 <Slogan>
-                    Organize your schedule and share life’s moments with the people who matter. asd
+                    Organize your schedule and share life’s moments with the people who matter. asdasd
                 </Slogan>
 
             </LoginForm>
