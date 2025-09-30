@@ -32,6 +32,7 @@ export const ModalTitle = styled.h2`
   margin: 0;
   font-size: 1.5rem;
   color: #333;
+  text-align: center;
 `;
 
 // 모달 내 이미지 미리보기를 위한 컨테이너

@@ -86,7 +86,18 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
             title={`Change ${imageType === 'profileImage' ? 'Profile' : 'Banner'} Image`}
         >
             <ModalBody>
-                <ImagePreview imageUrl={previewUrl} imageType={imageType}>{!previewUrl && "Upload an image"}</ImagePreview>
+                {/* ✅ [수정] 이미지 미리보기와 버튼들을 flexbox로 묶어 가로로 배치합니다. */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '24px', justifyContent: 'center' }}>
+                    <ImagePreview imageUrl={previewUrl} imageType={imageType}>{!previewUrl && "Upload an image"}</ImagePreview>
+
+                    {/* ✅ [수정] 버튼들을 세로로 쌓기 위한 컨테이너입니다. */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <SubmitButton type="button" onClick={handleUploadButtonClick}>Select Image</SubmitButton>
+                        {imageType === 'profileImage' && (
+                            <CancelButton type="button" onClick={handleRevert}>Revert to Default</CancelButton>
+                        )}
+                    </div>
+                </div>
 
                 <input
                     ref={fileInputRef}
@@ -95,18 +106,12 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
                     style={{ display: 'none' }}
                     onChange={handleFileChange}
                 />
-
-                <ActionButtonGroup>
-                    <SubmitButton type="button" onClick={handleUploadButtonClick}>Select Image</SubmitButton>
-                    {imageType === 'profileImage' && (
-                        <CancelButton type="button" onClick={handleRevert}>Revert to Default</CancelButton>
-                    )}
-                </ActionButtonGroup>
             </ModalBody>
 
-            <ModalFooter>
-                <CancelButton type="button" onClick={onClose}>Cancel</CancelButton>
-                <SubmitButton type="button" onClick={handleConfirm} disabled={!imageFile && !revertMode}>Confirm</SubmitButton>
+            {/* ✅ [수정] 하단 버튼들이 동일한 비율로 너비를 차지하도록 스타일을 수정합니다. */}
+            <ModalFooter style={{ display: 'flex', gap: '8px' }}>
+                <CancelButton type="button" onClick={onClose} style={{ flex: 1 }}>Cancel</CancelButton>
+                <SubmitButton type="button" onClick={handleConfirm} disabled={!imageFile && !revertMode} style={{ flex: 1 }}>Apply</SubmitButton>
             </ModalFooter>
         </ImageModal>
     );

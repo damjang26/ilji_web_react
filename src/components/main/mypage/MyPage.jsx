@@ -159,7 +159,7 @@ const MyPage = () => {
     );
 
     // 로딩/에러 처리
-    if (loading) return <div>로딩 중...</div>;
+    if (loading) return <div>Loading...</div>;
     if (error) return <div style={{color: "red"}}>{error}</div>;
     if (!loading && !profile) return <div>There is no profile information.</div>;
     return (
@@ -170,7 +170,7 @@ const MyPage = () => {
             >
                 {/* [수정] MypageImg 내부에 BannerImage를 렌더링 */}
                 {profile.bannerImage &&
-                    <BannerImage src={profile.bannerImage} alt="배너 이미지"/>}
+                    <BannerImage src={profile.bannerImage} alt="Banner image"/>}
 
             </MypageImg>
             <ContentBox>

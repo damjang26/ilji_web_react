@@ -115,13 +115,17 @@ const BannerImageEditor = ({isOpen, onClose, onCropComplete}) => {
                         </div>
                     )}
                 </CropArea>
+                {/* ✅ [수정] 이미지가 없을 때만 'Select Image' 버튼을 중앙에 표시합니다. */}
                 {!imageSrc && (
-                    <ActionButtonGroup><SubmitButton onClick={handleUploadButtonClick}>Select Image</SubmitButton></ActionButtonGroup>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+                        <SubmitButton onClick={handleUploadButtonClick}>Select Image</SubmitButton>
+                    </div>
                 )}
             </ModalBody>
-            <ModalFooter>
-                <CancelButton onClick={onClose}>Cancel</CancelButton>
-                <SubmitButton onClick={handleCrop} disabled={!imageSrc}>Apply</SubmitButton>
+            {/* ✅ [수정] 하단 버튼들이 동일한 비율로 너비를 차지하도록 스타일을 수정합니다. */}
+            <ModalFooter style={{ display: 'flex', gap: '8px' }}>
+                <CancelButton onClick={onClose} style={{ flex: 1 }}>Cancel</CancelButton>
+                <SubmitButton onClick={handleCrop} disabled={!imageSrc} style={{ flex: 1 }}>Apply</SubmitButton>
             </ModalFooter>
         </ImageModal>
     );
