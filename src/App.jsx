@@ -15,7 +15,7 @@ import {NotificationsProvider} from "./contexts/NotificationsContext.jsx";
 import LeftSideBar from "./components/LeftSideBar.jsx";
 import Main from "./components/Main.jsx";
 import LoginPage from "./components/login/LoginPage.jsx";
-import SetNicknamePage from "./components/nickname_set/SetNickNamePage.jsx";
+import SetNickNamePage from "./components/nickname_set/SetNickNamePage.jsx";
 
 // --- Modal Components ---
 import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
@@ -127,7 +127,7 @@ const AppContent = () => {
             <LeftSideBar/>
             <ContentWrapper>
                 <Routes location={background || location}>
-                    <Route path="/set-nickname" element={<SetNicknamePage/>}/>
+                    <Route path="/set-nickname" element={<SetNickNamePage/>}/>
                     {/* ✅ [수정] 공유 페이지 라우트를 메인 라우트로 이동시켜 직접 접속이 가능하게 합니다. */}
                     <Route path="/share/:shareId" element={<SharedJournalPage/>}/>
                     <Route path="/*" element={<Main/>}/>
