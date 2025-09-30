@@ -73,6 +73,7 @@ const ScheduleTab = ({ isInsideModal = false, initialEvent = null }) => {
                     onCancel={handleBackToList} // "목록으로" 버튼에 handleBackToList 함수 연결
                     onDelete={handleDelete}
                     onEdit={handleEdit}
+                    selectedDateFromList={selectedInfo?.data?.startStr}
                 />
             ) : (
                 <ScheduleList

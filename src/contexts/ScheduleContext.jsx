@@ -200,11 +200,8 @@ export function ScheduleProvider({children}) {
         if (event.rrule) {
             const rruleObject = parseRruleString(event.rrule);
 
-            // Add dtstart, which is mandatory for rrule objects.
-            // For all-day events, just the date part is fine. For timed events, use the full ISO string.
             rruleObject.dtstart = isAllDayEvent ? event.startTime.split('T')[0] : event.startTime;
 
-            // For timed recurring events, it's best to use duration instead of end.
             if (!isAllDayEvent) {
                 const start = new Date(event.startTime);
                 const end = new Date(event.endTime);
@@ -215,14 +212,15 @@ export function ScheduleProvider({children}) {
                 };
                 return {
                     ...commonProps,
+                    start: rruleObject.dtstart, // Add start property
                     rrule: rruleObject,
                     duration,
                 };
             }
 
-            // For all-day recurring events, just the rrule object is needed.
             return {
                 ...commonProps,
+                start: rruleObject.dtstart, // Add start property
                 rrule: rruleObject,
             };
         }

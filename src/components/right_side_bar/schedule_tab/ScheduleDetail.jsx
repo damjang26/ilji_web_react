@@ -12,7 +12,7 @@ import {
 import { Button, ActionButtons } from "../../../styled_components/common/FormElementsStyled.jsx";
 import { useAuth } from "../../../AuthContext.jsx";
 
-const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete}) => {
+const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete, selectedDateFromList}) => {
     const { tags } = useTags();
     const { user } = useAuth();
 
@@ -30,48 +30,53 @@ const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete}) => {
 
     // 날짜와 시간을 상황에 맞게 표시하는 함수
     const formatDateRange = () => {
+        const toDateStr = (d) => new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        // 목록에서 넘어온 반복 일정의 경우, 목록의 날짜를 우선으로 표시
+        if (event.rrule && selectedDateFromList) {
+            return toDateStr(selectedDateFromList);
+        }
+
         if (!event.start) return "날짜 정보 없음";
 
-        const start = new Date(event.start);
-        // Use the reliable end from the instance if available, otherwise fallback to event.end
-        const end = event._instance?.range?.end ? new Date(event._instance.range.end) :
-                    event.end ? new Date(event.end) : null;
+        const toTimeStr = (d) => {
+            const date = new Date(d);
+            return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+        };
 
-        const toDateStr = (d) => d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-        const toTimeStr = (d) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-
-        // Case 1: '하루 종일' 일정 (allDay: true)
+        // For all-day events, FullCalendar's event.end is the morning of the next day (exclusive).
         if (event.allDay) {
-            // If there's no end date, it's definitely a single day event.
-            if (!end) {
-                return toDateStr(start);
-            }
+            const start = new Date(event.start);
+            start.setHours(0, 0, 0, 0); // Normalize to midnight
 
-            // FullCalendar's end is exclusive. To get the real last day, subtract a moment.
-            const inclusiveEnd = new Date(end.getTime() - 1000);
+            if (event.end) {
+                const end = new Date(event.end);
+                end.setHours(0, 0, 0, 0); // Normalize to midnight
 
-            // Now compare the start date with the calculated inclusive end date.
-            if (start.getFullYear() === inclusiveEnd.getFullYear() &&
-                start.getMonth() === inclusiveEnd.getMonth() &&
-                start.getDate() === inclusiveEnd.getDate())
-            {
-                return toDateStr(start);
-            } else {
+                const oneDay = 24 * 60 * 60 * 1000;
+                // If the difference is exactly one day, it's a single-day event.
+                if (end.getTime() - start.getTime() === oneDay) {
+                    return toDateStr(start);
+                }
+                
+                // Otherwise, it's a multi-day event. Subtract one day from the exclusive end for display.
+                const inclusiveEnd = new Date(end.getTime() - oneDay);
                 return `${toDateStr(start)} ~ ${toDateStr(inclusiveEnd)}`;
+            } else {
+                // No end date also means it's a single day event.
+                return toDateStr(start);
             }
         }
 
-        // Case 2: 시간 지정 일정 (allDay: false)
-        const finalEnd = end || start; // If end is null, use start.
-        const startDateStr = toDateStr(start);
-        const startTimeStr = toTimeStr(start);
-        const endDateStr = toDateStr(finalEnd);
-        const endTimeStr = toTimeStr(finalEnd);
+        // Timed event logic
+        const start = new Date(event.start);
+        const end = event.end ? new Date(event.end) : start;
 
-        if (startDateStr === endDateStr) {
-            return `${startDateStr} ${startTimeStr} - ${endTimeStr}`;
+        if (toDateStr(start) === toDateStr(end)) {
+            return `${toDateStr(start)} ${toTimeStr(start)} - ${toTimeStr(end)}`;
+        } else {
+            return `${toDateStr(start)} ${toTimeStr(start)} - ${toDateStr(end)} ${toTimeStr(end)}`;
         }
-        return `${startDateStr} ${startTimeStr} - ${endDateStr} ${endTimeStr}`;
     };
     
     const isOwner = user && user.id === event.extendedProps.calendarId; // user가 null일 수 있으므로 방어 코드 필요
