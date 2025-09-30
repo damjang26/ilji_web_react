@@ -26,11 +26,24 @@ const FILTERS = {
 
 // 1. 개별 일정 아이템을 별도의 메모이즈된 컴포넌트로 분리합니다.
 const ScheduleEventItem = React.memo(({ event, onDetail }) => {
+  // HH:mm 형식으로 시간을 포맷하는 함수
+  const formatTime = (start) => {
+    if (!start || !start.includes('T')) {
+      // all-day recurring events might not have a time part in their start string
+      // which is the dtstart. Default to 00:00 in that case for display.
+      return '00:00';
+    }
+    return start.split('T')[1].substring(0, 5);
+  };
+
   return (
     <Tooltip title="클릭하면 상세 보기" placement="left">
       <EventItem onClick={() => {
         onDetail(event);
-      }}>{event.title}</EventItem>
+      }}>
+        <span>{event.title}</span>
+        <span className="event-time">{event.allDay ? 'all-day' : formatTime(event.start)}</span>
+      </EventItem>
     </Tooltip>
   );
 });

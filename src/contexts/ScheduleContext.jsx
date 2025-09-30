@@ -329,6 +329,17 @@ export function ScheduleProvider({children}) {
                     const url = `/api/schedules?${params.toString()}`;
                     const response = await api.get(url);
                     const formattedEvents = response.data.map(formatEventForCalendar);
+
+                    // Sort events by start time, then by title
+                    formattedEvents.sort((a, b) => {
+                        const startA = new Date(a.start).getTime();
+                        const startB = new Date(b.start).getTime();
+                        if (startA !== startB) {
+                            return startA - startB;
+                        }
+                        return a.title.localeCompare(b.title);
+                    });
+
                     setEvents(formattedEvents);
                     setCachedEvents(formattedEvents); // 캐시 업데이트
                     setError(null);
