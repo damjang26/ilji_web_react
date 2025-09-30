@@ -196,8 +196,8 @@ export function ScheduleProvider({children}) {
             },
         };
 
-        // Case 1: Recurring event (rrule is present)
-        if (event.rrule) {
+        // Case 1: Recurring event (rrule is present and valid)
+        if (event.rrule && event.rrule.includes('FREQ')) {
             const rruleObject = parseRruleString(event.rrule);
 
             rruleObject.dtstart = isAllDayEvent ? event.startTime.split('T')[0] : event.startTime;
@@ -399,7 +399,7 @@ export function ScheduleProvider({children}) {
                 ),
                 isAllDay: eventData.allDay,
                 // ✅ [버그 수정] rrule은 최상위 속성이므로 eventData.rrule에서 가져옵니다.
-                rrule: eventData.rrule,
+                rrule: eventData.rrule || null, // Explicitly send null for empty strings
             };
 
             // 백그라운드에서 API 요청을 보냅니다.
@@ -447,8 +447,7 @@ export function ScheduleProvider({children}) {
                         true
                     ),
                     isAllDay: eventData.allDay,
-                    // ✅ [버그 수정] rrule은 최상위 속성이므로 eventData.rrule에서 가져옵니다.
-                    rrule: eventData.rrule,
+                    rrule: eventData.rrule || null, // Explicitly send null for empty strings
                 };
                 const response = await api.put(`/api/schedules/${eventData.id}`, requestData);
                 const updatedEvent = formatEventForCalendar(response.data);
