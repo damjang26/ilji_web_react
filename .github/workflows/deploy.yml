@@ -8,10 +8,6 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: ./
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -22,8 +18,11 @@ jobs:
           node-version: 22
           check-latest: true
 
-      - name: Install dependencies
+      - name: Clean install dependencies
         run: npm ci
+
+      - name: Force install rollup binary
+        run: npm install --no-save @rollup/rollup-linux-x64-gnu
 
       - name: Build
         run: npm run build
