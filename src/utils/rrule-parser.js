@@ -1,3 +1,5 @@
+// [ROLLBACK_MARKER] - Content commented out as its logic has been consolidated into src/utils/rrule.js
+/*
 /**
  * Parses a complex rrule string (potentially containing newlines and multiple parts like DTSTART)
  * into a structured object with lowercase keys.
@@ -5,6 +7,7 @@
  * @param {string} rruleString The rrule string to parse.
  * @returns {object} A key-value object representing the rule.
  */
+/*
 export const parseRruleString = (rruleString) => {
     if (!rruleString) {
         return {};
@@ -35,3 +38,4 @@ export const parseRruleString = (rruleString) => {
 
     return rruleObject;
 };
+*/

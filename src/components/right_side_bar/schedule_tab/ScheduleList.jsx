@@ -88,8 +88,23 @@ const ScheduleList = ({
           options.freq = freqMap[freqString];
           
           // Timezone 모호성을 피하기 위해 항상 로컬 시간으로 Date 객체 생성
-          const dtstartStr = event.rrule.dtstart;
-          options.dtstart = new Date(dtstartStr.includes('T') ? dtstartStr : `${dtstartStr}T00:00:00`);
+          options.dtstart = event.rrule.dtstart;
+
+          // Convert byday strings to RRule.weekday objects
+          if (options.byday && Array.isArray(options.byday)) {
+            options.byday = options.byday.map(dayStr => {
+                switch (dayStr) {
+                    case 'MO': return RRule.MO;
+                    case 'TU': return RRule.TU;
+                    case 'WE': return RRule.WE;
+                    case 'TH': return RRule.TH;
+                    case 'FR': return RRule.FR;
+                    case 'SA': return RRule.SA;
+                    case 'SU': return RRule.SU;
+                    default: return null;
+                }
+            }).filter(Boolean);
+          }
 
           if (event.rrule.until) {
             const untilStr = event.rrule.until;

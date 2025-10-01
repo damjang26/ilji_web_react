@@ -17,7 +17,7 @@ import ConfirmModal from "../components/common/ConfirmModal.jsx";
 import {useAuth} from "../AuthContext.jsx";
 import {NO_TAG_ID} from "./TagContext.jsx";
 
-import {parseRruleString} from "../utils/rrule-parser.js";
+import { parseRRuleForCalendar, generateRRule } from "../utils/rrule.js";
 
 const ModalWrapper = styled.div`
     /*
@@ -51,10 +51,17 @@ const transformInitialDataToFormState = (initialData, user) => {
     const toYYYYMMDD = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const toHHMM = (d) => d.toTimeString().substring(0, 5);
 
-    let endDateForInput = end;
-    // allDay:true 이면서 여러 날을 드래그한 경우, FullCalendar의 종료일은 exclusive이므로 하루를 빼줍니다.
-    if (isAllDay && initialData.startStr.split('T')[0] !== initialData.endStr.split('T')[0]) {
+    let endDateForInput = end; // 'end' is the FullCalendar exclusive end date
+    if (isAllDay) {
+        // For all-day events, FullCalendar's end is exclusive.
+        // To get the inclusive end date for the form, subtract one day.
         endDateForInput = new Date(end.getTime() - (1000 * 3600 * 24));
+        // If the event was a single day all-day event, this will make formEndDate equal to start.
+        // If event.end was not provided by FullCalendar (single day event), then 'end' would be same as 'start',
+        // and subtracting a day would make it incorrect. So handle that case.
+        if (!initialData.endStr || (new Date(initialData.endStr).getTime() === new Date(initialData.startStr).getTime())) {
+             endDateForInput = start;
+        }
     }
 
     return {
@@ -83,22 +90,26 @@ const transformEventToFormState = (event) => {
     const plainEvent = typeof event.toPlainObject === 'function' ? event.toPlainObject() : event;
     console.log("2. plainEvent (after toPlainObject):", plainEvent);
 
+    // [ROLLBACK_MARKER]
     // 1. FIX RRULE DELETION BUG: Robustly parse rrule
-    let rruleValue = "";
-    try {
-        const rruleSet = event._def?.recurringDef?.typeData?.rruleSet;
-        const mainRruleObject = rruleSet?._rrule?.[0];
-        if (mainRruleObject && typeof mainRruleObject.toString === 'function') {
-            rruleValue = mainRruleObject.toString();
-        } else if (typeof plainEvent.rrule === 'string') {
-            rruleValue = plainEvent.rrule;
-        }
-    } catch {
-        rruleValue = typeof plainEvent.rrule === 'string' ? plainEvent.rrule : '';
-    }
-    if (rruleValue.startsWith('RRULE:')) {
-        rruleValue = rruleValue.replace(/^RRULE:/, '');
-    }
+    // let rruleValue = "";
+    // try {
+    //     const rruleSet = event._def?.recurringDef?.typeData?.rruleSet;
+    //     const mainRruleObject = rruleSet?._rrule?.[0];
+    //     if (mainRruleObject && typeof mainRruleObject.toString === 'function') {
+    //         rruleValue = mainRruleObject.toString();
+    //     } else if (typeof plainEvent.rrule === 'string') {
+    //         rruleValue = plainEvent.rrule;
+    //     }
+    // } catch {
+    //     rruleValue = typeof plainEvent.rrule === 'string' ? plainEvent.rrule : '';
+    // }
+    // if (rruleValue.startsWith('RRULE:')) {
+    //     rruleValue = rruleValue.replace(/^RRULE:/, '');
+    // }
+
+    // Simplified and robust rrule parsing
+    const rruleValue = typeof plainEvent.rrule === 'string' ? plainEvent.rrule.replace(/^RRULE:/, '') : '';
     console.log("2.1. Parsed rruleValue:", rruleValue);
 
     // 2. FIX TIMED & ALL-DAY BUGS: Correctly determine end date
@@ -111,12 +122,16 @@ const transformEventToFormState = (event) => {
     }
     console.log("3. Parsed Date objects:", { start, end });
 
-    let formEndDate = end;
-    if (rruleValue && plainEvent.allDay) {
-        formEndDate = new Date(start);
-    } else if (plainEvent.allDay && event.end) {
-        if (start.toISOString().split('T')[0] !== end.toISOString().split('T')[0]) {
-            formEndDate = new Date(end.getTime() - (1000 * 3600 * 24));
+    let formEndDate = end; // 'end' is the FullCalendar exclusive end date
+    if (plainEvent.allDay) {
+        // For all-day events, FullCalendar's end is exclusive.
+        // To get the inclusive end date for the form, subtract one day.
+        formEndDate = new Date(end.getTime() - (1000 * 3600 * 24));
+        // If the event was a single day all-day event, this will make formEndDate equal to start.
+        // If event.end was not provided by FullCalendar (single day event), then 'end' would be same as 'start',
+        // and subtracting a day would make it incorrect. So handle that case.
+        if (!event.end || (event.end.getTime() === event.start.getTime())) {
+             formEndDate = start;
         }
     }
 
@@ -198,9 +213,9 @@ export function ScheduleProvider({children}) {
 
         // Case 1: Recurring event (rrule is present and valid)
         if (event.rrule && event.rrule.includes('FREQ')) {
-            const rruleObject = parseRruleString(event.rrule);
+            const rruleObject = parseRRuleForCalendar(event.rrule);
 
-            rruleObject.dtstart = isAllDayEvent ? event.startTime.split('T')[0] : event.startTime;
+            rruleObject.dtstart = new Date(isAllDayEvent ? event.startTime.split('T')[0] : event.startTime);
 
             if (!isAllDayEvent) {
                 const start = new Date(event.startTime);
@@ -473,6 +488,56 @@ export function ScheduleProvider({children}) {
             console.error("일정 삭제 실패:", err);
         }
     }, [events, user]);
+
+    const updateRecurringEventInstance = useCallback(async (oldEvent, newEvent) => {
+        if (!user) return;
+
+        const masterEvent = events.find(e => String(e.id) === String(oldEvent.groupId));
+        if (!masterEvent) {
+            console.error("Master recurring event not found for groupId:", oldEvent.groupId);
+            return;
+        }
+
+        // 1. Add EXDATE to the master event's rrule
+        const oldRrule = masterEvent.rrule || '';
+        const parsedRrule = parseRRuleForCalendar(oldRrule);
+
+        const oldEventStart = new Date(oldEvent.start);
+        const pad = (num) => String(num).padStart(2, "0");
+        const exdateStr = `${oldEventStart.getFullYear()}${pad(oldEventStart.getMonth() + 1)}${pad(oldEventStart.getDate())}T${pad(oldEventStart.getHours())}${pad(oldEventStart.getMinutes())}${pad(oldEventStart.getSeconds())}Z`;
+
+        // Ensure exdate is an array for proper handling
+        const existingExdates = parsedRrule.exdate ? parsedRrule.exdate.split(',') : [];
+        const newExdates = [...existingExdates, exdateStr];
+
+        const updatedMasterRrule = generateRRule({
+            ...parsedRrule,
+            exdate: newExdates.join(','),
+        });
+
+        // Update the master event in the backend
+        await updateEvent({
+            ...masterEvent,
+            rrule: updatedMasterRrule,
+        });
+
+        // 2. Create a new non-recurring event for the moved instance
+        const newEventData = {
+            title: newEvent.title,
+            start: newEvent.start,
+            end: newEvent.end,
+            allDay: newEvent.allDay,
+            rrule: null, // This is now a non-recurring event
+            extendedProps: {
+                description: newEvent.extendedProps.description,
+                location: newEvent.extendedProps.location,
+                tagId: newEvent.extendedProps.tagId,
+                calendarId: newEvent.extendedProps.calendarId,
+            }
+        };
+        await addEvent(newEventData);
+
+    }, [user, events, addEvent, updateEvent]);
     // --- UI 제어 함수 ---
 
     const openSchedulePanelForDate = useCallback((dateInfo) => {
@@ -740,6 +805,7 @@ export function ScheduleProvider({children}) {
             // CRUD 함수 (deleteEvent는 confirmDelete 내부에서 사용됩니다)
             addEvent,
             updateEvent,
+            updateRecurringEventInstance, // ✅ [신규] 반복 일정 인스턴스 업데이트 함수
             requestDeleteConfirmation, // 외부에서는 이 함수를 통해 삭제를 요청합니다.
             fetchSchedulesByTags, //  태그 필터링 함수
             restoreCachedEvents, // 옵티미스틱 업데이트를 위한 함수
@@ -753,6 +819,7 @@ export function ScheduleProvider({children}) {
             popupState,
             addEvent,
             updateEvent,
+            updateRecurringEventInstance, // ✅ [신규] 반복 일정 인스턴스 업데이트 함수
             requestDeleteConfirmation, // deleteEvent -> requestDeleteConfirmation
             openSchedulePanelForDate,
             openSchedulePanelForNew,
