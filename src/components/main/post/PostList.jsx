@@ -37,7 +37,8 @@ import PostLikersModal from "./PostLikersModal.jsx"; // 좋아요 목록 모달 
 import FriendManagementModal from "../../friends/FriendManagementModal.jsx";
 import {message, Modal, Spin} from "antd";
 import {BiSolidShareAlt} from "react-icons/bi"; // antd 메시지 임포트
-import {shareJournal} from "../../../utils/shareUtils.js"; // ✅ [추가] 공유 부품 임포트
+import {shareJournal} from "../../../utils/shareUtils.js";
+import {LuBookLock, LuBookUser} from "react-icons/lu"; // ✅ [추가] 공유 부품 임포트
 
 export const JournalItem = ({
                                 journal,
@@ -148,6 +149,10 @@ export const JournalItem = ({
                                             {/* ✅ [수정] 닉네임 클릭 이벤트 추가 */}
                                             <span className="username"
                                                   onClick={() => onProfileClick(journal.writerId)}>{journal.writerNickname || 'User'}</span>
+                                            {journal.visibility === "PRIVATE" &&
+                                                <LuBookLock style={{marginRight: '4px'}}/>}
+                                            {journal.visibility === "FRIENDS_ONLY" &&
+                                                <LuBookUser style={{marginRight: '4px'}}/>}
                                             <span className="date">{formatRelativeTime(journal.createdAt)}</span>
                                         </div>
                                         <ActionItem>
@@ -224,6 +229,9 @@ export const JournalItem = ({
                                 {/* ✅ [수정] 닉네임 클릭 이벤트 추가 */}
                                 <span className="username"
                                       onClick={() => onProfileClick(journal.writerId)}>{journal.writerNickname || 'User'}</span>
+                                {journal.visibility === "PRIVATE" && <LuBookLock style={{marginRight: '4px'}}/>}
+                                {journal.visibility === "FRIENDS_ONLY" &&
+                                    <LuBookUser style={{marginRight: '4px'}}/>}
                                 <span className="date">{formatRelativeTime(journal.createdAt)}</span>
                             </div>
 
