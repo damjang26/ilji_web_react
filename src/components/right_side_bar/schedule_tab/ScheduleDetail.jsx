@@ -17,75 +17,72 @@ const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete, selecte
     const { user } = useAuth();
 
     if (!event) {
-        return <div>일정을 선택해주세요.</div>;
+        return <div>Please select an event.</div>;
     }
 
-    // 현재 일정의 tagId에 해당하는 태그 객체를 찾습니다。
+    // 현재 일정의 tagId에 해당하는 태그 객체
     const currentTag = useMemo(() => {
         const tagId = event.extendedProps?.tagId;
         if (!tagId) return null;
-        if (!Array.isArray(tags)) return null; // tags가 배열이 아닐 경우 방어 코드
+        if (!Array.isArray(tags)) return null;
         return tags.find(t => t.id === tagId);
     }, [event, tags]);
 
-    // 날짜와 시간을 상황에 맞게 표시하는 함수
+    // 날짜/시간 포맷
     const formatDateRange = () => {
-        const toDateStr = (d) => new Date(d).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+        if (!event.start) return "No date information";
 
-        // 목록에서 넘어온 반복 일정의 경우, 목록의 날짜를 우선으로 표시
+        // 반복 일정 → 목록에서 넘어온 날짜 우선
         if (event.rrule && selectedDateFromList) {
-            return toDateStr(selectedDateFromList);
+            return new Date(selectedDateFromList).toLocaleDateString("en-US", { 
+                year: "numeric", month: "long", day: "numeric" 
+            });
         }
 
-        if (!event.start) return "날짜 정보 없음";
-
-        const toTimeStr = (d) => {
-            const date = new Date(d);
-            return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
-        };
-
-        // For all-day events, FullCalendar's event.end is the morning of the next day (exclusive).
+        // Case 1: All-day event
         if (event.allDay) {
             const start = new Date(event.start);
-            start.setHours(0, 0, 0, 0); // Normalize to midnight
+            start.setHours(0, 0, 0, 0);
 
             if (event.end) {
                 const end = new Date(event.end);
-                end.setHours(0, 0, 0, 0); // Normalize to midnight
+                end.setHours(0, 0, 0, 0);
 
                 const oneDay = 24 * 60 * 60 * 1000;
-                // If the difference is exactly one day, it's a single-day event.
                 if (end.getTime() - start.getTime() === oneDay) {
-                    return toDateStr(start);
+                    return start.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
                 }
-                
-                // Otherwise, it's a multi-day event. Subtract one day from the exclusive end for display.
+
                 const inclusiveEnd = new Date(end.getTime() - oneDay);
-                return `${toDateStr(start)} ~ ${toDateStr(inclusiveEnd)}`;
+                return `${start.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })} ~ ${inclusiveEnd.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`;
             } else {
-                // No end date also means it's a single day event.
-                return toDateStr(start);
+                return start.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
             }
         }
 
-        // Timed event logic
+        // Case 2: Timed event
         const start = new Date(event.start);
         const end = event.end ? new Date(event.end) : start;
 
-        if (toDateStr(start) === toDateStr(end)) {
-            return `${toDateStr(start)} ${toTimeStr(start)} - ${toTimeStr(end)}`;
+        const startDateStr = start.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+        const startTimeStr = start.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+
+        const endDateStr = end.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+        const endTimeStr = end.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false });
+
+        if (startDateStr === endDateStr) {
+            return `${startDateStr} ${startTimeStr} - ${endTimeStr}`;
         } else {
-            return `${toDateStr(start)} ${toTimeStr(start)} - ${toDateStr(end)} ${toTimeStr(end)}`;
+            return `${startDateStr} ${startTimeStr} - ${endDateStr} ${endTimeStr}`;
         }
     };
     
-    const isOwner = user && user.id === event.extendedProps.calendarId; // user가 null일 수 있으므로 방어 코드 필요
+    const isOwner = user && user.id === event.extendedProps.calendarId;
 
     return (
         <DetailWrapper>
             <DetailHeader>
-                <BackButton onClick={onCancel}>← 목록으로</BackButton>
-                {/* ✅ [수정] 헤더 오른쪽에 날짜를 표시합니다. */}
+                <BackButton onClick={onCancel}>← Back to list</BackButton>
                 {displayDate && <HeaderDate>{displayDate}</HeaderDate>}
             </DetailHeader>
 
@@ -93,31 +90,37 @@ const ScheduleDetail = ({event, displayDate, onCancel, onEdit, onDelete, selecte
 
             <InfoSection>
                 <div>
-                    <InfoLabel>날짜</InfoLabel>
+                    <InfoLabel>Date</InfoLabel>
                     <InfoValue>{formatDateRange()}</InfoValue>
                 </div>
-                {event.extendedProps?.location && <div>
-                    <InfoLabel>장소</InfoLabel>
-                    <InfoValue>{event.extendedProps.location}</InfoValue>
-                </div>}
-                {currentTag && <div>
-                    <InfoLabel>태그</InfoLabel>
-                    <InfoValue>{currentTag.label}</InfoValue>
-                </div>}
-                {event.extendedProps?.description && <div>
-                    <InfoLabel>설명</InfoLabel>
-                    <InfoValue>{event.extendedProps.description}</InfoValue>
-                </div>}
+                {event.extendedProps?.location && (
+                    <div>
+                        <InfoLabel>Location</InfoLabel>
+                        <InfoValue>{event.extendedProps.location}</InfoValue>
+                    </div>
+                )}
+                {currentTag && (
+                    <div>
+                        <InfoLabel>Tag</InfoLabel>
+                        <InfoValue>{currentTag.label}</InfoValue>
+                    </div>
+                )}
+                {event.extendedProps?.description && (
+                    <div>
+                        <InfoLabel>Description</InfoLabel>
+                        <InfoValue>{event.extendedProps.description}</InfoValue>
+                    </div>
+                )}
             </InfoSection>
 
             {isOwner && (
                 <ActionButtons>
-                    <Button className="secondary" onClick={() => onDelete(event.id)}>삭제</Button>
-                    <Button className="primary" onClick={() => onEdit(event)}>수정</Button>
+                    <Button className="secondary" onClick={() => onDelete(event.id)}>Delete</Button>
+                    <Button className="primary" onClick={() => onEdit(event)}>Edit</Button>
                 </ActionButtons>
             )}
         </DetailWrapper>
-    )
-}
+    );
+};
 
 export default ScheduleDetail;

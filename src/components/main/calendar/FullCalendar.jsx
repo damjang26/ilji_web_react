@@ -23,6 +23,7 @@ import {
     LuBookLock,
     LuBookUser,
 } from "react-icons/lu"; // 날짜 옆 상태 아이콘
+import {shareJournal} from "../../../utils/shareUtils.js"; // ✅ [추가] 공유 부품 임포트
 import {useNavigate, useLocation} from "react-router-dom";
 
 import {RiQuillPenAiFill} from "react-icons/ri";
@@ -47,7 +48,12 @@ export default function FullCalendarExample() {
     const location = useLocation();
 
     const {
-        hasJournal, getJournal, deleteJournal, getJournalById, setVisibleDateRange
+        hasJournal,
+        getJournal,
+        deleteJournal,
+        getJournalById,
+        setVisibleDateRange,
+        loading: journalLoading,
     } = useJournal();
     const [diaryPopover, setDiaryPopover] = useState({
         visible: false,
@@ -75,7 +81,7 @@ export default function FullCalendarExample() {
         const handleAction = async () => {
             if (action === 'openJournalModal') {
                 const dateFromState = restState?.date;
-                navigate("/journal/write", {
+                navigate("/i-log/write", {
                     state: {
                         backgroundLocation: cleanBackgroundLocation, // 깨끗한 location 전달
                         selectedDate: dateFromState ? new Date(dateFromState) : new Date(),
@@ -99,7 +105,7 @@ export default function FullCalendarExample() {
                         }
                     } catch (error) {
                         console.error("Error fetching journal by ID:", error);
-                        alert("일기 정보를 불러오는 데 실패했습니다.");
+                        alert("Failed to load journal information.");
                     }
                 }
             }
@@ -121,21 +127,21 @@ export default function FullCalendarExample() {
         // 1. 팝오버의 날짜를 이용해 삭제할 일기 객체를 가져옵니다. (id를 알아내기 위함)
         const journalToDelete = getJournal(diaryPopover.date);
         if (!journalToDelete) {
-            alert("삭제할 일기를 찾을 수 없습니다.");
+            alert("Could not find the journal to delete.");
             return;
         }
 
         // 2. 사용자에게 정말 삭제할 것인지 확인받습니다.
-        if (window.confirm("정말로 이 일기를 삭제하시겠습니까?")) {
+        if (window.confirm("Are you sure you want to delete this journal?")) {
             try {
                 // 3. Context의 deleteJournal 함수를 호출합니다. (id와 날짜를 넘겨줍니다)
                 await deleteJournal(journalToDelete.id, diaryPopover.date);
-                alert("일기가 삭제되었습니다.");
+                alert("Journal deleted successfully.");
                 // 4. 성공적으로 삭제되면 팝오버를 닫습니다.
                 setDiaryPopover((p) => ({...p, visible: false}));
             } catch (error) {
                 console.error("일기 삭제 실패:", error);
-                alert("일기 삭제에 실패했습니다.");
+                alert("Failed to delete the journal.");
             }
         }
     };
@@ -171,7 +177,7 @@ export default function FullCalendarExample() {
 
     // 초기 로딩 시에만 전체 로딩 화면을 표시합니다.
     // (로딩 중이면서, 아직 이벤트가 하나도 없을 때)
-    const isInitialLoading = loading && events.length === 0;
+    const isInitialLoading = (loading) && events.length === 0;
     if (isInitialLoading) {
         return (
             <SpinnerWrapper>
@@ -219,7 +225,7 @@ export default function FullCalendarExample() {
         // 이로 인해 Context에서 해당 범위의 일기 데이터만 가져오는 API 요청이 트리거됩니다.
         const start = formatDate(dateInfo.view.activeStart);
         const end = formatDate(dateInfo.view.activeEnd);
-        setVisibleDateRange({ start, end });
+        setVisibleDateRange({start, end});
     };
 
     const handleEventDrop = (dropInfo) => {
@@ -374,7 +380,7 @@ export default function FullCalendarExample() {
     return (
         <CalendarWrapper>
             {/* 필터링 등 다시 로딩 시 스피너 표시 */}
-            {loading && (
+            {(loading || journalLoading) && !isInitialLoading && (
                 <SpinnerWrapper>
                     <Spinner/>
                 </SpinnerWrapper>
@@ -400,7 +406,7 @@ export default function FullCalendarExample() {
                                     // ✅ [수정] getJournal로 일기 데이터를 가져와 state에 담아 전달합니다.
                                     const journal = getJournal(diaryPopover.date);
                                     if (journal) {
-                                        navigate(`/journals/${journal.id}`, {
+                                        navigate(`/myi-log/${journal.id}`, {
                                             state: {
                                                 backgroundLocation: location,
                                                 journalData: journal,
@@ -409,19 +415,26 @@ export default function FullCalendarExample() {
                                     }
                                 }}
                             >
-                                <FaBookOpen/> 일기 보기
+                                <FaBookOpen/> Open i-log
                             </DiaryPopoverButton>
                             <DiaryPopoverButton onClick={handleDeleteJournal}>
-                                <FaTrash/> 일기 삭제
+                                <FaTrash/> Delete i-log
                             </DiaryPopoverButton>
-                            <DiaryPopoverButton>
-                                <FaShareAlt/> 일기 공유
+                            {/* ✅ [수정] 공유 버튼에 onClick 핸들러를 추가합니다. */}
+                            <DiaryPopoverButton onClick={() => {
+                                const journal = getJournal(diaryPopover.date);
+                                if (journal) {
+                                    shareJournal(journal);
+                                    setDiaryPopover(p => ({...p, visible: false})); // 공유 후 팝오버 닫기
+                                }
+                            }}>
+                                <FaShareAlt/> Share i-log
                             </DiaryPopoverButton>
                         </>
                     ) : (
                         <DiaryPopoverButton
                             onClick={() => {
-                                navigate("/journal/write", {
+                                navigate("/i-log/write", {
                                     state: {
                                         backgroundLocation: location,
                                         selectedDate: diaryPopover.date,
@@ -429,13 +442,12 @@ export default function FullCalendarExample() {
                                 });
                             }}
                         >
-                            <RiQuillPenAiFill style={{fontSize: "17px", verticalAlign: "bottom"}}/> 일기 작성
+                            <RiQuillPenAiFill style={{fontSize: "17px", verticalAlign: "bottom"}}/> Write i-log
                         </DiaryPopoverButton>
                     )}
                 </DiaryPopoverContainer>,
                 document.body
             )}
-
 
 
             <FullCalendar

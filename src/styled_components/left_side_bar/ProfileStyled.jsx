@@ -8,7 +8,8 @@ export const ProfileContainer = styled.div`
     align-items: center;
     position: relative; /* IconContainer를 위치시킬 기준점으로 설정 */
     width: 100%;
-    padding: 20px 0; /* 컴포넌트 상하 여유 공간 */
+    padding-top: 40px;
+    padding-bottom: 20px;
 `;
 
 // 프로필 이미지를 감싸는 영역

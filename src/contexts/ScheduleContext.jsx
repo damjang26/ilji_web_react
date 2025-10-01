@@ -16,9 +16,9 @@ import {api} from "../api"; // axios 대신 우리가 만든 api 인스턴스를
 import ConfirmModal from "../components/common/ConfirmModal.jsx";
 import {useAuth} from "../AuthContext.jsx";
 import {NO_TAG_ID} from "./TagContext.jsx";
-
 import { parseRRuleForCalendar, generateRRule } from "../utils/rrule.js";
 
+import { message } from "antd"
 const ModalWrapper = styled.div`
     /*
       z-index를 명시적으로 관리하여 모달이 다른 UI 요소(팝업 등) 위에
@@ -365,7 +365,7 @@ export function ScheduleProvider({children}) {
                     setError(null);
                 }
             } catch (err) {
-                console.error("일정 로딩 실패:", err);
+                console.error("Failed to load schedules:", err);
                 setError(err);
             } finally {
                 if (showLoading) setLoading(false);
@@ -430,9 +430,9 @@ export function ScheduleProvider({children}) {
                 );
             } catch (err) {
                 // 실패 시, UI를 원래 상태로 되돌립니다 (롤백).
-                console.error("일정 생성 실패 (롤백 실행):", err);
+                console.error("Schedule creation failed (rolling back):", err);
                 setEvents(originalEvents);
-                // TODO: 사용자에게 "생성에 실패했습니다"와 같은 알림을 보여주면 더 좋습니다.
+                // TODO: It would be better to show a notification to the user like "Failed to create schedule".
             }
         },
         [user, events]
@@ -442,7 +442,7 @@ export function ScheduleProvider({children}) {
         async (eventData) => {
             const eventToUpdate = events.find(e => String(e.id) === String(eventData.id));
             if (eventToUpdate && eventToUpdate.extendedProps.calendarId !== user.id) {
-                message.error('자신이 생성한 일정만 수정할 수 있습니다.');
+                message.error('You can only edit schedules you created.');
                 return;
             }
 
@@ -470,7 +470,7 @@ export function ScheduleProvider({children}) {
                 const updatedEvent = formatEventForCalendar(response.data);
                 setEvents(prev => prev.map(e => (String(e.id) === String(updatedEvent.id) ? updatedEvent : e)));
             } catch (err) {
-                console.error("일정 업데이트 실패:", err);
+                console.error("Schedule update failed:", err);
             }
         },
         [events, user]
@@ -479,7 +479,7 @@ export function ScheduleProvider({children}) {
     const deleteEvent = useCallback(async (eventId) => {
         const eventToDelete = events.find(e => String(e.id) === String(eventId));
         if (eventToDelete && eventToDelete.extendedProps.calendarId !== user.id) {
-            message.error('자신이 생성한 일정만 삭제할 수 있습니다.');
+            message.error('You can only delete schedules you created.');
             return;
         }
 
@@ -487,7 +487,7 @@ export function ScheduleProvider({children}) {
             setEvents((prev) => prev.filter((e) => String(e.id) !== String(eventId)));
             await api.delete(`/api/schedules/${eventId}`);
         } catch (err) {
-            console.error("일정 삭제 실패:", err);
+            console.error("Schedule deletion failed:", err);
         }
     }, [events, user]);
 
@@ -595,17 +595,18 @@ export function ScheduleProvider({children}) {
         let title;
         let view;
 
+
         if (event) { // Case 1: 이벤트 클릭
-            title = '일정 상세 정보';
+            title = 'Schedule Details';
             view = 'list';
         } else if (allDay === false) { // Case 2: 주/일별 뷰에서 시간 선택
-            title = '새 일정';
+            title = 'New schedule';
             view = 'form';
         } else if (diffInDays > 1) { // Case 3: 월별 뷰에서 여러 날 드래그
-            title = `새 일정`;
+            title = `New schedule`;
             view = 'form';
         } else { // Case 4: 월별 뷰에서 하루 클릭
-            title = `${start.getMonth() + 1}월 ${start.getDate()}일`;
+            title = start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
             view = 'list';
         }
 
@@ -849,9 +850,9 @@ export function ScheduleProvider({children}) {
                     isOpen={deleteModalState.isOpen}
                     onClose={cancelDeleteConfirmation}
                     onConfirm={confirmDelete}
-                    title="일정 삭제"
+                    title="Delete Schedule"
                 >
-                    정말로 이 일정을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                    Are you sure you want to delete this schedule? This action cannot be undone.
                 </ConfirmModal>
             </ModalWrapper>
         </ScheduleContext.Provider>

@@ -1,21 +1,21 @@
-import React, { useState, useEffect } from "react";
-import { BrowserRouter, useLocation, Routes, Route } from "react-router-dom";
-import { Spin } from "antd";
+import React, {useState, useEffect} from "react";
+import {BrowserRouter, useLocation, Routes, Route, useNavigate} from "react-router-dom";
+import {Spin} from "antd";
 import styled from "styled-components";
 
 // --- Providers ---
-import { useAuth } from "./AuthContext.jsx";
-import { JournalProvider } from "./contexts/JournalContext.jsx";
-import { MyPageProvider } from "./contexts/MyPageContext.jsx";
-import { ScheduleProvider, useSchedule } from "./contexts/ScheduleContext.jsx";
-import { TagProvider } from "./contexts/TagContext.jsx";
-import { NotificationsProvider } from "./contexts/NotificationsContext.jsx";
+import {useAuth} from "./AuthContext.jsx";
+import {JournalProvider} from "./contexts/JournalContext.jsx";
+import {MyPageProvider} from "./contexts/MyPageContext.jsx";
+import {ScheduleProvider, useSchedule} from "./contexts/ScheduleContext.jsx";
+import {TagProvider} from "./contexts/TagContext.jsx";
+import {NotificationsProvider} from "./contexts/NotificationsContext.jsx";
 
 // --- Page & Layout Components ---
 import LeftSideBar from "./components/LeftSideBar.jsx";
 import Main from "./components/Main.jsx";
 import LoginPage from "./components/login/LoginPage.jsx";
-import SetNicknamePage from "./components/nickname_set/SetNickNamePage.jsx";
+import SetNickNamePage from "./components/nickname_set/SetNickNamePage.jsx";
 
 // --- Modal Components ---
 import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
@@ -29,6 +29,8 @@ import SchedulePanelContent from "./components/main/calendar/SchedulePanelConten
 import ScheduleTab from "./components/right_side_bar/ScheduleTab.jsx";
 import ChatRoomList from "./components/right_side_bar/ChatRoomList.jsx";
 import Chat from "./components/right_side_bar/Chat.jsx";
+import JournalDatePicker from "./components/right_side_bar/JournalDatePicker.jsx"; // ✅ [추가]
+import SharedJournalPage from "./components/main/journal/SharedJournalPage.jsx"; // ✅ [추가] 공유 페이지
 
 const AppWrapper = styled.div`
     display: flex;
@@ -56,27 +58,28 @@ const ContentWrapper = styled.div`
 const getSchedulePanelTitle = (type) => {
     switch (type) {
         case 'new':
-            return '새 일정 추가';
+            return 'Add new schedule';
         case 'edit':
-            return '일정 수정';
+            return 'Edit schedule';
         case 'detail':
-            return '일정 상세 정보';
+            return 'Schedule Details';
         // case 'list_for_date':
         //     return '선택한 날짜의 일정';
         case 'rrule_form':
-            return '반복 설정';
+            return 'Repeat settings';
         default:
-            return '일정';
+            return 'Schedule';
     }
 }
 
 const AppContent = () => {
-    const { user, loading } = useAuth();
+    const {user, loading} = useAuth();
     const location = useLocation();
+    const navigate = useNavigate(); // ✅ [추가] navigate 함수를 가져옵니다.
 
     const [activePanel, setActivePanel] = useState(null);
     const [floatingChatRoomId, setFloatingChatRoomId] = useState(null);
-    const { selectedInfo, clearScheduleSelection } = useSchedule();
+    const {selectedInfo, clearScheduleSelection} = useSchedule();
 
     // ✅ selectedInfo에 값이 생기면 (상세/수정/추가 패널이 열리면)
     //    기존에 열려있던 목록 패널(activePanel)은 닫아줍니다.
@@ -87,18 +90,27 @@ const AppContent = () => {
     }, [selectedInfo]);
 
     const handlePanelButtonClick = (panel) => {
-        console.log("handlePanelButtonClick called with:", panel);
-        setActivePanel(prev => {
-            const newState = prev === panel ? null : panel;
-            console.log("activePanel changing from", prev, "to", newState);
-            return newState;
-        });
+        setFloatingChatRoomId(null); // 다른 패널 버튼 클릭 시 채팅방 닫기
+        setActivePanel(prev => prev === panel ? null : panel);
     };
 
     const handleChatRoomSelect = (roomId) => {
         setFloatingChatRoomId(roomId);
         setActivePanel(null); // 메시지 목록 패널은 닫음
     };
+
+    // ✅ [추가] 날짜 선택 패널에서 날짜 선택 시 실행될 함수
+    const handleDateSelectForJournal = (date) => {
+        // 패널을 닫고, 일기 작성 모달로 이동
+        setActivePanel(null);
+        navigate("/i-log/write", {
+            state: {
+                backgroundLocation: location,
+                selectedDate: date,
+            },
+        });
+    };
+
 
     const background = location.state && location.state.backgroundLocation;
 
@@ -112,33 +124,42 @@ const AppContent = () => {
 
     return user ? (
         <AppWrapper>
-            <LeftSideBar />
+            <LeftSideBar/>
             <ContentWrapper>
                 <Routes location={background || location}>
-                    <Route path="/set-nickname" element={<SetNicknamePage />} />
-                    <Route path="/*" element={<Main />} />
+                    <Route path="/set-nickname" element={<SetNickNamePage/>}/>
+                    {/* ✅ [수정] 공유 페이지 라우트를 메인 라우트로 이동시켜 직접 접속이 가능하게 합니다. */}
+                    <Route path="/share/:shareId" element={<SharedJournalPage/>}/>
+                    <Route path="/*" element={<Main/>}/>
                 </Routes>
 
                 {background && (
                     <Routes>
-                        <Route path="/journal/write" element={<JournalWriteModal/>}/>
-                        <Route path="/journals/:journalId" element={<JournalViewModal/>}/>
+                        <Route path="/i-log/write" element={<JournalWriteModal/>}/>
+                        <Route path="/myi-log/:journalId" element={<JournalViewModal/>}/>
                     </Routes>
                 )}
             </ContentWrapper>
 
             {/* === 새로운 플로팅 UI === */}
-            <FloatingActionButtons onButtonClick={handlePanelButtonClick} />
+            <FloatingActionButtons onButtonClick={handlePanelButtonClick}/>
 
             {activePanel === 'schedule' && (
-                <FloatingPanel title="일정 목록" onClose={() => setActivePanel(null)}>
-                    <ScheduleTab />
+                <FloatingPanel title="schedule list" onClose={() => setActivePanel(null)}>
+                    <ScheduleTab/>
                 </FloatingPanel>
             )}
 
             {activePanel === 'messages' && (
-                <FloatingPanel title="메시지" onClose={() => setActivePanel(null)}>
-                    <ChatRoomList chatRoom={handleChatRoomSelect} onBack={() => setActivePanel(null)} />
+                <FloatingPanel title="message" onClose={() => setActivePanel(null)}>
+                    <ChatRoomList chatRoom={handleChatRoomSelect} onBack={() => setActivePanel(null)}/>
+                </FloatingPanel>
+            )}
+
+            {/* ✅ [추가] '일기 작성' 패널 */}
+            {activePanel === 'writeJournal' && (
+                <FloatingPanel title="Write i-log" onClose={() => setActivePanel(null)}>
+                    <JournalDatePicker onDateSelect={handleDateSelectForJournal}/>
                 </FloatingPanel>
             )}
 
@@ -148,7 +169,7 @@ const AppContent = () => {
                     title={getSchedulePanelTitle(selectedInfo.type)}
                     onClose={clearScheduleSelection}
                 >
-                    <SchedulePanelContent />
+                    <SchedulePanelContent/>
                 </FloatingPanel>
             )}
 
@@ -156,6 +177,10 @@ const AppContent = () => {
                 <FloatingPanel
                     title="채팅"
                     onClose={() => {
+                        setFloatingChatRoomId(null);
+                        setActivePanel(null);
+                    }}
+                    onBack={() => {
                         setFloatingChatRoomId(null);
                         setActivePanel('messages');
                     }}
@@ -168,11 +193,11 @@ const AppContent = () => {
             {/* ============================ */}
 
             {/* 일정 관리를 위한 동적 위치 모달 */}
-            <ScheduleModal />
+            <ScheduleModal/>
 
         </AppWrapper>
     ) : (
-        <LoginPage />
+        <LoginPage/>
     );
 };
 
@@ -182,13 +207,9 @@ export default function App() {
             <BrowserRouter>
                 <JournalProvider>
                     <MyPageProvider>
-                        <ScheduleProvider>
-                            <TagProvider>
-                                <NotificationsProvider>
-                                    <AppContent />
-                                </NotificationsProvider>
-                            </TagProvider>
-                        </ScheduleProvider>
+                        <NotificationsProvider>
+                            <AppContent/>
+                        </NotificationsProvider>
                     </MyPageProvider>
                 </JournalProvider>
             </BrowserRouter>

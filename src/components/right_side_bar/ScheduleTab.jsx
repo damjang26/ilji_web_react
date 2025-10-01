@@ -53,6 +53,7 @@ const ScheduleTab = ({ isInsideModal = false, initialEvent = null }) => {
         // 확인 모달이 뜬 후, 삭제가 성공하면 Context에서 목록으로 돌아가는 것까지 처리해줍니다.
     }, [requestDeleteConfirmation]);
 
+
     const handleEdit = useCallback((event) => {
         if (isInsideModal) {
             // 모달 안에서는 모달의 뷰를 '폼'으로 변경

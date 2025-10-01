@@ -145,8 +145,7 @@ export const CropArea = styled.div`
     /* height: 450px; */ /* aspect-ratio 사용 시 고정 높이는 불필요할 수 있습니다. */
     background-color: #2c2c2c; /* 어두운 배경색으로 이미지를 돋보이게 합니다. */
 
-    /* [복구] 컨테이너 자체의 비율을 3:1로 강제하여 크롭 정확도 향상 */
-    aspect-ratio: 3 / 1;
+    aspect-ratio: 1 / 1;
 
     /* react-cropper가 생성하는 컨테이너가 부모 영역을 꽉 채우도록 합니다. */
 
@@ -364,14 +363,18 @@ export const CanvasContainer = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
+    /* ✅ [수정] width: 100% 대신 flex-grow를 사용하여 남은 공간을 모두 차지하도록 합니다. */
+    flex-grow: 1;
+    /* ✅ [추가] flex 아이템이 줄어들 수 있도록 설정하여 오버플로우를 방지합니다. */
+    flex-shrink: 1;
+    min-width: 0; /* flex 아이템의 최소 너비 제한을 풀어줍니다. */
     min-height: 400px;
 `;
 
 export const EditContainer = styled.div`
     display: flex;
     flex-direction: column;
-    width: 40%;
+    width: 280px; /* ✅ [수정] 이전 요청에 따라 너비를 247px로 유지합니다. */
     height: ${(props) => props.canvasHeight}px;
     min-height: 400px;
     background-color: #ffffff;
@@ -395,16 +398,26 @@ export const EditTab = styled.div`
 `;
 
 export const EditTabContent = styled.div`
-    padding: 10px;
+    /* ✅ [수정] 부모(EditContainer)의 남은 공간을 모두 차지하도록 설정합니다. */
+    flex-grow: 1;
+    /* ✅ [수정] 자식(EditTabWrapper)이 높이 100%를 올바르게 계산하도록 position 설정 */
+    position: relative;
+    /* ✅ [수정] 자식의 스크롤 영역이 패딩 안쪽으로 제한되도록 overflow를 여기로 이동 */
+    overflow: hidden;
 `;
 
 export const EditTabWrapper = styled.div`
-    flex-grow: 1; /* 부모(EditContainer)의 남은 공간을 모두 차지합니다. */
-    overflow-y: auto; /* 내용이 이 영역을 벗어나면 세로 스크롤을 생성합니다. */
-    min-height: 0; /* flex 아이템의 높이가 부모를 초과하는 것을 방지합니다. */
-    width: 247px; /* 기존 너비는 유지합니다. */
+    /* ✅ [수정] 부모(EditTabContent)를 기준으로 절대 위치를 잡아 꽉 채웁니다. */
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 10px; /* 기존 패딩을 이곳으로 이동 */
+    overflow-y: auto; /* 내용이 넘칠 때만 세로 스크롤 표시 */
 
     /* 스크롤바 스타일 (선택 사항) */
+
     &::-webkit-scrollbar {
         width: 6px;
     }
@@ -623,4 +636,51 @@ export const Description = styled.p`
     color: #666;
     text-align: center;
     margin-top: 20px;
+`;
+
+// ✅ [추가] 커스텀 브러시 크기 입력 필드 스타일
+export const BrushWidthInputContainer = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 0 8px;
+    background-color: #fff;
+    
+    /* ✅ [수정] 부모 flex 컨테이너의 높이에 맞춰 늘어나도록 설정합니다. */
+    align-self: stretch;
+
+    & > span {
+        color: #888;
+        font-size: 14px;
+    }
+`;
+
+export const BrushWidthInput = styled.input`
+    width: 40px;
+    border: none;
+    outline: none;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    background-color: transparent;
+
+    // 브라우저 기본 스피너(화살표) 숨기기
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    &[type=number] {
+        -moz-appearance: textfield;
+    }
+
+    &:disabled {
+        background-color: transparent;
+        color: #ccc;
+        cursor: not-allowed;
+    }
 `;

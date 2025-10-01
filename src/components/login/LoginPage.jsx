@@ -4,26 +4,22 @@ import {
     LoginPageContainer,
     LoginForm,
     LogoImage,
-    Input,
-    Button,
-    Separator
+    Slogan, // ✅ [추가] Slogan 컴포넌트 임포트
 } from "../../styled_components/login/LoginPageStyled.jsx";
 
 const LoginPage = () => {
+    return (
+        <LoginPageContainer>
+            <LoginForm>
+                <LogoImage src={logo} alt="Logo"/>
+                <SocialLogin/>
+                <Slogan>
+                    Organize your schedule and share life’s moments with the people who matter. 77
+                </Slogan>
 
-
-  return (
-    <LoginPageContainer>
-      <LoginForm>
-        <LogoImage src={logo} alt="Logo" />
-        <Input type="email" placeholder="이메일 주소" />
-        <Button>이메일로 회원가입하기</Button>
-        <Separator></Separator>
-        <SocialLogin />
-
-      </LoginForm>
-    </LoginPageContainer>
-  );
+            </LoginForm>
+        </LoginPageContainer>
+    );
 };
 
 export default LoginPage;

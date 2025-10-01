@@ -39,17 +39,16 @@ export default function FriendManagementModal({open, onClose, initialTab, target
             setFollowerList(followersRes.data);
         } catch (error) {
             console.error("Failed to fetch friend lists:", error);
-            message.error("목록을 불러오는 데 실패했습니다.");
+            message.error("Failed to load list.");
         } finally {
             setLoading(false);
         }
-    }, []); // Dependencies are empty as the function now relies on its argument.
+    }, []);
 
     useEffect(() => {
         if (open) {
-            // Fetch lists for the specific user (or the logged-in user if targetUserId is null)
             fetchLists(targetUserId);
-            fetchMyFollowing(); // Always refresh the logged-in user's following status
+            fetchMyFollowing();
         }
     }, [open, targetUserId, fetchLists, fetchMyFollowing]);
 
@@ -66,7 +65,7 @@ export default function FriendManagementModal({open, onClose, initialTab, target
                     setSearchResults(response.data);
                 } catch (error) {
                     console.error("Search failed:", error);
-                    message.error("사용자 검색에 실패했습니다.");
+                    message.error("User search failed.");
                 } finally {
                     setIsSearching(false);
                 }
@@ -85,26 +84,26 @@ export default function FriendManagementModal({open, onClose, initialTab, target
     const handleFollow = async (userToFollowId) => {
         try {
             await followUser(userToFollowId);
-            message.success("팔로우했습니다.");
+            message.success("Followed.");
             // Refresh the list for the currently viewed user (from props)
             fetchLists(targetUserId);
             fetchMyFollowing();
         } catch (error) {
             console.error("Follow failed:", error);
-            message.error("팔로우에 실패했습니다.");
+            message.error("Follow failed.");
         }
     };
 
     const handleUnfollow = async (userToUnfollowId) => {
         try {
             await unfollowUser(userToUnfollowId);
-            message.success("언팔로우했습니다.");
+            message.success("Unfollowed");
             // Refresh the list for the currently viewed user (from props)
             fetchLists(targetUserId);
             fetchMyFollowing();
         } catch (error) {
             console.error("Unfollow failed:", error);
-            message.error("언팔로우에 실패했습니다.");
+            message.error("Unfollow failed.");
         }
     };
 
@@ -129,7 +128,7 @@ export default function FriendManagementModal({open, onClose, initialTab, target
             loading={loading || isSearching}
             itemLayout="horizontal"
             dataSource={getUniqueUsers(users)}
-            locale={{emptyText: "표시할 사용자가 없습니다."}}
+            locale={{emptyText: "There are no users to display."}}
             renderItem={(item) => {
                 // Add a safeguard to prevent runtime errors if myFollowing is not yet an array
                 const isFollowing = Array.isArray(myFollowing)
@@ -158,9 +157,9 @@ export default function FriendManagementModal({open, onClose, initialTab, target
                         key={item.userId}
                         actions={[
                             isFollowing ? (
-                                <Button onClick={() => handleUnfollow(item.userId)}>언팔로우</Button>
+                                <Button onClick={() => handleUnfollow(item.userId)}>Unfollow</Button>
                             ) : (
-                                <Button type="primary" onClick={() => handleFollow(item.userId)}>팔로우</Button>
+                                <Button type="primary" onClick={() => handleFollow(item.userId)}>Follow</Button>
                             ),
                         ]}
                     >
@@ -182,11 +181,11 @@ export default function FriendManagementModal({open, onClose, initialTab, target
     const tabItems = [
         {
             key: 'search',
-            label: '새 친구 찾기',
+            label: 'Find new friends',
             children: (
                 <>
                     <Search
-                        placeholder="닉네임 또는 이메일로 검색"
+                        placeholder="Search by nickname or email"
                         onSearch={(value) => setSearchTerm(value)}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         style={{marginBottom: 20}}
@@ -199,19 +198,19 @@ export default function FriendManagementModal({open, onClose, initialTab, target
         },
         {
             key: 'following',
-            label: `팔로잉 ${followingList.length}`,
+            label: `Following ${followingList.length}`,
             children: renderUserList(followingList),
         },
         {
             key: 'followers',
-            label: `팔로워 ${followerList.length}`,
+            label: `followers ${followerList.length}`,
             children: renderUserList(followerList),
         },
     ];
 
     return (
         <Modal
-            title="친구 목록"
+            title="Friends list"
             open={open}
             onCancel={onClose}
             footer={null}

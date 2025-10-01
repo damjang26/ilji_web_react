@@ -51,7 +51,7 @@ const JournalWrite = ({
                           onFabricModeChange,
                           journalToEdit: journalToEditFromProp
                       }) => {
-    const {user} = useAuth(); // 현재 로그인한 유저 정보
+    const {user, triggerPostChange} = useAuth(); // [수정] triggerPostChange 함수를 가져옵니다.
     const {createJournalEntry, updateJournalEntry} = useJournal(); // ✅ 수정 함수도 가져옵니다.
 
     // ✅ [수정] props와 location.state 양쪽에서 데이터를 받을 수 있도록 로직 개선
@@ -158,18 +158,18 @@ const JournalWrite = ({
     const visibilityOptions = useMemo(() => ({
         'PUBLIC': {
             icon: <LuGlobe/>,
-            text: '전체 공개',
-            description: '모든 사람이 내 일기를 볼 수 있습니다.'
+            text: 'Public',
+            description: 'Everyone can see my journal.'
         },
         'FRIENDS_ONLY': {
             icon: <LuUsers/>,
-            text: '친구 공개',
-            description: '나와 내 친구들만 볼 수 있습니다.'
+            text: 'Friends',
+            description: 'Only you and your friends can see it.'
         },
         'PRIVATE': {
             icon: <LuLock/>,
-            text: '나만 보기',
-            description: '이 일기는 나만 볼 수 있습니다.'
+            text: 'Private',
+            description: 'Only you can see this journal.'
         }
     }), []);
 
@@ -196,13 +196,13 @@ const JournalWrite = ({
         // 1. 허용되지 않는 파일 형식을 먼저 걸러냅니다.
         const invalidFiles = allFiles.filter(file => !allowedTypes.includes(file.type));
         if (invalidFiles.length > 0) {
-            alert(`지원하지 않는 파일 형식입니다. JPG, PNG 파일만 업로드할 수 있습니다.`);
+            alert(`Unsupported file format. Only JPG and PNG files can be uploaded.`);
             return; // 유효하지 않은 파일이 있으면 함수를 중단합니다.
         }
 
         // 2. 허용된 파일들로만 개수 제한을 확인합니다.
         if (images.length + allFiles.length > MAX_IMAGE_LIMIT) {
-            alert(`사진은 최대 ${MAX_IMAGE_LIMIT}개까지 추가할 수 있습니다.`);
+            alert(`You can add up to ${MAX_IMAGE_LIMIT} photos.`);
             return;
         }
 
@@ -254,8 +254,8 @@ const JournalWrite = ({
             const blobUrl = URL.createObjectURL(file); // Canvas용 URL 생성
             setEditingImageInfo({image: {...image, file, preview: blobUrl}, index});
         } catch (err) {
-            console.error("이미지 편집 준비 실패:", err);
-            alert("이미지를 편집할 수 없습니다. 다시 시도해주세요.");
+            console.error("Failed to prepare image for editing:", err);
+            alert("Cannot edit the image. Please try again.");
         }
     };
 
@@ -346,7 +346,7 @@ const JournalWrite = ({
 
         setImages(newImages);
         setEditingImageInfo(null); // 모든 편집 모드 종료
-        alert('이미지가 성공적으로 편집되었습니다.');
+        alert('Image edited successfully.');
     };
 
     // 일기 저장
@@ -373,18 +373,22 @@ const JournalWrite = ({
                 const updatedJournal = await updateJournalEntry(journalToEdit.id, journalPayload);
                 // ✅ [수정] 수정이 성공하면, 전역 이벤트를 발생시켜 다른 컴포넌트에게 알립니다.
                 // 이벤트의 detail에 수정된 '전체 일기 객체'를 담아 보냅니다.
-                window.dispatchEvent(new CustomEvent('journal:updated', { detail: { updatedJournal } }));
-                alert('일기가 성공적으로 수정되었습니다!');
+                window.dispatchEvent(new CustomEvent('journal:updated', {detail: {updatedJournal}}));
+                alert('Journal updated successfully!');
+                // [수정] 게시물 변경 신호를 보냅니다.
+                triggerPostChange();
             } else {
                 // ✅ 생성 모드일 경우
                 const createPayload = {...journalPayload, logDate: selectedDate};
                 await createJournalEntry(createPayload);
-                alert('일기가 성공적으로 저장되었습니다!');
+                alert('Journal saved successfully!');
+                // [핵심 추가] 생성 성공 후에도 게시물 변경 신호를 보냅니다.
+                triggerPostChange();
             }
         } catch (error) {
-            console.error("일기 저장 실패:", error);
+            console.error("Failed to save journal:", error);
             // 서버에서 보낸 에러 메시지가 있다면 보여주는 것이 더 좋습니다.
-            alert(error.response?.data?.message || '일기 저장에 실패했습니다.');
+            alert(error.response?.data?.message || 'Failed to save journal.');
         } finally {
             setIsSubmitting(false); // 제출 상태 해제
             onClose(); // 모든 작업 후 모달 닫기
@@ -430,7 +434,7 @@ const JournalWrite = ({
                         onDragOver={handleDragOver}
                         onDrop={handleDrop}
                         $isDragging={isDragging} // ✅ 스타일링을 위해 isDragging 상태 전달
-                        placeholder="오늘은 무슨 일이 있었나요?"
+                        placeholder="Share what happened today📝"
                     />
 
                     {images.length > 0 && (
@@ -461,12 +465,12 @@ const JournalWrite = ({
                                 accept="image/jpeg, image/png"
                                 style={{display: 'none'}}
                             />
-                            <IconButton data-tooltip="이미지 추가" onClick={handleImageButtonClick}
+                            <IconButton data-tooltip="Add image" onClick={handleImageButtonClick}
                                         disabled={images.length >= MAX_IMAGE_LIMIT}>
                                 <FaImage/>
                             </IconButton>
                             <ActionButtonWrapper ref={emojiPickerContainerRef}>
-                                <IconButton data-tooltip="이모지 추가" onClick={handleEmojiIconClick}>
+                                <IconButton data-tooltip="Add emoji" onClick={handleEmojiIconClick}>
                                     <FaSmile/>
                                 </IconButton>
                                 {showEmojiPicker && (
@@ -486,7 +490,7 @@ const JournalWrite = ({
                             </VisibilityButton>
                             {isVisibilityDropdownOpen && (
                                 <VisibilityDropdown>
-                                    {Object.entries(visibilityOptions).map(([key, { icon, text }]) => (
+                                    {Object.entries(visibilityOptions).map(([key, {icon, text}]) => (
                                         <VisibilityOption key={key} onClick={() => handleVisibilityChange(key)}>
                                             {icon}
                                             <span>{text}</span>
@@ -497,7 +501,7 @@ const JournalWrite = ({
                         </VisibilitySelector>
                         <PostButton onClick={onSubmit}
                                     disabled={(!content.trim() && images.length === 0) || isSubmitting}>
-                            {isSubmitting ? (isEditMode ? '수정 중...' : '저장 중...') : (isEditMode ? '수정하기' : '게시하기')}
+                            {isSubmitting ? (isEditMode ? 'Updating...' : 'Saving...') : (isEditMode ? 'Edit' : 'Upload')}
                         </PostButton>
                     </ActionBar>
                 </FormContent>

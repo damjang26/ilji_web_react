@@ -1,7 +1,7 @@
 import { RRule } from 'rrule';
 
 // Constants
-const WEEKDAYS_MAP = { MO: '월', TU: '화', WE: '수', TH: '목', FR: '금', SA: '토', SU: '일' };
+const WEEKDAYS_MAP = { MO: 'Mon', TU: 'Tue', WE: 'Wed', TH: 'Thu', FR: 'Fri', SA: 'Sat', SU: 'Sun' };
 const WEEKDAYS_ORDER = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
 
 export const FREQ_OPTIONS = {
@@ -27,8 +27,6 @@ const sortWeekdays = (days) => {
 /**
  * Parses an RRULE string into a standardized state object.
  * Handles various formats (with/without RRULE: prefix, mixed case keys).
- * @param {string} rruleString The RRULE string to parse.
- * @returns {object} A standardized state object for UI and logic.
  */
 export const parseRRule = (rruleString) => {
     const initialState = {
@@ -42,12 +40,9 @@ export const parseRRule = (rruleString) => {
 
     if (!rruleString) return initialState;
 
-    // Normalize the string: remove prefix, split into parts
     const rules = rruleString.replace(/^RRULE:/i, '').split(';').reduce((acc, rule) => {
         const [key, val] = rule.split('=');
-        if (key && val) {
-            acc[key.toUpperCase()] = val; // Standardize keys to uppercase
-        }
+        if (key && val) acc[key.toUpperCase()] = val;
         return acc;
     }, {});
 
@@ -60,7 +55,6 @@ export const parseRRule = (rruleString) => {
         count = parseInt(rules.COUNT, 10);
     } else if (rules.UNTIL) {
         terminationType = TERMINATION_TYPES.UNTIL;
-        // Handle YYYYMMDDTHHmmssZ format
         const untilDateStr = rules.UNTIL.split('T')[0];
         if (untilDateStr && untilDateStr.length === 8) {
             until = `${untilDateStr.slice(0, 4)}-${untilDateStr.slice(4, 6)}-${untilDateStr.slice(6, 8)}`;
@@ -81,8 +75,6 @@ export const parseRRule = (rruleString) => {
 
 /**
  * Generates a standardized RRULE string from a state object.
- * @param {object} state The state object (from parseRRule or UI).
- * @returns {string} The generated RRULE string (e.g., "FREQ=DAILY;INTERVAL=2").
  */
 export const generateRRule = (state) => {
     const { freq, interval, byday, terminationType, count, until } = state;
@@ -90,24 +82,18 @@ export const generateRRule = (state) => {
 
     let newRruleParts = [`FREQ=${freq}`];
 
-    if (interval > 1) {
-        newRruleParts.push(`INTERVAL=${interval}`);
-    }
+    if (interval > 1) newRruleParts.push(`INTERVAL=${interval}`);
 
     if (freq === FREQ_OPTIONS.WEEKLY && byday.length > 0) {
-        // Ensure days are sorted before joining
         newRruleParts.push(`BYDAY=${sortWeekdays(byday).join(',')}`);
     }
 
     switch (terminationType) {
         case TERMINATION_TYPES.COUNT:
-            if (count > 0) {
-                newRruleParts.push(`COUNT=${count}`);
-            }
+            if (count > 0) newRruleParts.push(`COUNT=${count}`);
             break;
         case TERMINATION_TYPES.UNTIL:
             if (until) {
-                // Convert YYYY-MM-DD to YYYYMMDDTHHmmssZ for RFC 5545 compliance
                 const utcDate = until.replace(/-/g, '') + 'T235959Z';
                 newRruleParts.push(`UNTIL=${utcDate}`);
             }
@@ -115,52 +101,45 @@ export const generateRRule = (state) => {
         default:
             break;
     }
+
     return newRruleParts.join(';');
 };
 
 /**
- * Generates a human-readable summary text from an RRULE string.
- * @param {string} rruleString The RRULE string.
- * @returns {string} A human-readable summary (e.g., "매주 월, 수요일, 10회").
+ * Generates a human-readable summary text from an RRULE string (English).
  */
 export const rruleToText = (rruleString) => {
-    if (!rruleString) {
-        return '반복 안 함';
-    }
+    if (!rruleString) return 'Does not repeat';
 
-    // Use the standardized parser
     const rules = parseRRule(rruleString);
-
     const { freq, interval, byday, terminationType, count, until } = rules;
     let summary = '';
 
-    // 1. Frequency and Interval
     switch (freq) {
         case FREQ_OPTIONS.DAILY:
-            summary = interval > 1 ? `${interval}일마다` : '매일';
+            summary = interval > 1 ? `Every ${interval} days` : 'Daily';
             break;
         case FREQ_OPTIONS.WEEKLY:
-            summary = interval > 1 ? `${interval}주마다` : '매주';
+            summary = interval > 1 ? `Every ${interval} weeks` : 'Weekly';
             if (byday && byday.length > 0) {
                 const days = sortWeekdays(byday).map(day => WEEKDAYS_MAP[day]).join(', ');
-                summary += ` ${days}요일`;
+                summary += ` on ${days}`;
             }
             break;
         case FREQ_OPTIONS.MONTHLY:
-            summary = interval > 1 ? `${interval}개월마다` : '매월';
+            summary = interval > 1 ? `Every ${interval} months` : 'Monthly';
             break;
         case FREQ_OPTIONS.YEARLY:
-            summary = interval > 1 ? `${interval}년마다` : '매년';
+            summary = interval > 1 ? `Every ${interval} years` : 'Annually';
             break;
         default:
-            return '반복 안 함';
+            return 'Does not repeat';
     }
 
-    // 2. Termination
     if (terminationType === TERMINATION_TYPES.COUNT) {
-        summary += `, ${count}회`;
+        summary += `, ${count} times`;
     } else if (terminationType === TERMINATION_TYPES.UNTIL && until) {
-        summary += `, ${until}까지`;
+        summary += `, until ${until}`;
     }
 
     return summary;
@@ -168,14 +147,9 @@ export const rruleToText = (rruleString) => {
 
 /**
  * Parses an RRULE string into a simple key-value object for FullCalendar.
- * Keys are lowercased to be compatible with rrule.js options.
- * @param {string} rruleString The RRULE string.
- * @returns {object} A simple key-value object (e.g., {freq: 'weekly', count: 10}).
  */
 export const parseRRuleForCalendar = (rruleString) => {
-  if (!rruleString) {
-    return {};
-  }
+  if (!rruleString) return {};
 
   const rruleObject = {};
   const parts = rruleString
@@ -192,7 +166,6 @@ export const parseRRuleForCalendar = (rruleString) => {
     let value = part.substring(splitIndex + 1).trim();
 
     if (key === 'byday') {
-      // convert BYDAY → byweekday with Weekday objects
       const days = value.split(',').map(dayStr => {
         switch (dayStr) {
           case 'SU': return RRule.SU;
@@ -206,7 +179,7 @@ export const parseRRuleForCalendar = (rruleString) => {
         }
       }).filter(Boolean);
       rruleObject['byweekday'] = days;
-      return; // skip adding "byday"
+      return;
     } else if (key === 'count' || key === 'interval') {
       value = parseInt(value, 10);
     } else if (key === 'until') {

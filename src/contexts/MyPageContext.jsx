@@ -37,16 +37,16 @@ export const MyPageProvider = ({ children, userId }) => { // [수정] userId pro
       const response = await api.get(endpoint);
       setProfile(response.data);
     } catch (err) {
-      console.error(`[MyPageContext] 프로필 로딩 실패:`, err);
+      console.error(`[MyPageContext] Profile loading failed:`, err);
       const message = err.response?.status === 404
-          ? "존재하지 않는 사용자입니다."
-          : "프로필 정보를 불러오는 데 실패했습니다.";
+          ? "User not found."
+          : "Failed to load profile information.";
       setError(message);
       setProfile(null);
     } finally {
       setLoading(false);
     }
-  }, []); // [수정] 외부 의존성이 없으므로 빈 배열로 변경합니다.
+  }, []); // [수정] 함수가 외부 변수에 의존하지 않으므로 빈 배열로 유지합니다.
 
   useEffect(() => {
     // [수정] userId가 변경될 때마다 적절한 프로필을 로드합니다.
@@ -58,47 +58,48 @@ export const MyPageProvider = ({ children, userId }) => { // [수정] userId pro
   useEffect(() => {
     // myPageViewRequest가 0이 아닐 때만 (초기 렌더링 방지) 실행
     if (myPageViewRequest > 0) {
-      handleCancel();
+      setIsEditing(false); // [수정] 함수 직접 호출 대신 상태를 직접 변경하여 안정성 확보
     }
   }, [myPageViewRequest]); // myPageViewRequest 값이 바뀔 때마다 실행
 
-  const updateProfile = async (profileData, { profileImageFile, bannerImageFile, revertToDefault = {} }) => {
-    if (!loggedInUser) {
-      const err = new Error("사용자 인증 정보가 없어 프로필을 업데이트할 수 없습니다.");
-      setError(err.message);
-      throw err;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append(
-        "request",
-        new Blob([JSON.stringify(profileData)], { type: "application/json" })
-      );
-
-      if (profileImageFile) formData.append("profileImage", profileImageFile);
-      if (bannerImageFile) formData.append("bannerImage", bannerImageFile);
-
-      if (revertToDefault.profileImage) formData.append("revertProfileImage", "true");
-      if (revertToDefault.bannerImage) formData.append("revertBannerImage", "true");
-
-      // [수정] 프로필 업데이트 API 경로도 일관성을 위해 'users'로 변경합니다.
-      await api.put(`/api/user/profile`, formData);
-
-      await refreshUser(); // 전역 상태 업데이트
-      await loadProfile(); // 현재 Context의 프로필 다시 로드
-      setIsEditing(false); // 수정 완료 후 보기 모드로 전환
-    } catch (err) {
-      console.error("[MyPageContext] updateProfile 오류", err);
-      const message = err.response?.data?.message || "프로필 업데이트 중 오류 발생";
-      setError(message);
-      throw err;
-    }
-  };
+  // [수정] updateProfile 함수를 useCallback으로 감싸서 안정화시킵니다.
+  const updateProfile = useCallback(async (profileData, { profileImageFile, bannerImageFile, revertToDefault = {} }) => {
+      if (!loggedInUser) {
+        const err = new Error("Cannot update profile without user authentication.");
+        setError(err.message);
+        throw err;
+      }
+  
+      try {
+        const formData = new FormData();
+        formData.append(
+          "request",
+          new Blob([JSON.stringify(profileData)], { type: "application/json" })
+        );
+  
+        if (profileImageFile) formData.append("profileImage", profileImageFile);
+        if (bannerImageFile) formData.append("bannerImage", bannerImageFile);
+  
+        if (revertToDefault.profileImage) formData.append("revertProfileImage", "true");
+        if (revertToDefault.bannerImage) formData.append("revertBannerImage", "true");
+  
+        await api.put(`/api/user/profile`, formData);
+  
+        await refreshUser(); // 전역 상태 업데이트
+        await loadProfile(loggedInUser.id);
+        // setIsEditing(false); // 수정 완료 후 보기 모드로 전환
+      } catch (err) {
+        console.error("[MyPageContext] updateProfile error", err);
+        const message = err.response?.data?.message || "An error occurred while updating the profile.";
+        setError(message);
+        throw err;
+      }
+    }, [loggedInUser, refreshUser, loadProfile]); // 함수가 사용하는 외부 값들을 의존성 배열에 추가합니다.
 
   // 수정 모드 진입/취소 핸들러
-  const handleEdit = () => setIsEditing(true);
-  const handleCancel = () => setIsEditing(false);
+  // [수정] 이 함수들도 useCallback으로 감싸 일관성을 유지합니다.
+  const handleEdit = useCallback(() => setIsEditing(true), []);
+  const handleCancel = useCallback(() => setIsEditing(false), []);
 
   // Provider가 제공할 값들
   const value = {
@@ -110,6 +111,7 @@ export const MyPageProvider = ({ children, userId }) => { // [수정] userId pro
     isEditing,
     handleEdit,
     handleCancel,
+    refetchProfile: loadProfile, // [추가] 프로필 정보를 다시 불러오는 함수를 외부에 제공합니다.
   };
   return <MyPageContext.Provider value={value}>{children}</MyPageContext.Provider>;
 

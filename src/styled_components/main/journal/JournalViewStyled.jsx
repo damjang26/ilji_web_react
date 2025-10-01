@@ -18,7 +18,7 @@ export const ViewContainer = styled.article`
         background-color: white;
         border-radius: 16px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        gap: 20px;
+        gap: 15px;
         padding: 28px;
         width: 500px; /* 이미지가 없을 때의 너비 */
         position: relative; /* 내부 CommentContainer의 기준점 */
@@ -26,6 +26,7 @@ export const ViewContainer = styled.article`
         /* ✅ [추가] 댓글 창 상태에 따라 높이를 동적으로 조절하고 애니메이션을 추가합니다. */
         height: ${({isCommentOpen}) => (isCommentOpen ? '90vh' : 'auto')};
         max-height: 90vh;
+        min-height: 270px;
         transition: height 0.4s ease-in-out;
     }
 
@@ -123,11 +124,11 @@ export const ContentContainer = styled.div`
     display: flex;
     flex-direction: column;
     position: relative; /* 자식 요소(CommentContainer)의 absolute 포지셔닝 기준점 */
+    gap: 15px;
 `;
 
 /** JournalView에 표시될 날짜 스타일 */
 export const JournalDate = styled.h3`
-    margin-top: 12px;
     margin-bottom: 0;
     padding: 0;
     font-size: 1rem; /* 16px */
@@ -176,9 +177,14 @@ export const ContentSection = styled.div`
     font-size: 14px;
     line-height: 1.6;
     white-space: pre-wrap; /* 줄바꿈과 공백을 그대로 표시 */
-    padding: 16px;
+    padding: 0 7px;
     overflow-y: auto; /* 내용이 길어지면 스크롤 */
     flex-grow: 1; /* 남는 공간을 모두 채움 */
+
+    p {
+        margin-top: 0;
+        margin-bottom: 2em;
+    }
 `;
 
 // ✅ [신규] 좋아요, 댓글, 공유 버튼을 담는 액션 컨테이너

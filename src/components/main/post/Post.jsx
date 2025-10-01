@@ -25,7 +25,7 @@ const Post = () => {
         try {
             const response = await getFeed({page: fetchPage, size: 10});
             const data = response.data;
-            console.log("데이터", data); // 디버깅 후 주석 처리 또는 삭제
+            console.log("Data fetched", data); // For debugging, can be removed later
 
             // ✅ [개선] 중복 데이터 처리 로직 개선
             setPosts(prevPosts => {
@@ -43,7 +43,7 @@ const Post = () => {
 
             setHasMore(!data.last);
         } catch (error) {
-            console.error(`피드 로딩 실패 (페이지: ${fetchPage}):`, error);
+            console.error(`Failed to load feed (page: ${fetchPage}):`, error);
         } finally {
             setLoading(false);
         }

@@ -8,13 +8,8 @@ const Sticker = ({canvas}) => {
     const [deleteBtnPos, setDeleteBtnPos] = useState({x: 0, y: 0, visible: false});
     const iconSize = 28; // 삭제 아이콘 크기를 상수로 관리하면 유지보수가 편해집니다.
 
-    const stickers = [
-        "/images/emoji/sticker1.png",
-        "/images/emoji/sticker2.png",
-        "/images/emoji/sticker3.png",
-        "/images/emoji/sticker4.png",
-        "/images/emoji/sticker5.png",
-    ];
+    // ✅ [수정] Array.from을 사용하여 스티커 경로 배열을 동적으로 생성합니다.
+    const stickers = Array.from({length: 21}, (_, i) => `/images/emoji/sticker${i + 1}.png`);
 
     const addSticker = async (url) => {
         if (!canvas) return;
@@ -22,17 +17,23 @@ const Sticker = ({canvas}) => {
             // fabric.Image.fromURL은 Promise를 반환하므로 await와 함께 사용할 수 있습니다.
             // crossOrigin 옵션은 다른 도메인의 이미지를 불러올 때 발생할 수 있는 문제를 방지합니다.
             const img = await fabric.Image.fromURL(url, {crossOrigin: 'anonymous'});
+
+            // ✅ [추가] 스티커의 목표 크기를 80px로 설정합니다.
+            const TARGET_SIZE = 100;
+            // ✅ [추가] 원본 이미지의 가로/세로 중 더 큰 쪽을 기준으로 축소 비율을 계산합니다.
+            const scale = TARGET_SIZE / Math.max(img.width, img.height);
+
             img.set({
                 left: 100,
                 top: 100,
-                scaleX: 0.2,
-                scaleY: 0.2,
+                scaleX: scale, // ✅ [수정] 계산된 비율을 적용합니다.
+                scaleY: scale, // ✅ [수정] 계산된 비율을 적용합니다.
             });
             canvas.add(img);
             canvas.setActiveObject(img); // 추가된 스티커를 바로 활성화합니다.
             canvas.renderAll();
         } catch (error) {
-            console.error("스티커를 추가하는 데 실패했습니다:", error);
+            console.error("Failed to add stickers:", error);
         }
     };
 

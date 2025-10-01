@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Modal, Tabs, List, Avatar, message, Input, Checkbox } from "antd";
+import React, {useState, useEffect, useCallback} from "react";
+import {Modal, Tabs, List, Avatar, message, Input, Checkbox} from "antd";
 import {
     getFollowingList,
     getFollowersList,
     searchUsers,
-    createChatRoom,
+    createChatRoom
 } from "../../api";
-import { useAuth } from "../../AuthContext";
-import { useDebounce } from "../../hooks/useDebounce";
+import {useAuth} from "../../AuthContext";
+import {useDebounce} from "../../hooks/useDebounce";
 
-const { Search } = Input;
+const {Search} = Input;
 
-export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }) {
-    const { user: loggedInUser } = useAuth();
+export default function CreateChatRoomModal({open, onClose, onChatRoomCreated}) {
+    const {user: loggedInUser} = useAuth();
 
     const [activeTab, setActiveTab] = useState("following");
     const [followingList, setFollowingList] = useState([]);
@@ -38,7 +38,7 @@ export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }
             setFollowerList(followersRes.data);
         } catch (error) {
             console.error("Failed to fetch friend lists:", error);
-            message.error("목록을 불러오는 데 실패했습니다.");
+            message.error("Failed to load list.");
         } finally {
             setLoading(false);
         }
@@ -61,7 +61,7 @@ export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }
                     setSearchResults(response.data);
                 } catch (error) {
                     console.error("Search failed:", error);
-                    message.error("사용자 검색에 실패했습니다.");
+                    message.error("User search failed.");
                 } finally {
                     setIsSearching(false);
                 }
@@ -82,7 +82,7 @@ export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }
 
     const handleOk = async () => {
         if (selectedUsers.length === 0) {
-            message.warn("한 명 이상의 사용자를 선택해야 합니다.");
+            message.warn("You must select at least one user.");
             return;
         }
 
@@ -90,12 +90,12 @@ export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }
 
         try {
             const response = await createChatRoom(roomName, userIds);
-            message.success("채팅방이 생성되었습니다.");
+            message.success("A chat room has been created.\n");
             onChatRoomCreated(response.data);
             onClose();
         } catch (error) {
             console.error("Failed to create chat room:", error);
-            message.error("채팅방 생성에 실패했습니다.");
+            message.error("Failed to create chat room.");
         }
     };
 
@@ -114,7 +114,7 @@ export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }
             loading={loading || isSearching}
             itemLayout="horizontal"
             dataSource={getUniqueUsers(users)}
-            locale={{ emptyText: "표시할 사용자가 없습니다." }}
+            locale={{emptyText:"There are no users to display."}}
             renderItem={(item) => {
                 if (loggedInUser && item.userId === loggedInUser.id) {
                     return null;
@@ -133,7 +133,8 @@ export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }
                         ]}
                     >
                         <List.Item.Meta
-                            avatar={<Avatar src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`} />}
+                            avatar={<Avatar
+                                src={item.picture || `https://api.dicebear.com/7.x/miniavs/svg?seed=${item.userId}`}/>}
                             title={item.name}
                             description={item.email}
                         />
@@ -146,24 +147,24 @@ export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }
     const tabItems = [
         {
             key: 'following',
-            label: '팔로잉',
+            label: 'Following',
             children: renderUserList(followingList),
         },
         {
             key: 'followers',
-            label: '팔로워',
+            label: 'Followers',
             children: renderUserList(followerList),
         },
         {
             key: 'search',
-            label: '검색',
+            label: 'Search',
             children: (
                 <>
                     <Search
-                        placeholder="닉네임 또는 이메일로 검색"
+                        placeholder="Search by nickname or email"
                         onSearch={(value) => setSearchTerm(value)}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{ marginBottom: 20 }}
+                        style={{marginBottom: 20}}
                         enterButton
                         loading={isSearching}
                     />
@@ -175,21 +176,21 @@ export default function CreateChatRoomModal({ open, onClose, onChatRoomCreated }
 
     return (
         <Modal
-            title="새로운 채팅방 생성"
+            title="Create a new chat room"
             open={open}
             onCancel={onClose}
             onOk={handleOk}
-            okText="만들기"
-            cancelText="취소"
+            okText="Create"
+            cancelText="Cancel"
             width={400}
         >
             <Input
-                placeholder="채팅방 이름 (선택)"
+                placeholder="Chat Room Name (Select)"
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
-                style={{ marginBottom: 20 }}
+                style={{marginBottom: 20}}
             />
-            <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} centered />
+            <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabItems} centered/>
         </Modal>
     );
 }

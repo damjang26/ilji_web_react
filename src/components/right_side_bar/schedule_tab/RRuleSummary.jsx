@@ -59,6 +59,7 @@ const RRuleSummary = ({ rrule, onClick }) => {
     //     return summary;
     // }, [rrule]);
 
+
     return (
         <SummaryWrapper onClick={onClick}>
             <SummaryText>{summaryText}</SummaryText>

@@ -125,6 +125,14 @@ apiNoti.interceptors.request.use(
  */
 export const getFeed = (params) => api.get('/api/i-log/feed', {params});
 
+/**
+ * 특정 일기의 공유 ID를 가져오거나 생성합니다.
+ * @param {number} journalId - 일기의 ID
+ * @returns {Promise<AxiosResponse<any>>} - { shareId: "..." } 형태의 응답을 포함하는 Promise
+ */
+export const getOrCreateShareId = (journalId) => {
+    return api.post(`/api/i-log/${journalId}/share`);
+};
 // =================================
 // 좋아요 관련 API
 // =================================
@@ -156,7 +164,7 @@ export const getUserJournals = (userId) => api.get(`/api/i-log/user/${userId}`);
  */
 export const getPagedJournals = (params) => {
     // 예: /api/i-log/user/123?page=0&size=10&sort=logDate,desc
-    const { userId, page, size, sortBy } = params;
+    const {userId, page, size, sortBy} = params;
 
     let sortQuery;
     switch (sortBy) {
@@ -250,12 +258,40 @@ export const leaveChatRoom = (roomId) => {
     return api.post(`/api/chat/${roomId}/leave`);
 };
 
-/**
-
- 새로운 채팅방을 생성합니다.
- @param {string} roomName - 채팅방 이름
- @param {number[]} userIds - 참여할 사용자들의 ID 배열
- @returns {Promise<axios.AxiosResponse<any>>}*/
 export const createChatRoom = (roomName, userIds) => {
     return api.post("/api/chat/create", { roomName, userIds });
+};
+
+// =================================
+// AI 관련 API
+// =================================
+
+/**
+ * 사용자의 채팅 메시지를 백엔드로 보내 AI 태그 추천을 요청하는 함수
+ * @param {string} userMessage - 사용자가 입력한 채팅 메시지
+ * @returns {Promise<string|null>} - 추천 태그 문자열 또는 null (무시해야 할 경우)
+ */
+export const getAiTagSuggestion = async (userMessage) => {
+  // 메시지가 너무 짧으면 API 호출 자체를 생략 (비용 절약)
+  if (!userMessage || userMessage.trim().length < 5) {
+    return null;
+  }
+
+  try {
+    const response = await api.post('/ai', { prompt: userMessage });
+
+    // 응답 본문이 비어있지 않다면 (추천 태그가 있다면) 태그를 반환
+    if (response.data) {
+      console.log('AI 추천 태그:', response.data);
+      return response.data;
+    } else {
+      // 응답 본문이 비어있다면 (AI가 'IGNORE'한 경우)
+      console.log('AI가 일상 대화로 판단하여 무시했습니다.');
+      return null;
+    }
+  } catch (error) {
+    console.error('AI 태그 추천 API 호출 중 오류 발생:', error);
+    // 2xx가 아닌 상태 코드(5xx 등)는 axios에서 에러로 처리됩니다.
+    return null;
+  }
 };

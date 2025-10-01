@@ -16,14 +16,18 @@ const LikeList = () => {
     const [ref, inView] = useInView({
         threshold: 0,
     });
+    const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-    const fetchPosts = useCallback(async (isNewSort) => {
+
+    // [수정] fetchPosts가 signal을 인자로 받도록 변경합니다.
+    const fetchPosts = useCallback(async (isNewSort, signal) => {
         if (loading) return;
         setLoading(true);
 
         const currentPage = isNewSort ? 0 : page;
 
         try {
+            // [수정] API 호출 시 signal을 전달합니다.
             const response = await getLikedPosts({
                 userId: userId,
                 sortBy: sortBy,
@@ -38,8 +42,11 @@ const LikeList = () => {
                 setPage(currentPage + 1);
             }
         } catch (error) {
-            console.error("좋아요 누른 일기 목록을 불러오는 데 실패했습니다.", error);
-            message.error("목록을 불러오는 데 실패했습니다.");
+            // [수정] 요청이 취소된 경우(AbortError)는 정상적인 동작이므로 에러를 출력하지 않습니다.
+            if (error.name !== 'AbortError' && error.name !== 'CanceledError') {
+                console.error("Failed to load the list of diaries you liked.", error);
+                message.error("Failed to load list.");
+            }
         } finally {
             setLoading(false);
         }
@@ -47,24 +54,33 @@ const LikeList = () => {
 
     // 정렬 기준이 변경되면, 페이지를 0으로 초기화하고 데이터를 새로 불러옵니다.
     useEffect(() => {
+        // [핵심 수정] 요청 취소를 위한 AbortController를 생성합니다.
+        const controller = new AbortController();
+
         setPosts([]);
         setPage(0);
         setHasMore(true);
-        fetchPosts(true);
-    }, [sortBy, userId]);
+        // [핵심 수정] fetchPosts 호출 시 controller의 signal을 전달합니다.
+        fetchPosts(true, controller.signal).then(() => setInitialLoadDone(true));
+
+        // [핵심 수정] 클린업 함수: 컴포넌트가 사라지거나, 정렬 기준이 다시 바뀌면 이전 요청을 취소합니다.
+        return () => {
+            controller.abort();
+        };
+    }, [sortBy, userId]); // fetchPosts를 의존성에서 제외하여 무한 루프 가능성을 차단합니다.
 
     // 사용자가 마지막 요소를 보고 있고, 더 불러올 데이터가 있으면 다음 페이지를 불러옵니다.
     useEffect(() => {
-        if (inView && hasMore && !loading) {
+        if (inView && hasMore && !loading && initialLoadDone) {
             fetchPosts(false);
         }
-    }, [inView, hasMore, loading, fetchPosts]);
+    }, [inView, hasMore, loading, fetchPosts, initialLoadDone]);
 
     // ✅ [추가] 'journal:updated' 전역 이벤트를 감지하여, 목록의 해당 항목을 즉시 업데이트합니다.
     // 이렇게 하면 전체 목록을 다시 불러오는 API 호출 없이도 수정된 내용이 바로 반영됩니다.
     useEffect(() => {
         const handleJournalUpdate = (event) => {
-            const { updatedJournal } = event.detail;
+            const {updatedJournal} = event.detail;
             if (updatedJournal) {
                 setPosts(prevPosts =>
                     prevPosts.map(p =>
@@ -81,10 +97,11 @@ const LikeList = () => {
     return (
         <div>
             <SortOptionsContainer>
-                <SortButton $active={sortBy === 'liked_at'} onClick={() => setSortBy('liked_at')}>좋아요 누른 순</SortButton>
-                <SortButton $active={sortBy === 'uploaded_at'} onClick={() => setSortBy('uploaded_at')}>일기 작성
-                    순</SortButton>
-                <SortButton $active={sortBy === 'popular'} onClick={() => setSortBy('popular')}>인기 순</SortButton>
+                <SortButton $active={sortBy === 'liked_at'} onClick={() => setSortBy('liked_at')}>Newest
+                    Likes</SortButton>
+                <SortButton $active={sortBy === 'uploaded_at'}
+                            onClick={() => setSortBy('uploaded_at')}>Newest upload</SortButton>
+                <SortButton $active={sortBy === 'popular'} onClick={() => setSortBy('popular')}>Popular</SortButton>
             </SortOptionsContainer>
 
             {/* ✅ [수정] prop 이름을 journals -> posts로 변경하고, 필요한 모든 props 전달 */}
@@ -96,9 +113,10 @@ const LikeList = () => {
                 lastPostElementRef={ref}
             />
 
-            {loading && <div style={{textAlign: 'center', padding: '20px'}}><Spin/></div>}
-            {/* 무한 스크롤을 위한 감지 요소 */}
-            {!loading && hasMore && <div ref={ref} style={{height: '20px'}}/>}
+            {/*{loading && <div style={{textAlign: 'center', padding: '20px'}}><Spin/></div>}*/}
+            {/*/!* 무한 스크롤을 위한 감지 요소 *!/*/}
+            {/*{!loading && hasMore && <div ref={ref} style={{height: '20px'}}/>}*/}
+
         </div>
     );
 };

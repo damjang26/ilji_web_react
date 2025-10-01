@@ -23,6 +23,7 @@ export const HeaderIconButton = styled.button`
     ${commonButtonStyle}
     font-size: 18px; /* Slightly larger for header icons */
     padding: 6px; /* Adjust padding for icon size */
+
     svg {
         font-size: 18px;
     }
@@ -64,7 +65,7 @@ export const MessagesContainer = styled.div`
     flex-grow: 1;
     overflow-y: auto;
     padding: 20px;
-    background-color: #f8f9fa;
+    background-color: white;
 `;
 
 export const Message = styled.div`
@@ -104,6 +105,7 @@ export const MessageForm = styled.form`
     padding: 15px;
     border-top: 1px solid #e9ecef;
     background-color: #fff;
+    gap: 10px;
 `;
 
 export const MessageInput = styled.input`
@@ -121,13 +123,47 @@ export const MessageInput = styled.input`
 `;
 
 export const SendButton = styled.button`
-    ${commonButtonStyle}
-    margin-left: 10px;
+    height: 40px; /* ✅ 세로 높이 */
+    width: 40px; /* ✅ 세로와 동일한 가로 너비 설정 */
+    border: none;
     background-color: #7b5fff;
-    color: #fff;
+    color: white;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0; /* ✅ 버튼 크기가 줄어들지 않도록 설정 */
 
     &:hover {
-        background-color: #6a4fe9;
-        color: #fff;
+        background-color: #45a049;
+    }
+`;
+
+export const SuggestedTag = styled.div`
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #555;
+
+    span {
+        margin-right: 8px;
+    }
+`;
+
+export const SuggestedTagButton = styled.button`
+    padding: 6px 12px;
+    border-radius: 16px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+
+    &:hover {
+        background-color: #e0e0e0;
+        border-color: #bbb;
     }
 `;

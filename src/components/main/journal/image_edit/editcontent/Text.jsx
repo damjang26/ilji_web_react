@@ -9,31 +9,24 @@ import {
 } from "../../../../../styled_components/main/journal/JournalWriteStyled.jsx";
 
 // 폰트, 글자 크기, 색상
-// ✅ [수정] 대부분의 컴퓨터에 기본 설치된 '안전한' 한/영 폰트 목록으로 교체
+// ✅ [수정] index.css에 추가된 웹 폰트와 기본 시스템 폰트를 포함합니다.
 const FONTS = [
-    // --- 한글/영문 공용 폰트 ---
-    "Malgun Gothic",  // 윈도우의 기본 고딕체 (가장 무난함)
-    "Dotum",          // 윈도우의 전통적인 돋움체
-    "Batang",         // 윈도우의 기본 명조체(바탕체)
-    "Gungsuh",        // 윈도우의 궁서체 (붓글씨 느낌)
-    // --- 영문 전용 폰트 (한글은 시스템 기본값으로 표시됨) ---
-    "Arial",          // 가장 기본적인 영문 고딕체
-    "Times New Roman",// 가장 기본적인 영문 명조체
-    "Courier New",    // 타자기로 친 듯한 고정폭 글씨체
-    // --- 일본어 공용 폰트 (Windows/macOS) ---
-    "Meiryo",         // 메이리오 (Windows의 모던 고딕체)
-    "Yu Gothic",      // 유고딕 (Win/Mac 공용 모던 고딕체)
-    "Hiragino Sans",  // 히라기노 산스 (macOS의 기본 고딕체)
-    "MS PMincho",     // MS P민초 (Windows의 기본 명조체)
+    // --- 추가된 웹 폰트 ---
+    "KyoboHandwriting2019", // 교보 손글씨
+    "AviChiba",             // 어비 치바체
+    "GowoonDodum",          // 고운 돋움
+    // --- 기본 시스템 폰트 ---
+    "Malgun Gothic",        // 윈도우 기본 고딕
+    "Arial",                // 영문 기본 고딕
 ];
 const FONT_SIZES = [8, 10, 12, 16, 20, 24, 32, 40, 48];
 const COLORS = ["#000000", "#E53E3E", "#3182CE", "#38A169", "#D69E2E", "#ffffff", "#7B5FFF"];
 
 const Text = ({canvas}) => {
     // UI 컨트롤(폰트, 크기, 색상)을 위한 상태
-    const [selectedFont, setSelectedFont] = useState("sans-serif");
+    const [selectedFont, setSelectedFont] = useState("KyoboHandwriting2019");
     const [selectedSize, setSelectedSize] = useState(16);
-    const [selectedColor, setSelectedColor] = useState("#333333");
+    const [selectedColor, setSelectedColor] = useState("#000000");
 
     // 캔버스 상태(선택된 텍스트, 텍스트 총 개수)를 추적하기 위한 상태
     const [activeText, setActiveText] = useState(null);
@@ -41,28 +34,37 @@ const Text = ({canvas}) => {
     const [deleteBtnPos, setDeleteBtnPos] = useState({x: 0, y: 0, visible: false});
     const iconSize = 28;
 
-    const addText = () => {
+    // ✅ [수정] async/await를 사용하여 폰트 로딩을 기다리도록 변경
+    const addText = async () => {
         if (!canvas) return;
 
-        const iText = new fabric.IText('텍스트를 입력하세요', {
-            left: canvas.width / 2,
-            top: canvas.height / 2,
-            originX: 'center',
-            originY: 'center',
-            fontFamily: selectedFont,
-            fontSize: selectedSize,
-            fill: selectedColor,
-            padding: 10,
-            borderColor: '#7b5fff',
-            cornerColor: '#7b5fff',
-            cornerSize: 10,
-            transparentCorners: false,
-        });
+        try {
+            // ✅ [핵심] 캔버스에 텍스트를 추가하기 전에, 사용할 폰트가 로드될 때까지 기다립니다.
+            // 이렇게 하면 폰트가 적용되지 않는 문제를 해결할 수 있습니다.
+            await document.fonts.load(`${selectedSize}px ${selectedFont}`);
 
-        canvas.add(iText).setActiveObject(iText);
-        iText.enterEditing();
-        iText.selectAll();
-        canvas.renderAll();
+            const iText = new fabric.IText('Type your text here', {
+                left: canvas.width / 2,
+                top: canvas.height / 2,
+                originX: 'center',
+                originY: 'center',
+                fontFamily: selectedFont,
+                fontSize: selectedSize,
+                fill: selectedColor,
+                padding: 5,
+                borderColor: '#7b5fff',
+                cornerColor: '#7b5fff',
+                cornerSize: 10,
+                transparentCorners: false,
+            });
+
+            canvas.add(iText).setActiveObject(iText);
+            iText.enterEditing();
+            iText.selectAll();
+            canvas.renderAll();
+        } catch (err) {
+            console.error("Font loading failed or text creation failed:", err);
+        }
     };
 
     // 캔버스 이벤트를 감지하여 상태를 업데이트하는 메인 Effect
@@ -156,13 +158,13 @@ const Text = ({canvas}) => {
 
     return (
         <TextContainer>
-            <AddButton onClick={addText}>텍스트 추가하기</AddButton>
+            <AddButton onClick={addText}>Add Text</AddButton>
             {/* 캔버스에 텍스트가 하나도 없을 때만 설명을 보여줌 */}
             {textObjectCount === 0 && (
                 <Description>
-                    버튼을 눌러 텍스트를 추가한 후,
+                    Click the button to add text,
                     <br/>
-                    캔버스에서 직접 수정해 보세요.
+                    then edit it directly on the canvas.
                 </Description>
             )}
 
