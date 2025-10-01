@@ -33,7 +33,8 @@ import {formatRelativeTime} from "../../../../utils/timeFormatter.js";
 import {BiSolidShareAlt} from "react-icons/bi";
 import PostLikersModal from "../../post/PostLikersModal.jsx";
 import PostComment from "../../post/PostComment.jsx";
-import {shareJournal} from "../../../../utils/shareUtils.js"; // ✅ [추가] 공유 부품 임포트
+import {shareJournal} from "../../../../utils/shareUtils.js";
+import {LuBookLock, LuBookUser} from "react-icons/lu"; // ✅ [추가] 공유 부품 임포트
 
 // ✅ [신규] 각 일기 항목을 렌더링하는 컴포넌트
 // 각 아이템이 독립적인 이미지 슬라이더 상태를 갖도록 분리합니다.
@@ -140,6 +141,10 @@ const JournalItem = ({
                                             <span className="username"
                                                   onClick={() => onProfileClick(journal.writerId)}
                                             >{journal.writerNickname || 'User'}</span>
+                                            {journal.visibility === "PRIVATE" &&
+                                                <LuBookLock style={{marginRight: '4px'}}/>}
+                                            {journal.visibility === "FRIENDS_ONLY" &&
+                                                <LuBookUser style={{marginRight: '4px'}}/>}
                                             <span className="date">{formatRelativeTime(journal.createdAt)}</span>
                                         </div>
 
@@ -213,6 +218,9 @@ const JournalItem = ({
                             <div>
                                 <span className="username"
                                       onClick={() => onProfileClick(journal.writerId)}>{journal.writerNickname || 'User'}</span>
+                                {journal.visibility === "PRIVATE" && <LuBookLock style={{marginRight: '4px'}}/>}
+                                {journal.visibility === "FRIENDS_ONLY" &&
+                                    <LuBookUser style={{marginRight: '4px'}}/>}
                                 <span className="date">{formatRelativeTime(journal.createdAt)}</span>
                             </div>
 
@@ -515,7 +523,7 @@ const JournalList = ({onPostChange}) => {
                     <EmptyFeedText>
                         Be the first to share your story today!
                     </EmptyFeedText>
-                    <WriteJournalButton onClick={() => navigate('/journal/write', {
+                    <WriteJournalButton onClick={() => navigate('/i-log/write', {
                         state: {backgroundLocation: location}
                     })}>
                         Write Now
