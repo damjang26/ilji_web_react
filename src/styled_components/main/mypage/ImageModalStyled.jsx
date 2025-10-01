@@ -49,6 +49,7 @@ export const ImagePreview = styled.div`
    background-image: url(${props => props.imageUrl});
    background-size: cover;
    background-position: center;
+   cursor: pointer; /* ✅ [추가] 클릭 가능하다는 것을 알려주기 위해 커서 모양을 변경합니다. */
    margin-bottom: 16px; /* 입력 필드와의 간격 */
  
    /* imageType prop에 따라 원형/사각형으로 모양 변경 */
@@ -56,8 +57,8 @@ export const ImagePreview = styled.div`
      width: 150px;
      height: 150px;
      border-radius: 50%; /* 프로필은 원형 */
-     margin-left: auto;
-     margin-right: auto;
+     // margin-left: auto;
+     // margin-right: auto;
    `}
  `;
 

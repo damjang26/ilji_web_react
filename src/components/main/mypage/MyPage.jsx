@@ -273,11 +273,8 @@ const MyPage = () => {
             <ImageBox
                 isOpen={isImageModalOpen}
                 onClose={() => setIsImageModalOpen(false)}
-                currentImageUrl={
-                    profile && editingImageType && profile[editingImageType]
-                        ? profile[editingImageType].split("?")[0]
-                        : ""
-                }
+                // ✅ [수정] 캐시 문제를 해결하기 위해 URL의 타임스탬프를 제거하지 않고 그대로 전달합니다.
+                currentImageUrl={profile && editingImageType ? profile[editingImageType] : ""}
                 onConfirm={handleImageConfirm}
                 imageType={editingImageType}
                 isEditable={isOwner} // isOwner를 전달하여 편집 가능 여부 제어
