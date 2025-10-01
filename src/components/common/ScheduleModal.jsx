@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useLayoutEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import {
     ModalBackdrop,
@@ -9,20 +9,31 @@ import {
     ModalContent
 } from '../../styled_components/common/ScheduleModalStyled';
 import ScheduleTab from '../right_side_bar/ScheduleTab';
-import ScheduleForm from '../right_side_bar/schedule_tab/ScheduleForm'; // 폼 컴포넌트를 직접 import
+import ScheduleForm from '../right_side_bar/schedule_tab/ScheduleForm';
+import RRuleGenerator from '../right_side_bar/schedule_tab/RRuleGenerator'; // 반복 규칙 컴포넌트 import
 import { useSchedule } from '../../contexts/ScheduleContext';
 
 const ScheduleModal = () => {
     // 필요한 함수들을 context에서 모두 가져옵니다.
-    const { scheduleModalData, closeScheduleModal, goBackInSchedulePanel, openSchedulePanelForRRule } = useSchedule();
-    const { isOpen, position, title, view, initialEvent } = scheduleModalData || {}; // initialEvent 가져오기
+    const { 
+        scheduleModalData, 
+        closeScheduleModal, 
+        goBackInSchedulePanel, 
+        switchToModalRRuleView, // rrule 폼으로 전환하는 함수
+        formData, // rrule 값을 위해 필요
+        setFormData // rrule 값을 변경하기 위해 필요
+    } = useSchedule();
+    const { isOpen, position, title, view, initialEvent } = scheduleModalData || {};
 
     const modalRef = useRef(null);
-    const headerRef = useRef(null);
 
     const [modalStyle, setModalStyle] = useState({
         visibility: 'hidden',
     });
+
+    const handleRruleChange = useCallback((newRrule) => {
+        setFormData(prev => ({ ...prev, rrule: newRrule }));
+    }, [setFormData]);
 
     useLayoutEffect(() => {
         if (!isOpen || !modalRef.current) return;
@@ -60,14 +71,11 @@ const ScheduleModal = () => {
             setModalStyle({ top: `${top}px`, left: `${left}px`, visibility: 'visible' });
         };
 
-        // 초기 위치 계산
         updatePosition();
 
-        // ResizeObserver로 크기 변경 감지 및 위치 재조정
         const resizeObserver = new ResizeObserver(updatePosition);
         resizeObserver.observe(modalElem);
 
-        // 컴포넌트 언마운트 시 Observer 해제
         return () => {
             resizeObserver.disconnect();
         };
@@ -77,6 +85,29 @@ const ScheduleModal = () => {
         return null;
     }
 
+    const renderContent = () => {
+        switch (view) {
+            case 'form':
+                return <ScheduleForm 
+                    onBack={goBackInSchedulePanel} 
+                    onShowRRuleForm={switchToModalRRuleView} 
+                    isInsideModal={true} 
+                />;
+            case 'rrule_form':
+                return <RRuleGenerator 
+                    value={formData?.rrule || ''} 
+                    onChange={handleRruleChange} 
+                    onClose={goBackInSchedulePanel} 
+                />;
+            case 'list':
+            default:
+                return <ScheduleTab 
+                    isInsideModal={true} 
+                    initialEvent={initialEvent} 
+                />;
+        }
+    };
+
     return ReactDOM.createPortal(
         <ModalBackdrop onMouseDown={closeScheduleModal}>
             <ModalContainer
@@ -84,14 +115,14 @@ const ScheduleModal = () => {
                 style={modalStyle}
                 onMouseDown={(e) => e.stopPropagation()}
             >
+
                 <ModalHeader ref={headerRef}>
                     <h2>{title || "schedule management"}</h2>
                     <CloseButton onClick={closeScheduleModal}>&times;</CloseButton>
                 </ModalHeader>
                 <ModalContent>
-                    {view === 'form' 
-                        ? <ScheduleForm onBack={goBackInSchedulePanel} onShowRRuleForm={openSchedulePanelForRRule} isInsideModal={true} /> 
-                        : <ScheduleTab isInsideModal={true} initialEvent={initialEvent} />}                </ModalContent>
+                    {renderContent()}
+                </ModalContent>
             </ModalContainer>
         </ModalBackdrop>,
         document.body

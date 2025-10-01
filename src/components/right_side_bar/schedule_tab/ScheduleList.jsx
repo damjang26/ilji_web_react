@@ -1,3 +1,4 @@
+import { RRule } from "rrule";
 import React, { useState, useMemo } from "react";
 import { FaCalendarDay, FaCalendarWeek, FaInfinity } from "react-icons/fa";
 import { Tooltip } from "antd";
@@ -25,11 +26,24 @@ const FILTERS = {
 
 // 1. 개별 일정 아이템을 별도의 메모이즈된 컴포넌트로 분리합니다.
 const ScheduleEventItem = React.memo(({ event, onDetail }) => {
+  // HH:mm 형식으로 시간을 포맷하는 함수
+  const formatTime = (start) => {
+    if (!start || !start.includes('T')) {
+      // all-day recurring events might not have a time part in their start string
+      // which is the dtstart. Default to 00:00 in that case for display.
+      return '00:00';
+    }
+    return start.split('T')[1].substring(0, 5);
+  };
+
   return (
     <Tooltip title="Click to see details" placement="left">
       <EventItem onClick={() => {
         onDetail(event);
-      }}>{event.title}</EventItem>
+      }}>
+        <span>{event.title}</span>
+        <span className="event-time">{event.allDay ? 'all-day' : formatTime(event.start)}</span>
+      </EventItem>
     </Tooltip>
   );
 });
@@ -49,8 +63,55 @@ const ScheduleList = ({
   const filteredEvents = useMemo(() => {
     // 1. 캘린더에서 특정 날짜가 선택된 경우, 해당 날짜의 일정만 보여줍니다.
     if (selectedDate) {
-      const result = allEvents.filter((e) => e.start?.startsWith(selectedDate));
-      return result;
+      const selectedDayStart = new Date(`${selectedDate}T00:00:00`);
+      const selectedDayEnd = new Date(`${selectedDate}T23:59:59`);
+
+      return allEvents.filter(event => {
+        if (!event.start) return false;
+
+        // 반복 일정 처리
+        if (event.rrule && event.rrule.freq) {
+          const options = { ...event.rrule };
+
+          // freq 문자열을 RRule 라이브러리 상수로 변환
+          const freqMap = {
+            'YEARLY': RRule.YEARLY,
+            'MONTHLY': RRule.MONTHLY,
+            'WEEKLY': RRule.WEEKLY,
+            'DAILY': RRule.DAILY,
+            'HOURLY': RRule.HOURLY,
+            'MINUTELY': RRule.MINUTELY,
+            'SECONDLY': RRule.SECONDLY,
+          };
+          const freqString = event.rrule.freq.toUpperCase();
+          if (!freqMap[freqString]) return false; // 유효하지 않은 freq
+          options.freq = freqMap[freqString];
+          
+          // Timezone 모호성을 피하기 위해 항상 로컬 시간으로 Date 객체 생성
+          options.dtstart = event.rrule.dtstart;
+
+          if (event.rrule.until) {
+            const untilStr = event.rrule.until;
+            options.until = new Date(untilStr.includes('T') ? untilStr : `${untilStr}T23:59:59`);
+          }
+
+          const rule = new RRule(options);
+          console.log("[DEBUG] Options passed to RRule constructor:", options);
+          const occurrences = rule.between(selectedDayStart, selectedDayEnd, true);
+          return occurrences.length > 0;
+        }
+
+        // 여러 날에 걸친 비반복 일정 처리
+        if (event.end && !event.rrule) {
+          const eventStart = new Date(event.start.split('T')[0] + 'T00:00:00');
+          const eventEnd = new Date(event.end.split('T')[0] + 'T00:00:00');
+          // selectedDay가 [eventStart, eventEnd) 범위에 있는지 확인
+          return selectedDayStart >= eventStart && selectedDayStart < eventEnd;
+        }
+
+        // 단일 날짜 일정
+        return event.start.startsWith(selectedDate);
+      });
     }
 
     // 2. 특정 날짜가 선택되지 않은 경우, '오늘' 또는 '이번 달' 필터를 적용합니다.
