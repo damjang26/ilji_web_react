@@ -217,6 +217,8 @@ export function ScheduleProvider({children}) {
 
             rruleObject.dtstart = new Date(isAllDayEvent ? event.startTime.split('T')[0] : event.startTime);
 
+            console.log("[DEBUG] rruleObject being passed to FullCalendar:", rruleObject);
+
             if (!isAllDayEvent) {
                 const start = new Date(event.startTime);
                 const end = new Date(event.endTime);

@@ -90,22 +90,6 @@ const ScheduleList = ({
           // Timezone 모호성을 피하기 위해 항상 로컬 시간으로 Date 객체 생성
           options.dtstart = event.rrule.dtstart;
 
-          // Convert byday strings to RRule.weekday objects
-          if (options.byday && Array.isArray(options.byday)) {
-            options.byday = options.byday.map(dayStr => {
-                switch (dayStr) {
-                    case 'MO': return RRule.MO;
-                    case 'TU': return RRule.TU;
-                    case 'WE': return RRule.WE;
-                    case 'TH': return RRule.TH;
-                    case 'FR': return RRule.FR;
-                    case 'SA': return RRule.SA;
-                    case 'SU': return RRule.SU;
-                    default: return null;
-                }
-            }).filter(Boolean);
-          }
-
           if (event.rrule.until) {
             const untilStr = event.rrule.until;
             options.until = new Date(untilStr.includes('T') ? untilStr : `${untilStr}T23:59:59`);

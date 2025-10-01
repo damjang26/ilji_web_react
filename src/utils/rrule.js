@@ -170,43 +170,57 @@ export const rruleToText = (rruleString) => {
  * Parses an RRULE string into a simple key-value object for FullCalendar.
  * Keys are lowercased to be compatible with rrule.js options.
  * @param {string} rruleString The RRULE string.
- * @returns {object} A simple key-value object (e.g., {freq: 'daily', count: '10'}).
+ * @returns {object} A simple key-value object (e.g., {freq: 'weekly', count: 10}).
  */
 export const parseRRuleForCalendar = (rruleString) => {
-    if (!rruleString) {
-        return {};
+  if (!rruleString) {
+    return {};
+  }
+
+  const rruleObject = {};
+  const parts = rruleString
+    .replace(/^RRULE:/i, '')
+    .replace(/\n/g, ';')
+    .split(';')
+    .filter(part => part);
+
+  parts.forEach(part => {
+    const splitIndex = part.indexOf('=');
+    if (splitIndex === -1) return;
+
+    const key = part.substring(0, splitIndex).trim().toLowerCase();
+    let value = part.substring(splitIndex + 1).trim();
+
+    if (key === 'byday') {
+      // convert BYDAY → byweekday with Weekday objects
+      const days = value.split(',').map(dayStr => {
+        switch (dayStr) {
+          case 'SU': return RRule.SU;
+          case 'MO': return RRule.MO;
+          case 'TU': return RRule.TU;
+          case 'WE': return RRule.WE;
+          case 'TH': return RRule.TH;
+          case 'FR': return RRule.FR;
+          case 'SA': return RRule.SA;
+          default: return null;
+        }
+      }).filter(Boolean);
+      rruleObject['byweekday'] = days;
+      return; // skip adding "byday"
+    } else if (key === 'count' || key === 'interval') {
+      value = parseInt(value, 10);
+    } else if (key === 'until') {
+      if (value.length === 8) {
+        value = `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}T23:59:59Z`;
+      } else if (value.length === 15 && value.endsWith('Z')) {
+        value = `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}T${value.slice(9, 11)}:${value.slice(11, 13)}:${value.slice(13, 15)}Z`;
+      }
     }
 
-    const rruleObject = {};
-    // Replace newlines with semicolons, then split, and filter out empty parts.
-    const parts = rruleString.replace(/^RRULE:/i, '').replace(/\n/g, ';').split(';').filter(part => part);
+    if (key && value !== undefined) {
+      rruleObject[key] = value;
+    }
+  });
 
-    parts.forEach(part => {
-        const splitIndex = part.indexOf('=');
-        if (splitIndex === -1) return;
-
-        const key = part.substring(0, splitIndex).trim().toLowerCase();
-        let value = part.substring(splitIndex + 1).trim();
-
-        if (key === 'byday') {
-            // rrule-js expects an array of strings for byday when parsing from iCalendar string
-            // We will convert to RRule.weekday objects later in ScheduleList.jsx
-            value = value.split(',');
-        } else if (key === 'count' || key === 'interval') {
-            value = parseInt(value, 10);
-        } else if (key === 'until') {
-            // Ensure UNTIL is in YYYY-MM-DDTHH:mm:ssZ format for rrule.js if it's just YYYYMMDD
-            if (value.length === 8) {
-                value = `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}T23:59:59Z`;
-            } else if (value.length === 15 && value.endsWith('Z')) { // YYYYMMDDTHHmmssZ
-                value = `${value.slice(0, 4)}-${value.slice(4, 6)}-${value.slice(6, 8)}T${value.slice(9, 11)}:${value.slice(11, 13)}:${value.slice(13, 15)}Z`;
-            }
-        }
-
-        if (key && value !== undefined) { // Check for undefined after parsing
-            rruleObject[key] = value;
-        }
-    });
-
-    return rruleObject;
+  return rruleObject;
 };
