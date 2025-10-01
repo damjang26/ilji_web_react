@@ -324,20 +324,29 @@ export function ScheduleProvider({children}) {
         return null; // Fallback for unexpected types
     };
 
+    // ✅ [추가] 일정을 시작 시간, 그리고 제목 순으로 정렬하는 헬퍼 함수
+    const sortEvents = (events) => {
+        return [...events].sort((a, b) => {
+            // start 값이 유효하지 않은 경우를 대비하여 방어 코드 추가
+            const startA = a.start ? new Date(a.start).getTime() : 0;
+            const startB = b.start ? new Date(b.start).getTime() : 0;
+            if (startA !== startB) {
+                return startA - startB;
+            }
+            return a.title.localeCompare(b.title);
+        });
+    };
+
     // ✅ 태그 ID를 인자로 받아 스케줄을 로드하는 핵심 함수
     const fetchSchedulesByTags = useCallback(
         async (tagIds = [], options = {}) => {
             const { showLoading = true } = options;
-            // console.log(`[DEBUG] fetchSchedulesByTags 호출됨. tagIds: ${tagIds}, showLoading: ${showLoading}`);
-
             if (!user) {
                 setEvents([]);
                 if (showLoading) setLoading(false);
                 return;
             }
-
             if (showLoading) setLoading(true);
-
             try {
                 if (tagIds && tagIds.length > 0) {
                     const params = new URLSearchParams();
@@ -346,19 +355,9 @@ export function ScheduleProvider({children}) {
                     const url = `/api/schedules?${params.toString()}`;
                     const response = await api.get(url);
                     const formattedEvents = response.data.map(formatEventForCalendar);
-
-                    // Sort events by start time, then by title
-                    formattedEvents.sort((a, b) => {
-                        const startA = new Date(a.start).getTime();
-                        const startB = new Date(b.start).getTime();
-                        if (startA !== startB) {
-                            return startA - startB;
-                        }
-                        return a.title.localeCompare(b.title);
-                    });
-
-                    setEvents(formattedEvents);
-                    setCachedEvents(formattedEvents); // 캐시 업데이트
+                    const sortedEvents = sortEvents(formattedEvents); // ✅ 정렬 함수 사용
+                    setEvents(sortedEvents);
+                    setCachedEvents(sortedEvents);
                     setError(null);
                 } else {
                     setEvents([]);
@@ -372,7 +371,7 @@ export function ScheduleProvider({children}) {
             }
         },
         [user]
-    ); // user가 바뀔 때마다 이 함수를 재생성합니다.
+    );
 
     useEffect(() => {
         if (!user) {
@@ -384,59 +383,37 @@ export function ScheduleProvider({children}) {
 
     const addEvent = useCallback(
         async (eventData) => {
-            if (!user) return; // 사용자가 없으면 함수 실행 중단
+            if (!user) return;
 
-            // 롤백을 대비하여 원래 이벤트 목록을 저장합니다.
             const originalEvents = events;
+            const tempNewEvent = { ...eventData, id: `temp-${Date.now()}` };
+            setEvents((prev) => sortEvents([...prev, tempNewEvent])); // ✅ 옵티미스틱 업데이트 시에도 정렬
 
-            // UI를 즉시 업데이트하기 위해 임시 이벤트를 생성합니다.
-            // 서버로부터 실제 ID를 받기 전까지 사용할 임시 ID를 부여합니다.
-            const tempNewEvent = {
-                ...eventData,
-                id: `temp-${Date.now()}`,
-            };
-            setEvents((prev) => [...prev, tempNewEvent]);
-
-            // 프론트엔드 폼 데이터를 백엔드 DTO 형식으로 변환
             const requestData = {
                 calendarId: eventData.extendedProps.calendarId || 1,
                 title: eventData.title,
                 location: eventData.extendedProps.location,
-                tagId: eventData.extendedProps.tagId === NO_TAG_ID ? null : eventData.extendedProps.tagId, // tags -> tagId로 수정
+                tagId: eventData.extendedProps.tagId === NO_TAG_ID ? null : eventData.extendedProps.tagId,
                 description: eventData.extendedProps.description,
-                startTime: formatDateTimeForBackend(
-                    eventData.start,
-                    eventData.allDay,
-                    false
-                ),
-                endTime: formatDateTimeForBackend(
-                    eventData.end,
-                    eventData.allDay,
-                    true
-                ),
+                startTime: formatDateTimeForBackend(eventData.start, eventData.allDay, false),
+                endTime: formatDateTimeForBackend(eventData.end, eventData.allDay, true),
                 isAllDay: eventData.allDay,
-                // ✅ [버그 수정] rrule은 최상위 속성이므로 eventData.rrule에서 가져옵니다.
-                rrule: eventData.rrule || null, // Explicitly send null for empty strings
+                rrule: eventData.rrule || null,
             };
 
-            // 백그라운드에서 API 요청을 보냅니다.
             try {
                 const response = await api.post("/api/schedules", requestData);
                 const realNewEvent = formatEventForCalendar(response.data);
-
-                // 성공 시, 임시 이벤트를 서버로부터 받은 실제 이벤트로 교체합니다.
                 setEvents((prev) =>
-                    prev.map((e) => (e.id === tempNewEvent.id ? realNewEvent : e))
+                    sortEvents(prev.map((e) => (e.id === tempNewEvent.id ? realNewEvent : e))) // ✅ 실제 데이터로 교체 후에도 정렬
                 );
             } catch (err) {
-                // 실패 시, UI를 원래 상태로 되돌립니다 (롤백).
                 console.error("Schedule creation failed (rolling back):", err);
                 setEvents(originalEvents);
-                // TODO: It would be better to show a notification to the user like "Failed to create schedule".
             }
         },
         [user, events]
-    ); // ✅ user와 events를 의존성 배열에 추가
+    );
 
     const updateEvent = useCallback(
         async (eventData) => {
@@ -446,6 +423,11 @@ export function ScheduleProvider({children}) {
                 return;
             }
 
+            const originalEvents = events; // 롤백을 위해 원본 저장
+            // 옵티미스틱 업데이트: UI를 먼저 변경
+            const optimisticallyUpdatedEvent = { ...eventToUpdate, ...eventData };
+            setEvents(prev => sortEvents(prev.map(e => (String(e.id) === String(eventData.id) ? optimisticallyUpdatedEvent : e))));
+
             try {
                 const requestData = {
                     calendarId: eventData.extendedProps.calendarId,
@@ -453,24 +435,18 @@ export function ScheduleProvider({children}) {
                     location: eventData.extendedProps.location,
                     tagId: eventData.extendedProps.tagId === NO_TAG_ID ? null : eventData.extendedProps.tagId,
                     description: eventData.extendedProps.description,
-                    startTime: formatDateTimeForBackend(
-                        eventData.start,
-                        eventData.allDay,
-                        false
-                    ),
-                    endTime: formatDateTimeForBackend(
-                        eventData.end || eventData.start,
-                        eventData.allDay,
-                        true
-                    ),
+                    startTime: formatDateTimeForBackend(eventData.start, eventData.allDay, false),
+                    endTime: formatDateTimeForBackend(eventData.end || eventData.start, eventData.allDay, true),
                     isAllDay: eventData.allDay,
-                    rrule: eventData.rrule || null, // Explicitly send null for empty strings
+                    rrule: eventData.rrule || null,
                 };
                 const response = await api.put(`/api/schedules/${eventData.id}`, requestData);
-                const updatedEvent = formatEventForCalendar(response.data);
-                setEvents(prev => prev.map(e => (String(e.id) === String(updatedEvent.id) ? updatedEvent : e)));
+                const updatedEventFromServer = formatEventForCalendar(response.data);
+                // 서버 응답으로 최종 업데이트 및 정렬
+                setEvents(prev => sortEvents(prev.map(e => (String(e.id) === String(updatedEventFromServer.id) ? updatedEventFromServer : e))));
             } catch (err) {
                 console.error("Schedule update failed:", err);
+                setEvents(originalEvents); // 실패 시 롤백
             }
         },
         [events, user]

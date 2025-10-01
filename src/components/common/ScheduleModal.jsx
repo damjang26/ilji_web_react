@@ -26,6 +26,7 @@ const ScheduleModal = () => {
     const { isOpen, position, title, view, initialEvent } = scheduleModalData || {};
 
     const modalRef = useRef(null);
+    const headerRef = useRef(null);
 
     const [modalStyle, setModalStyle] = useState({
         visibility: 'hidden',

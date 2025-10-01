@@ -28,12 +28,19 @@ const FILTERS = {
 const ScheduleEventItem = React.memo(({ event, onDetail }) => {
   // HH:mm 형식으로 시간을 포맷하는 함수
   const formatTime = (start) => {
-    if (!start || !start.includes('T')) {
+    let startStr = start;
+    // 방어 코드: start가 Date 객체인 경우, 문자열로 변환합니다.
+    // 이는 낙관적 업데이트 시 또는 데이터 포맷이 일관되지 않을 때 발생할 수 있습니다.
+    if (start instanceof Date) {
+      startStr = start.toISOString();
+    }
+
+    if (!startStr || !startStr.includes('T')) {
       // all-day recurring events might not have a time part in their start string
       // which is the dtstart. Default to 00:00 in that case for display.
       return '00:00';
     }
-    return start.split('T')[1].substring(0, 5);
+    return startStr.split('T')[1].substring(0, 5);
   };
 
   return (
@@ -69,48 +76,35 @@ const ScheduleList = ({
       return allEvents.filter(event => {
         if (!event.start) return false;
 
-        // 반복 일정 처리
+        // 반복 일정 처리 (기존 로직 유지)
         if (event.rrule && event.rrule.freq) {
           const options = { ...event.rrule };
-
-          // freq 문자열을 RRule 라이브러리 상수로 변환
           const freqMap = {
-            'YEARLY': RRule.YEARLY,
-            'MONTHLY': RRule.MONTHLY,
-            'WEEKLY': RRule.WEEKLY,
-            'DAILY': RRule.DAILY,
-            'HOURLY': RRule.HOURLY,
-            'MINUTELY': RRule.MINUTELY,
-            'SECONDLY': RRule.SECONDLY,
+            'YEARLY': RRule.YEARLY, 'MONTHLY': RRule.MONTHLY, 'WEEKLY': RRule.WEEKLY,
+            'DAILY': RRule.DAILY, 'HOURLY': RRule.HOURLY, 'MINUTELY': RRule.MINUTELY, 'SECONDLY': RRule.SECONDLY,
           };
           const freqString = event.rrule.freq.toUpperCase();
-          if (!freqMap[freqString]) return false; // 유효하지 않은 freq
+          if (!freqMap[freqString]) return false;
           options.freq = freqMap[freqString];
-          
-          // Timezone 모호성을 피하기 위해 항상 로컬 시간으로 Date 객체 생성
           options.dtstart = event.rrule.dtstart;
-
           if (event.rrule.until) {
             const untilStr = event.rrule.until;
             options.until = new Date(untilStr.includes('T') ? untilStr : `${untilStr}T23:59:59`);
           }
-
           const rule = new RRule(options);
-          console.log("[DEBUG] Options passed to RRule constructor:", options);
           const occurrences = rule.between(selectedDayStart, selectedDayEnd, true);
           return occurrences.length > 0;
         }
 
-        // 여러 날에 걸친 비반복 일정 처리
-        if (event.end && !event.rrule) {
-          const eventStart = new Date(event.start.split('T')[0] + 'T00:00:00');
-          const eventEnd = new Date(event.end.split('T')[0] + 'T00:00:00');
-          // selectedDay가 [eventStart, eventEnd) 범위에 있는지 확인
-          return selectedDayStart >= eventStart && selectedDayStart < eventEnd;
-        }
+        // 비반복 일정에 대한 통합 처리 (시간 지정, 하루 종일, 여러 날 모두 포함)
+        const eventStart = new Date(event.start);
+        // event.end가 없는 경우(예: API 데이터 이상)를 대비하여 event.start로 대체
+        const eventEnd = event.end ? new Date(event.end) : eventStart;
 
-        // 단일 날짜 일정
-        return event.start.startsWith(selectedDate);
+        // 두 기간 [A, B)와 [C, D)가 겹치는지 확인하는 표준 공식: (A < D && B > C)
+        // 여기서 우리 로직은 [selectedDayStart, selectedDayEnd] 와 [eventStart, eventEnd) 의 교차점을 찾습니다.
+        // FullCalendar의 all-day 이벤트는 종료일이 포함되지 않으므로(exclusive), 이 로직이 정확합니다.
+        return eventStart <= selectedDayEnd && eventEnd > selectedDayStart;
       });
     }
 
@@ -119,15 +113,15 @@ const ScheduleList = ({
     switch (filterMode) {
       case "today": {
         const todayStr = now.toISOString().split("T")[0];
-        const result = allEvents.filter((e) => e.start?.startsWith(todayStr));
-        return result;
+        // start가 오늘 날짜로 시작하는 모든 이벤트를 포함
+        return allEvents.filter((e) => e.start?.startsWith(todayStr));
       }
       case "month": {
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, "0");
         const monthPrefix = `${year}-${month}`;
-        const result = allEvents.filter((e) => e.start?.startsWith(monthPrefix));
-        return result;
+        // start가 해당 월로 시작하는 모든 이벤트를 포함
+        return allEvents.filter((e) => e.start?.startsWith(monthPrefix));
       }
       case "all":
         return allEvents;

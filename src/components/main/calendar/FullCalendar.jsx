@@ -228,18 +228,13 @@ export default function FullCalendarExample() {
         setVisibleDateRange({start, end});
     };
 
-    const handleEventDrop = (dropInfo) => {
+    const handleEventDrop = async (dropInfo) => {
         const { event, oldEvent } = dropInfo;
 
-        // 반복 이벤트 인스턴스인지 확인
-        // event.groupId는 반복 이벤트의 모든 인스턴스가 공유하는 ID입니다.
-        // event.recurring은 해당 이벤트가 반복 이벤트의 인스턴스임을 나타냅니다.
+        // Optimistically update the UI, but await the backend update
         if (event.groupId && event.recurring) {
-            // 반복 이벤트의 특정 인스턴스가 이동된 경우
-            updateRecurringEventInstance(oldEvent, event);
+            await updateRecurringEventInstance(oldEvent, event);
         } else {
-            // 일반 이벤트 또는 반복 이벤트의 마스터 이벤트가 이동된 경우
-            // (FullCalendar는 마스터 이벤트를 직접 드롭할 수 없으므로, 이 경로는 주로 일반 이벤트에 해당)
             if (!event.allDay) {
                 const newDate = event.start;
                 const originalDate = oldEvent.start;
@@ -256,19 +251,23 @@ export default function FullCalendarExample() {
                     const duration = oldEvent.end.getTime() - originalDate.getTime();
                     newEnd = new Date(newStart.getTime() + duration);
                 }
-                updateEvent({
+                await updateEvent({
                     ...event.toPlainObject(),
                     start: newStart,
                     end: newEnd,
                 });
             } else {
-                updateEvent({
+                await updateEvent({
                     ...event.toPlainObject(),
                     start: event.start,
                     end: event.end,
                 });
             }
         }
+
+        // After the update is complete, change the selected date in the side panel
+        const newDateStr = formatDate(event.start);
+        openSchedulePanelForDate({ startStr: newDateStr });
     };
 
     const handleEventResize = (info) => {
