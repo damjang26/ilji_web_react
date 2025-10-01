@@ -45,11 +45,18 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
     const handleUploadButtonClick = () => fileInputRef.current?.click();
 
     const handleRevert = () => {
-        // [수정] 브라우저 캐시 문제를 방지하기 위해 기본 이미지 URL에도 고유한 타임스탬프를 추가합니다.
-        const defaultUrlWithCacheBuster = `${DEFAULT_PROFILE_URL}?t=${new Date().getTime()}`;
+        // ✅ [수정] DEFAULT_PROFILE_URL이 유효할 때만 타임스탬프를 추가하여 안정성을 높입니다.
+        //    환경변수가 비어있더라도 코드가 깨지지 않습니다.
+        // ✅ [핵심 수정] URL에 '?'가 이미 있는지 확인하고, 상황에 맞게 '?' 또는 '&'를 사용하여
+        //    캐시 방지용 타임스탬프를 추가합니다. 이렇게 하면 어떤 형태의 URL이든 안전하게 처리할 수 있습니다.
+        let preview = '';
+        if (DEFAULT_PROFILE_URL) {
+            const separator = DEFAULT_PROFILE_URL.includes('?') ? '&' : '?';
+            preview = `${DEFAULT_PROFILE_URL}${separator}t=${new Date().getTime()}`;
+        }
 
         setImageFile(null);
-        setPreviewUrl(defaultUrlWithCacheBuster);
+        setPreviewUrl(preview);
         setRevertMode(true);
     };
 
@@ -99,7 +106,6 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
             title={`Change ${imageType === 'profileImage' ? 'Profile' : 'Banner'} Image`}
         >
             <ModalBody>
-                {/* ✅ [수정] 레이아웃 조정을 위해 스타일을 변경합니다. */}
                 <div style={{ 
                     display: 'flex', 
                     alignItems: 'center', 
