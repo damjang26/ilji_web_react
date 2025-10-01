@@ -189,13 +189,17 @@ const JournalItem = ({
                     <IndexTabActions type="share" onClick={handleShare}>
                         <button data-tooltip="Share"><BiSolidShareAlt/></button>
                     </IndexTabActions>
-                    <IndexTabActions type="edit" onClick={() => onEdit(journal)}>
-                        <button data-tooltip="Edit"><HiPencilAlt/></button>
-                    </IndexTabActions>
-                    <IndexTabActions type="delete" onClick={() => onDelete(journal.id, journal.logDate.split('T')[0])}>
-                        <button data-tooltip="Delete">
-                            <MdDeleteForever/></button>
-                    </IndexTabActions>
+                    {/* ✅ [수정] 현재 사용자가 작성자일 경우에만 수정/삭제 버튼을 보여줍니다. */}
+                    {user?.id === journal.writerId && (
+                        <>
+                            <IndexTabActions type="edit" onClick={() => onEdit(journal)}>
+                                <button data-tooltip="Edit"><HiPencilAlt/></button>
+                            </IndexTabActions>
+                            <IndexTabActions type="delete" onClick={() => onDelete(journal.id, journal.logDate.split('T')[0])}>
+                                <button data-tooltip="Delete"><MdDeleteForever/></button>
+                            </IndexTabActions>
+                        </>
+                    )}
                 </IndexTabsContainer>
             </JournalItemWrapper>
         );
@@ -263,13 +267,17 @@ const JournalItem = ({
                 <IndexTabActions type="share" onClick={handleShare}>
                     <button data-tooltip="Share"><BiSolidShareAlt/></button>
                 </IndexTabActions>
-                <IndexTabActions type="edit" onClick={() => onEdit(journal)}>
-                    <button data-tooltip="Edit"><HiPencilAlt/></button>
-                </IndexTabActions>
-                <IndexTabActions type="delete" onClick={() => onDelete(journal.id, journal.logDate.split('T')[0])}>
-                    <button data-tooltip="Delete">
-                        <MdDeleteForever/></button>
-                </IndexTabActions>
+                {/* ✅ [수정] 현재 사용자가 작성자일 경우에만 수정/삭제 버튼을 보여줍니다. */}
+                {user?.id === journal.writerId && (
+                    <>
+                        <IndexTabActions type="edit" onClick={() => onEdit(journal)}>
+                            <button data-tooltip="Edit"><HiPencilAlt/></button>
+                        </IndexTabActions>
+                        <IndexTabActions type="delete" onClick={() => onDelete(journal.id, journal.logDate.split('T')[0])}>
+                            <button data-tooltip="Delete"><MdDeleteForever/></button>
+                        </IndexTabActions>
+                    </>
+                )}
             </IndexTabsContainer>
         </JournalItemWrapper>
     );
