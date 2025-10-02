@@ -54,6 +54,12 @@ export const Input = styled.input`
         font-size: 13px;
         padding: 7px 10px;
     `}
+
+        /* ✅ textarea로 쓸 때는 리사이즈 막기 */
+    &[as="textarea"],
+    textarea& {
+        resize: none;
+    }
 `;
 
 /** '하루 종일' 체크박스를 위한 스타일 */
@@ -63,12 +69,12 @@ export const CheckboxWrapper = styled.label`
     gap: 8px;
     cursor: pointer;
     font-size: 14px;
-    user-select: none; /* 클릭 시 텍스트가 선택되는 것을 방지 */
+    user-select: none;
 `;
 
 /** '하루 종일'에 사용될 커스텀 체크박스 input */
 export const CustomCheckbox = styled.input.attrs({ type: 'checkbox' })`
-    appearance: none; /* 브라우저 기본 스타일 제거 */
+    appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
 
@@ -79,14 +85,13 @@ export const CustomCheckbox = styled.input.attrs({ type: 'checkbox' })`
     background-color: #f8f9fa;
     cursor: pointer;
     transition: background-color 0.2s, border-color 0.2s;
-    position: relative; /* 체크 표시를 위한 기준점 */
+    position: relative;
 
     &:checked {
         border-color: transparent;
         background-color: #7b5fff; /* ✅ 보라색 */
     }
 
-    /* 체크 표시 (V) 아이콘 */
     &:checked::after {
         content: '✔';
         font-size: 14px;
@@ -99,19 +104,25 @@ export const CustomCheckbox = styled.input.attrs({ type: 'checkbox' })`
     }
 `;
 
-/** 날짜/시간 블록 전체를 감싸는 컨테이너 (세로 2줄) */
+/** 날짜/시간 블록 전체를 감싸는 컨테이너 */
 export const DateTimeSection = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 12px; /* 행 간격 */
+    gap: 12px;
 `;
 
-/** 한 줄(Row) 컨테이너 */
+/** 한 줄(Row) 컨테이너 - "날짜 한 줄", "시간 한 줄" */
 export const DateTimeRow = styled.div`
     display: flex;
     align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
+    gap: 24px; /* Start와 End 사이 간격 */
+    flex-wrap: nowrap;
+
+    @media (max-width: 560px) {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
 `;
 
 /** 라벨 + 인풋을 한 줄로 묶는 컨테이너 */
@@ -119,4 +130,13 @@ export const InlineField = styled.div`
     display: flex;
     align-items: center;
     gap: 6px;
+
+    > label {
+        white-space: nowrap;
+    }
+
+    > input {
+        flex: 1;
+        min-width: 120px;
+    }
 `;

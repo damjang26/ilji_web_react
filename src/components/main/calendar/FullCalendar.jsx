@@ -376,6 +376,38 @@ export default function FullCalendarExample() {
         );
     };
 
+    const customEventSort = (a, b) => {
+        const now = new Date();
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date(todayStart);
+        todayEnd.setDate(todayStart.getDate() + 1);
+
+        const startA = new Date(a.start);
+        const startB = new Date(b.start);
+
+        // Use end time for 'past' calculation. Default to start time if end is not available.
+        const endA = a.end ? new Date(a.end) : startA;
+        const endB = b.end ? new Date(b.end) : startB;
+
+        const aIsToday = startA >= todayStart && startA < todayEnd;
+        const bIsToday = startB >= todayStart && startB < todayEnd;
+
+        // Apply special sorting logic only when both events are for today.
+        if (aIsToday && bIsToday) {
+            const isPastA = endA < now; // Check against END time
+            const isPastB = endB < now; // Check against END time
+
+            // If one is past and one is not, the non-past (future or ongoing) event comes first.
+            if (isPastA !== isPastB) {
+                return isPastA ? 1 : -1;
+            }
+        }
+
+        // For all other cases, default to standard chronological sorting by start time.
+        return startA.getTime() - startB.getTime();
+    };
+
     return (
         <CalendarWrapper>
             {/* 필터링 등 다시 로딩 시 스피너 표시 */}
@@ -477,6 +509,7 @@ export default function FullCalendarExample() {
                 dayCellContent={renderDayCellContent} // ✅ [수정] dayCellDidMount를 dayCellContent로 교체
                 datesSet={handleDatesSet}
                 eventDisplay="block"
+                eventOrder={customEventSort} // ✅ [추가] 커스텀 정렬 함수 적용
                 eventTimeFormat={{
                     hour: "numeric",
                     minute: "2-digit",

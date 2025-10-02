@@ -97,21 +97,40 @@ const ScheduleForm = ({ onBack, onShowRRuleForm, isInsideModal = false }) => {
                     <Label htmlFor="all-day" style={{fontWeight: 'normal', cursor: 'pointer'}}>All day</Label>
                 </CheckboxWrapper>
 
+                {/* ✅ 날짜/시간 구조 변경 */}
                 <FieldSet>
-                    <Label>Start</Label>
+                    <Label>Date & Time</Label>
                     <DateTimeRow>
-                        <Input type="date" value={form.startDate} onChange={set("startDate")} />
-                        {!form.allDay && <Input type="time" value={form.startTime} onChange={set("startTime")} />}
+                        <Input
+                            type="date"
+                            value={form.startDate}
+                            onChange={set("startDate")}
+                        />
+                        <Input
+                            type="date"
+                            value={form.endDate}
+                            min={form.startDate}
+                            onChange={set("endDate")}
+                        />
                     </DateTimeRow>
-                </FieldSet>
 
-                <FieldSet>
-                    <Label>End</Label>
-                    <DateTimeRow>
-                        <Input type="date" value={form.endDate} min={form.startDate} onChange={set("endDate")} />
-                        {!form.allDay && <Input type="time" value={form.endTime} min={form.startDate === form.endDate ? form.startTime : undefined} onChange={set("endTime")} />}
-                    </DateTimeRow>
+                    {!form.allDay && (
+                        <DateTimeRow>
+                            <Input
+                                type="time"
+                                value={form.startTime}
+                                onChange={set("startTime")}
+                            />
+                            <Input
+                                type="time"
+                                value={form.endTime}
+                                min={form.startDate === form.endDate ? form.startTime : undefined}
+                                onChange={set("endTime")}
+                            />
+                        </DateTimeRow>
+                    )}
                 </FieldSet>
+                {/* ✅ 여기까지 날짜/시간 구조 수정 */}
 
                 <FieldSet>
                     <Label htmlFor="location">Location</Label>
@@ -125,11 +144,11 @@ const ScheduleForm = ({ onBack, onShowRRuleForm, isInsideModal = false }) => {
                         id="tags"
                         placeholder="Select a tag"
                         value={form.tagId}
-                        onChange={set("tagId")} // set 함수가 직접 value를 받도록 수정했음
+                        onChange={set("tagId")}
                         options={tagOptions}
                         style={{ width: '100%' }}
-                        allowClear // 선택을 취소할 수 있는 x 버튼 추가
-                        getPopupContainer={() => formRef.current} // 드롭다운을 form 내부에 렌더링
+                        allowClear
+                        getPopupContainer={() => formRef.current}
                     />
                 </FieldSet>
 
