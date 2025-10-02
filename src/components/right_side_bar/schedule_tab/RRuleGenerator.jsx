@@ -14,21 +14,23 @@ import {
     ClickableInputWrapper,
 } from '../../../styled_components/right_side_bar/schedule_tab/RRuleGeneratorStyled';
 import { ActionButtons, Button } from '../../../styled_components/common/FormElementsStyled.jsx'; // ✅ 버튼 추가
+import { parseRRule, generateRRule, FREQ_OPTIONS, TERMINATION_TYPES } from '../../../utils/rrule.js';
 
 // --- Constants for better readability and maintenance ---
-const FREQ_OPTIONS = {
-    NONE: '',
-    DAILY: 'DAILY',
-    WEEKLY: 'WEEKLY',
-    MONTHLY: 'MONTHLY',
-    YEARLY: 'YEARLY',
-};
-
-const TERMINATION_TYPES = {
-    NONE: 'none',
-    COUNT: 'count',
-    UNTIL: 'until',
-};
+// [ROLLBACK_MARKER]
+// const FREQ_OPTIONS = {
+//     NONE: '',
+//     DAILY: 'DAILY',
+//     WEEKLY: 'WEEKLY',
+//     MONTHLY: 'MONTHLY',
+//     YEARLY: 'YEARLY',
+// };
+//
+// const TERMINATION_TYPES = {
+//     NONE: 'none',
+//     COUNT: 'count',
+//     UNTIL: 'until',
+// };
 
 const WEEKDAYS = [
     { label: 'Mon', value: 'MO' },
@@ -43,90 +45,91 @@ const WEEKDAYS = [
 // Helper to sort BYDAY arrays consistently according to the defined order (월-일)
 const sortWeekdays = (days) => WEEKDAYS.map(d => d.value).filter(day => days.includes(day))
 
-/**
- * Parses an rrule string into a structured state object.
- * @param {string} rruleString The rrule string to parse.
- * @returns {object} A state object representing the rule.
- */
-const parseRRule = (rruleString) => {
-    const initialState = {
-        freq: FREQ_OPTIONS.NONE,
-        interval: 1,
-        byday: [],
-        terminationType: TERMINATION_TYPES.NONE,
-        count: 10,
-        until: '',
-    };
-
-    if (!rruleString) return initialState;
-
-    const rules = rruleString.split(';').reduce((acc, rule) => {
-        const [key, val] = rule.split('=');
-        if (key && val) acc[key] = val;
-        return acc;
-    }, {});
-
-    let terminationType = TERMINATION_TYPES.NONE;
-    let count = initialState.count;
-    let until = initialState.until;
-
-    if (rules.COUNT) {
-        terminationType = TERMINATION_TYPES.COUNT;
-        count = parseInt(rules.COUNT, 10);
-    } else if (rules.UNTIL) {
-        terminationType = TERMINATION_TYPES.UNTIL;
-        const untilDateStr = rules.UNTIL.split('T')[0];
-        if (untilDateStr && untilDateStr.length === 8) {
-            until = `${untilDateStr.slice(0, 4)}-${untilDateStr.slice(4, 6)}-${untilDateStr.slice(6, 8)}`;
-        }
-    }
-
-    const rawByday = rules.BYDAY ? rules.BYDAY.split(',') : [];
-
-    return {
-        freq: rules.FREQ || FREQ_OPTIONS.NONE,
-        interval: parseInt(rules.INTERVAL, 10) || 1,
-        byday: sortWeekdays(rawByday),
-        terminationType,
-        count,
-        until,
-    };
-};
-
-/**
- * Generates an rrule string from a state object.
- * @param {object} state The state object.
- * @returns {string} The generated rrule string.
- */
-const generateRRule = (state) => {
-    const { freq, interval, byday, terminationType, count, until } = state;
-    if (!freq) return '';
-
-    let newRruleParts = [`FREQ=${freq}`];
-
-    if (interval > 1) {
-        newRruleParts.push(`INTERVAL=${interval}`);
-    }
-
-    if (freq === FREQ_OPTIONS.WEEKLY && byday.length > 0) {
-        newRruleParts.push(`BYDAY=${byday.join(',')}`);
-    }
-
-    switch (terminationType) {
-        case TERMINATION_TYPES.COUNT:
-            newRruleParts.push(`COUNT=${count}`);
-            break;
-        case TERMINATION_TYPES.UNTIL:
-            if (until) {
-                const utcDate = until.replace(/-/g, '') + 'T235959Z';
-                newRruleParts.push(`UNTIL=${utcDate}`);
-            }
-            break;
-        default:
-            break;
-    }
-    return newRruleParts.join(';');
-};
+// [ROLLBACK_MARKER]
+// /**
+//  * Parses an rrule string into a structured state object.
+//  * @param {string} rruleString The rrule string to parse.
+//  * @returns {object} A state object representing the rule.
+//  */
+// const parseRRule = (rruleString) => {
+//     const initialState = {
+//         freq: FREQ_OPTIONS.NONE,
+//         interval: 1,
+//         byday: [],
+//         terminationType: TERMINATION_TYPES.NONE,
+//         count: 10,
+//         until: '',
+//     };
+//
+//     if (!rruleString) return initialState;
+//
+//     const rules = rruleString.split(';').reduce((acc, rule) => {
+//         const [key, val] = rule.split('=');
+//         if (key && val) acc[key] = val;
+//         return acc;
+//     }, {});
+//
+//     let terminationType = TERMINATION_TYPES.NONE;
+//     let count = initialState.count;
+//     let until = initialState.until;
+//
+//     if (rules.COUNT) {
+//         terminationType = TERMINATION_TYPES.COUNT;
+//         count = parseInt(rules.COUNT, 10);
+//     } else if (rules.UNTIL) {
+//         terminationType = TERMINATION_TYPES.UNTIL;
+//         const untilDateStr = rules.UNTIL.split('T')[0];
+//         if (untilDateStr && untilDateStr.length === 8) {
+//             until = `${untilDateStr.slice(0, 4)}-${untilDateStr.slice(4, 6)}-${untilDateStr.slice(6, 8)}`;
+//         }
+//     }
+//
+//     const rawByday = rules.BYDAY ? rules.BYDAY.split(',') : [];
+//
+//     return {
+//         freq: rules.FREQ || FREQ_OPTIONS.NONE,
+//         interval: parseInt(rules.INTERVAL, 10) || 1,
+//         byday: sortWeekdays(rawByday),
+//         terminationType,
+//         count,
+//         until,
+//     };
+// };
+//
+// /**
+//  * Generates an rrule string from a state object.
+//  * @param {object} state The state object.
+//  * @returns {string} The generated rrule string.
+//  */
+// const generateRRule = (state) => {
+//     const { freq, interval, byday, terminationType, count, until } = state;
+//     if (!freq) return '';
+//
+//     let newRruleParts = [`FREQ=${freq}`];
+//
+//     if (interval > 1) {
+//         newRruleParts.push(`INTERVAL=${interval}`);
+//     }
+//
+//     if (freq === FREQ_OPTIONS.WEEKLY && byday.length > 0) {
+//         newRruleParts.push(`BYDAY=${byday.join(',')}`);
+//     }
+//
+//     switch (terminationType) {
+//         case TERMINATION_TYPES.COUNT:
+//             newRruleParts.push(`COUNT=${count}`);
+//             break;
+//         case TERMINATION_TYPES.UNTIL:
+//             if (until) {
+//                 const utcDate = until.replace(/-/g, '') + 'T235959Z';
+//                 newRruleParts.push(`UNTIL=${utcDate}`);
+//             }
+//             break;
+//         default:
+//             break;
+//     }
+//     return newRruleParts.join(';');
+// };
 
 const RRuleGenerator = ({ value, onChange, onClose }) => {
     // 1. Derive UI state directly from props. No internal state management.

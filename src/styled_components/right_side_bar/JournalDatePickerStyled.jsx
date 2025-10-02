@@ -1,16 +1,14 @@
 import styled, {createGlobalStyle} from "styled-components";
 
-// ✅ [신규] 캘린더 내부의 세부 스타일을 적용하기 위한 전역 스타일
 export const CalendarGlobalStyle = createGlobalStyle`
-    /* 선택된 날짜 (보라색 동그라미) */
-    .react-datepicker__day--selected,
-    .react-datepicker__day--keyboard-selected {
+    /* 내가 선택한 날짜 (보라색 동그라미) */
+    .selected-day {
         background-color: #7b5fff !important;
         color: white !important;
-        border-radius: 50%;
+        border-radius: 50% !important;
     }
 
-    /* 오늘 날짜 */
+    /* 오늘 날짜 (선택되지 않았을 때) */
     .react-datepicker__day--today {
         font-weight: bold;
     }
@@ -21,16 +19,22 @@ export const CalendarGlobalStyle = createGlobalStyle`
         border-radius: 50%;
     }
 
+    .react-datepicker__day--keyboard-selected {
+        background-color: transparent !important; /* 기본 하늘색 제거 */
+        color: inherit !important; /* 글자색도 원래대로 */
+    }
+
     /* 비활성화된 날짜 */
     .react-datepicker__day--disabled {
         color: #ccc !important;
         cursor: not-allowed;
 
         &:hover {
-            background-color: transparent !important; /* 호버 효과 제거 */
+            background-color: transparent !important;
         }
     }
 `;
+
 
 // datepicker의 z-index를 antd Modal보다 높게 설정하고, 기본 틀 스타일을 지정합니다.
 export const DatePickerWrapper = styled.div`

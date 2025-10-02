@@ -65,6 +65,9 @@ export const EventList = styled.ul`
 
 /** 개별 일정 항목을 나타내는 li 태그 */
 export const EventItem = styled.li`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 12px;
     margin-bottom: 8px;
     border-radius: 6px;
@@ -74,7 +77,6 @@ export const EventItem = styled.li`
     border: 1px solid #e9ecef;
     font-weight: 500;
     color: #212529;
-    font-size: 14px;
 
     &:hover {
         background-color: #f1f3f5;
@@ -82,9 +84,28 @@ export const EventItem = styled.li`
     }
 
     ${props => props.isInsideModal && css`
-        font-size: 13px;
         padding: 10px;
+
+        .event-title {
+            font-size: 13px;
+        }
+
+        .event-time {
+            font-size: 12px;
+        }
     `}
+
+    /* 제목과 시간 폰트를 각각 지정 */
+    .event-title {
+        font-size: 14px;
+    }
+
+    .event-time {
+        font-size: 12px;
+        color: #868e96;
+        font-weight: 500;
+        margin-left: 12px; // 제목과의 최소 간격
+    }
 `;
 
 /** 등록된 일정이 없을 때 표시되는 메시지 */

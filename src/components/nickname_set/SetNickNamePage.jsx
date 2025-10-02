@@ -7,7 +7,7 @@ import { api } from '../../api';
 
 const { Title, Paragraph } = Typography;
 
-const SetNicknamePage = () => {
+const SetNickNamePage = () => {
     const [form] = Form.useForm();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false); // '시작하기' 버튼 로딩 상태
@@ -107,4 +107,4 @@ const SetNicknamePage = () => {
     );
 };
 
-export default SetNicknamePage;
+export default SetNickNamePage;

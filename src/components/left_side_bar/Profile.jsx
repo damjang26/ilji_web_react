@@ -1,9 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../AuthContext";
-import SocialLogin from "../account/GoogleLogin";
-import { EllipsisOutlined } from "@ant-design/icons";
-import { Dropdown } from "antd";
+import SocialLogin from "../account/GoogleLogin.jsx";
+import LoadingSpinner from "../common/LoadingSpinner.jsx"; // ✅ [추가] 커스텀 로딩 스피너
 import defaultProfileImage from '../../static/image/default-profile.png';
 import {
   Email,
@@ -33,9 +32,7 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <ProfileContainer>
-        <div>로딩 중...</div>
-      </ProfileContainer>
+        <LoadingSpinner />
     );
   }
 

@@ -1,6 +1,5 @@
 import React, {useState, useEffect} from "react";
 import {BrowserRouter, useLocation, Routes, Route, useNavigate} from "react-router-dom";
-import {Spin} from "antd";
 import styled from "styled-components";
 
 // --- Providers ---
@@ -15,7 +14,7 @@ import {NotificationsProvider} from "./contexts/NotificationsContext.jsx";
 import LeftSideBar from "./components/LeftSideBar.jsx";
 import Main from "./components/Main.jsx";
 import LoginPage from "./components/login/LoginPage.jsx";
-import SetNicknamePage from "./components/nickname_set/SetNickNamePage.jsx";
+import SetNickNamePage from "./components/nickname_set/SetNickNamePage.jsx";
 
 // --- Modal Components ---
 import JournalWriteModal from "./components/main/journal/JournalWriteModal.jsx";
@@ -31,6 +30,7 @@ import ChatRoomList from "./components/right_side_bar/ChatRoomList.jsx";
 import Chat from "./components/right_side_bar/Chat.jsx";
 import JournalDatePicker from "./components/right_side_bar/JournalDatePicker.jsx"; // ✅ [추가]
 import SharedJournalPage from "./components/main/journal/SharedJournalPage.jsx"; // ✅ [추가] 공유 페이지
+import LoadingSpinner from "./components/common/LoadingSpinner.jsx"; // ✅ [추가] 커스텀 로딩 스피너
 
 const AppWrapper = styled.div`
     display: flex;
@@ -117,7 +117,7 @@ const AppContent = () => {
     if (loading) {
         return (
             <FullPageSpinner>
-                <Spin size="large"/>
+                <LoadingSpinner />
             </FullPageSpinner>
         );
     }
@@ -127,7 +127,7 @@ const AppContent = () => {
             <LeftSideBar/>
             <ContentWrapper>
                 <Routes location={background || location}>
-                    <Route path="/set-nickname" element={<SetNicknamePage/>}/>
+                    <Route path="/set-nickname" element={<SetNickNamePage/>}/>
                     {/* ✅ [수정] 공유 페이지 라우트를 메인 라우트로 이동시켜 직접 접속이 가능하게 합니다. */}
                     <Route path="/share/:shareId" element={<SharedJournalPage/>}/>
                     <Route path="/*" element={<Main/>}/>

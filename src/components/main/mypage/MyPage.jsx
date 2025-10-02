@@ -37,6 +37,7 @@ import FriendManagementModal from "../../friends/FriendManagementModal.jsx";
 import MyPageSet from "./MyPageSet.jsx";
 import LikeList from "./feature/LikeList.jsx"; // Import the component to switch to
 import defaultProfileImage from '../../../static/image/default-profile.png';
+import LoadingSpinner from "../../common/LoadingSpinner.jsx";
 
 /**
  * MyPageContent - UI 렌더링만 담당
@@ -159,7 +160,11 @@ const MyPage = () => {
     );
 
     // 로딩/에러 처리
-    if (loading) return <div>Loading...</div>;
+    if (loading) {
+        return (
+            <LoadingSpinner/>
+        );
+    }
     if (error) return <div style={{color: "red"}}>{error}</div>;
     if (!loading && !profile) return <div>There is no profile information.</div>;
     return (
@@ -170,7 +175,7 @@ const MyPage = () => {
             >
                 {/* [수정] MypageImg 내부에 BannerImage를 렌더링 */}
                 {profile.bannerImage &&
-                    <BannerImage src={profile.bannerImage} alt="Banner image"/>}
+                    <BannerImage src={profile.bannerImage} alt="배너 이미지"/>}
 
             </MypageImg>
             <ContentBox>
@@ -273,8 +278,11 @@ const MyPage = () => {
             <ImageBox
                 isOpen={isImageModalOpen}
                 onClose={() => setIsImageModalOpen(false)}
-                // ✅ [수정] 캐시 문제를 해결하기 위해 URL의 타임스탬프를 제거하지 않고 그대로 전달합니다.
-                currentImageUrl={profile && editingImageType ? profile[editingImageType] : ""}
+                currentImageUrl={
+                    profile && editingImageType && profile[editingImageType]
+                        ? profile[editingImageType].split("?")[0]
+                        : ""
+                }
                 onConfirm={handleImageConfirm}
                 imageType={editingImageType}
                 isEditable={isOwner} // isOwner를 전달하여 편집 가능 여부 제어

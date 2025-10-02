@@ -11,6 +11,7 @@ const ScheduleTab = ({ isInsideModal = false, initialEvent = null }) => {
         openSchedulePanelForNew,
         openSchedulePanelForEdit, // 수정 패널을 여는 함수 가져오기
         switchToModalFormView, // 모달 뷰 전환 함수 가져오기
+        requestDeleteConfirmation, // 삭제 확인 모달을 여는 함수
     } = useSchedule();
 
     // 1. 선택된 이벤트를 관리할 상태를 추가합니다. null이면 목록, 값이 있으면 상세 정보를 표시합니다.
@@ -24,8 +25,8 @@ const ScheduleTab = ({ isInsideModal = false, initialEvent = null }) => {
     }, [initialEvent]);
 
     const handleAdd = useCallback(() => {
-        const today = new Date().toISOString().split('T')[0];
-        const dateInfo = { startStr: today, endStr: today, allDay: true };
+        const dateStr = selectedInfo?.data?.startStr || new Date().toISOString().split('T')[0];
+        const dateInfo = { startStr: dateStr, endStr: dateStr, allDay: true };
 
         if (isInsideModal) {
             // 모달 안에서는 모달의 뷰를 '폼'으로 변경
@@ -34,7 +35,7 @@ const ScheduleTab = ({ isInsideModal = false, initialEvent = null }) => {
             // 사이드 패널에서는 기존 방식대로 패널 열기
             openSchedulePanelForNew(dateInfo);
         }
-    }, [isInsideModal, openSchedulePanelForNew, switchToModalFormView]);
+    }, [isInsideModal, openSchedulePanelForNew, switchToModalFormView, selectedInfo]);
 
     // 2. 목록에서 아이템 클릭 시, 전역 패널을 여는 대신 selectedEvent 상태를 업데이트합니다.
     const handleShowDetail = useCallback((event) => {
@@ -46,13 +47,12 @@ const ScheduleTab = ({ isInsideModal = false, initialEvent = null }) => {
         setSelectedEvent(null);
     }, []);
 
-    // 상세 보기의 삭제/수정 처리 (Context의 함수를 호출하고 목록으로 돌아감)
-    const handleDelete = useCallback(async (eventId) => {
-        if (window.confirm("Are you sure you want to delete this schedule?")) {
-            // await deleteSchedule(eventId); // context의 삭제 함수 호출
-            handleBackToList(); // 목록으로 돌아가기
-        }
-    }, [handleBackToList]);
+    // 상세 보기의 삭제 처리 - Context의 함수를 호출
+    const handleDelete = useCallback((eventId) => {
+        requestDeleteConfirmation(eventId);
+        // 확인 모달이 뜬 후, 삭제가 성공하면 Context에서 목록으로 돌아가는 것까지 처리해줍니다.
+    }, [requestDeleteConfirmation]);
+
 
     const handleEdit = useCallback((event) => {
         if (isInsideModal) {
@@ -74,6 +74,7 @@ const ScheduleTab = ({ isInsideModal = false, initialEvent = null }) => {
                     onCancel={handleBackToList} // "목록으로" 버튼에 handleBackToList 함수 연결
                     onDelete={handleDelete}
                     onEdit={handleEdit}
+                    selectedDateFromList={selectedInfo?.data?.startStr}
                 />
             ) : (
                 <ScheduleList

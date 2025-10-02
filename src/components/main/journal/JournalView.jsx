@@ -18,6 +18,7 @@ import {
     ContentContainer, SideActionTabsContainer, SideActionTab, JournalDate
 } from '../../../styled_components/main/journal/JournalViewStyled';
 import {HiPencilAlt} from "react-icons/hi";
+import {LuBookLock, LuBookUser} from "react-icons/lu"; // ✅ [추가] 공개 범위 아이콘
 import {MdDeleteForever} from "react-icons/md";
 import {ActionItem, LikeCountSpan} from "../../../styled_components/main/post/PostListStyled.jsx";
 import {FaChevronLeft, FaChevronRight, FaRegHeart} from "react-icons/fa";
@@ -193,6 +194,8 @@ const JournalView = () => {
                             <AuthorInfo>
                                 <AuthorName>{journal?.writerNickname || 'User'}</AuthorName>
                             </AuthorInfo>
+                            {journal.visibility === "PRIVATE" && <LuBookLock style={{marginRight: '4px'}}/>}
+                            {journal.visibility === "FRIENDS_ONLY" && <LuBookUser style={{marginRight: '4px'}}/>}
                         </div>
                         <ActionItem>
                             {journal.likeCount > 0 && (
@@ -269,6 +272,9 @@ const JournalView = () => {
                                 <AuthorInfo>
                                     <AuthorName>{journal?.writerNickname || 'User'}</AuthorName>
                                 </AuthorInfo>
+                                {journal.visibility === "PRIVATE" && <LuBookLock style={{marginRight: '4px'}}/>}
+                                {journal.visibility === "FRIENDS_ONLY" &&
+                                    <LuBookUser style={{marginRight: '4px'}}/>}
                             </div>
                             <ActionItem>
                                 {journal.likeCount > 0 && (

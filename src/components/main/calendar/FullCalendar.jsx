@@ -37,6 +37,7 @@ export default function FullCalendarExample() {
         openScheduleModal, // 모달을 여는 새 함수
         showEventDetails, // ✅ [신규] 상세보기를 위한 통합 함수
         updateEvent,
+        updateRecurringEventInstance, // ✅ [신규] 반복 일정 인스턴스 업데이트 함수
         popupState,
         openPopup,
         closePopup,
@@ -227,46 +228,63 @@ export default function FullCalendarExample() {
         setVisibleDateRange({start, end});
     };
 
-    const handleEventDrop = (dropInfo) => {
-        const {event, oldEvent} = dropInfo;
+    const handleEventDrop = async (dropInfo) => {
+        const { event, oldEvent } = dropInfo;
 
-        if (!event.allDay) {
-            const newDate = event.start;
-            const originalDate = oldEvent.start;
-            const newStart = new Date(
-                newDate.getFullYear(),
-                newDate.getMonth(),
-                newDate.getDate(),
-                originalDate.getHours(),
-                originalDate.getMinutes(),
-                originalDate.getSeconds()
-            );
-            let newEnd = null;
-            if (oldEvent.end) {
-                const duration = oldEvent.end.getTime() - originalDate.getTime();
-                newEnd = new Date(newStart.getTime() + duration);
-            }
-            updateEvent({
-                ...event.toPlainObject(),
-                start: newStart,
-                end: newEnd,
-            });
+        // Optimistically update the UI, but await the backend update
+        if (event.groupId && event.recurring) {
+            await updateRecurringEventInstance(oldEvent, event);
         } else {
+            if (!event.allDay) {
+                const newDate = event.start;
+                const originalDate = oldEvent.start;
+                const newStart = new Date(
+                    newDate.getFullYear(),
+                    newDate.getMonth(),
+                    newDate.getDate(),
+                    originalDate.getHours(),
+                    originalDate.getMinutes(),
+                    originalDate.getSeconds()
+                );
+                let newEnd = null;
+                if (oldEvent.end) {
+                    const duration = oldEvent.end.getTime() - originalDate.getTime();
+                    newEnd = new Date(newStart.getTime() + duration);
+                }
+                await updateEvent({
+                    ...event.toPlainObject(),
+                    start: newStart,
+                    end: newEnd,
+                });
+            } else {
+                await updateEvent({
+                    ...event.toPlainObject(),
+                    start: event.start,
+                    end: event.end,
+                });
+            }
+        }
+
+        // After the update is complete, change the selected date in the side panel
+        const newDateStr = formatDate(event.start);
+        openSchedulePanelForDate({ startStr: newDateStr });
+    };
+
+    const handleEventResize = (info) => {
+        const { event, oldEvent } = info;
+
+        // 반복 이벤트 인스턴스인지 확인
+        if (event.groupId && event.recurring) {
+            // 반복 이벤트의 특정 인스턴스가 리사이즈된 경우
+            updateRecurringEventInstance(oldEvent, event);
+        } else {
+            // 일반 이벤트 또는 반복 이벤트의 마스터 이벤트가 리사이즈된 경우
             updateEvent({
                 ...event.toPlainObject(),
                 start: event.start,
                 end: event.end,
             });
         }
-    };
-
-    const handleEventResize = (info) => {
-        const {event} = info;
-        updateEvent({
-            ...event.toPlainObject(),
-            start: event.start,
-            end: event.end,
-        });
     };
 
     const startHideTimer = () => {

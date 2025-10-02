@@ -83,7 +83,7 @@ export const CustomCheckbox = styled.input.attrs({ type: 'checkbox' })`
 
     &:checked {
         border-color: transparent;
-        background-color: #7b5fff; /* ✅ 그라데이션에서 보라색 단색으로 변경 */
+        background-color: #7b5fff; /* ✅ 보라색 */
     }
 
     /* 체크 표시 (V) 아이콘 */
@@ -99,8 +99,24 @@ export const CustomCheckbox = styled.input.attrs({ type: 'checkbox' })`
     }
 `;
 
-/** 날짜와 시간 입력 필드를 한 줄에 배치하기 위한 컨테이너 */
+/** 날짜/시간 블록 전체를 감싸는 컨테이너 (세로 2줄) */
+export const DateTimeSection = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* 행 간격 */
+`;
+
+/** 한 줄(Row) 컨테이너 */
 export const DateTimeRow = styled.div`
-    display: grid; /* flex에서 grid로 변경하여 자식 요소들을 세로로 쌓습니다. */
-    gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+`;
+
+/** 라벨 + 인풋을 한 줄로 묶는 컨테이너 */
+export const InlineField = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
 `;
