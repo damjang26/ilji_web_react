@@ -37,6 +37,7 @@ import FriendManagementModal from "../../friends/FriendManagementModal.jsx";
 import MyPageSet from "./MyPageSet.jsx";
 import LikeList from "./feature/LikeList.jsx"; // Import the component to switch to
 import defaultProfileImage from '../../../static/image/default-profile.png';
+import LoadingSpinner from "../../common/LoadingSpinner.jsx";
 
 /**
  * MyPageContent - UI 렌더링만 담당
@@ -159,7 +160,11 @@ const MyPage = () => {
     );
 
     // 로딩/에러 처리
-    if (loading) return <div>로딩 중...</div>;
+    if (loading) {
+        return (
+            <LoadingSpinner/>
+        );
+    }
     if (error) return <div style={{color: "red"}}>{error}</div>;
     if (!loading && !profile) return <div>There is no profile information.</div>;
     return (

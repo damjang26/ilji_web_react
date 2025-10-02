@@ -1,6 +1,5 @@
 import React, {useState, useEffect} from "react";
 import {BrowserRouter, useLocation, Routes, Route, useNavigate} from "react-router-dom";
-import {Spin} from "antd";
 import styled from "styled-components";
 
 // --- Providers ---
@@ -31,6 +30,7 @@ import ChatRoomList from "./components/right_side_bar/ChatRoomList.jsx";
 import Chat from "./components/right_side_bar/Chat.jsx";
 import JournalDatePicker from "./components/right_side_bar/JournalDatePicker.jsx"; // ✅ [추가]
 import SharedJournalPage from "./components/main/journal/SharedJournalPage.jsx"; // ✅ [추가] 공유 페이지
+import LoadingSpinner from "./components/common/LoadingSpinner.jsx"; // ✅ [추가] 커스텀 로딩 스피너
 
 const AppWrapper = styled.div`
     display: flex;
@@ -117,7 +117,7 @@ const AppContent = () => {
     if (loading) {
         return (
             <FullPageSpinner>
-                <Spin size="large"/>
+                <LoadingSpinner />
             </FullPageSpinner>
         );
     }
