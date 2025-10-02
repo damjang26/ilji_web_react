@@ -175,7 +175,7 @@ const AppContent = () => {
 
             {floatingChatRoomId && (
                 <FloatingPanel
-                    title="채팅"
+                    title="Chat"
                     onClose={() => {
                         setFloatingChatRoomId(null);
                         setActivePanel(null);

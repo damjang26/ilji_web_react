@@ -140,7 +140,7 @@ export default function FullCalendarExample() {
                 // 4. 성공적으로 삭제되면 팝오버를 닫습니다.
                 setDiaryPopover((p) => ({...p, visible: false}));
             } catch (error) {
-                console.error("일기 삭제 실패:", error);
+                console.error("Failed to delete journal:", error);
                 alert("Failed to delete the journal.");
             }
         }

@@ -17,8 +17,16 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
     const { user } = useAuth();
     const { profile, updateProfile } = useMyPage(); // Context에서 가져오기
 
+    // ✅ [추가] 모든 상태를 초기화하는 함수
+    const resetState = () => {
+        setPreviewUrl('');
+        setImageFile(null);
+        setRevertMode(false);
+    };
+
     useEffect(() => {
         if (isOpen) {
+            // 모달이 열릴 때 전달받은 이미지로 미리보기 설정
             setPreviewUrl(currentImageUrl || '');
             setImageFile(null);
             setRevertMode(false);
@@ -37,10 +45,18 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
     const handleUploadButtonClick = () => fileInputRef.current?.click();
 
     const handleRevert = () => {
-        // 기본 이미지 URL로 미리보기 변경
-        const defaultUrl = DEFAULT_PROFILE_URL || '';
+        // ✅ [수정] DEFAULT_PROFILE_URL이 유효할 때만 타임스탬프를 추가하여 안정성을 높입니다.
+        //    환경변수가 비어있더라도 코드가 깨지지 않습니다.
+        // ✅ [핵심 수정] URL에 '?'가 이미 있는지 확인하고, 상황에 맞게 '?' 또는 '&'를 사용하여
+        //    캐시 방지용 타임스탬프를 추가합니다. 이렇게 하면 어떤 형태의 URL이든 안전하게 처리할 수 있습니다.
+        let preview = '';
+        if (DEFAULT_PROFILE_URL) {
+            const separator = DEFAULT_PROFILE_URL.includes('?') ? '&' : '?';
+            preview = `${DEFAULT_PROFILE_URL}${separator}t=${new Date().getTime()}`;
+        }
+
         setImageFile(null);
-        setPreviewUrl(defaultUrl);
+        setPreviewUrl(preview);
         setRevertMode(true);
     };
 
@@ -72,7 +88,8 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
             await updateProfile(textProfileData, updateOptions);
 
             alert('Image updated successfully.');
-            onClose();
+            resetState(); // ✅ [수정] 성공 후 상태 초기화
+            onClose(); // 모달 닫기
         } catch (err) {
             console.error('Image update failed:', err);
             alert('An error occurred while updating the image.');
@@ -82,11 +99,36 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
     return (
         <ImageModal
             isOpen={isOpen}
-            onClose={onClose}
+            onClose={() => {
+                resetState(); // ✅ [수정] 모달이 닫힐 때 상태를 초기화합니다.
+                onClose();
+            }}
             title={`Change ${imageType === 'profileImage' ? 'Profile' : 'Banner'} Image`}
         >
             <ModalBody>
-                <ImagePreview imageUrl={previewUrl} imageType={imageType}>{!previewUrl && "Upload an image"}</ImagePreview>
+                <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '68px', // ✅ [수정] 이 값을 조절하여 이미지와 버튼 사이의 간격을 넓힐 수 있습니다.
+                    justifyContent: 'flex-start', // ✅ [수정] 그룹 전체를 왼쪽 정렬합니다.
+                    marginTop: '16px', // 1. 제목과의 세로 간격 (값을 키우면 더 멀어집니다)
+                    paddingLeft: '40px'// 2. 왼쪽에서의 가로 간격 (값을 키우면 그룹 전체가 오른쪽으로 이동합니다)
+                }}>
+                    {/* ✅ [수정] 이미지 미리보기 영역을 클릭하면 파일 선택창이 열리도록 onClick 이벤트를 추가합니다. */}
+                    <ImagePreview
+                        imageUrl={previewUrl}
+                        imageType={imageType}
+                        onClick={handleUploadButtonClick}
+                    >{!previewUrl && "Upload an image"}</ImagePreview>
+
+                    {/* ✅ [수정] 버튼들을 세로로 쌓기 위한 컨테이너입니다. */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <SubmitButton type="button" onClick={handleUploadButtonClick}>Select Image</SubmitButton>
+                        {imageType === 'profileImage' && (
+                            <CancelButton type="button" onClick={handleRevert}>Revert to Default</CancelButton>
+                        )}
+                    </div>
+                </div>
 
                 <input
                     ref={fileInputRef}
@@ -95,18 +137,12 @@ const ImageBox = ({ isOpen, onClose, currentImageUrl, imageType }) => {
                     style={{ display: 'none' }}
                     onChange={handleFileChange}
                 />
-
-                <ActionButtonGroup>
-                    <SubmitButton type="button" onClick={handleUploadButtonClick}>Select Image</SubmitButton>
-                    {imageType === 'profileImage' && (
-                        <CancelButton type="button" onClick={handleRevert}>Revert to Default</CancelButton>
-                    )}
-                </ActionButtonGroup>
             </ModalBody>
 
-            <ModalFooter>
-                <CancelButton type="button" onClick={onClose}>Cancel</CancelButton>
-                <SubmitButton type="button" onClick={handleConfirm} disabled={!imageFile && !revertMode}>Confirm</SubmitButton>
+            {/* ✅ [수정] 하단 버튼들이 동일한 비율로 너비를 차지하도록 스타일을 수정합니다. */}
+            <ModalFooter style={{ display: 'flex', gap: '8px' }}>
+                <CancelButton type="button" onClick={onClose} style={{ flex: 1 }}>Cancel</CancelButton>
+                <SubmitButton type="button" onClick={handleConfirm} disabled={!imageFile && !revertMode} style={{ flex: 1 }}>Apply</SubmitButton>
             </ModalFooter>
         </ImageModal>
     );

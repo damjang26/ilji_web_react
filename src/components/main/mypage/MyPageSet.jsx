@@ -106,7 +106,7 @@ const MyPageSet = () => {
             alert('Image updated successfully.');
             setIsModalOpen(false); // 성공 시 모달 닫기
         } catch (err) {
-            console.error("이미지 업데이트 실패:", err);
+            console.error("Image update failed:", err);
         }
     };
 
@@ -139,7 +139,7 @@ const MyPageSet = () => {
             // [수정] 저장 성공 후, MyPage로 돌아가기 위해 handleCancel을 호출합니다.
             handleCancel();
         } catch (err) {
-            console.error("프로필 저장 실패:", err);
+            console.error("Profile save failed:", err);
         }
     };
 

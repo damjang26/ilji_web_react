@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input, Button, Form, Typography, message, Spin, Row, Col } from 'antd';
 import styled from 'styled-components';
-import { PageWrapper, LoginWrapper, ValidationMessage } from './SetNicknamePageStyled';
+import { PageWrapper, LoginWrapper, ValidationMessage } from '../../styled_components/nickname_set/SetNicknamePageStyled';
 import { api } from '../../api';
 
 const { Title, Paragraph } = Typography;
