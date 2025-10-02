@@ -65,9 +65,18 @@ const JournalDatePicker = ({onDateSelect}) => { // onDateSelect는 패널을 닫
                     selected={selectedDate}
                     onChange={(date) => setSelectedDate(date)}
                     filterDate={date => !isDateDisabled(date)}
-                    onMonthChange={handleMonthChange} // ✅ [추가] 월 변경 시 핸들러 연결
+                    onMonthChange={handleMonthChange}
                     inline
+                    dayClassName={(date) => {
+                        const isSameDay =
+                            date.getFullYear() === selectedDate.getFullYear() &&
+                            date.getMonth() === selectedDate.getMonth() &&
+                            date.getDate() === selectedDate.getDate();
+
+                        return isSameDay ? "selected-day" : "";
+                    }}
                 />
+
             </DatePickerWrapper>
             {/* ✅ [수정] isDateDisabled 함수를 사용하여 선택된 날짜에 일기가 이미 있으면 버튼을 비활성화합니다. */}
             <Button
