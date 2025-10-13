@@ -133,6 +133,14 @@ export const getFeed = (params) => api.get('/api/i-log/feed', {params});
 export const getOrCreateShareId = (journalId) => {
     return api.post(`/api/i-log/${journalId}/share`);
 };
+
+/**
+ * [신규] 특정 날짜의 내 일기를 조회합니다.
+ * @param {string} date - 조회할 날짜 (YYYY-MM-DD 형식)
+ * @returns {Promise<axios.AxiosResponse<any>>}
+ */
+export const getJournalByDate = (date) => api.get(`/api/i-log/date/${date}`);
+
 // =================================
 // 좋아요 관련 API
 // =================================
@@ -259,7 +267,7 @@ export const leaveChatRoom = (roomId) => {
 };
 
 export const createChatRoom = (roomName, userIds) => {
-    return api.post("/api/chat/create", { roomName, userIds });
+    return api.post("/api/chat/create", {roomName, userIds});
 };
 
 // =================================
@@ -272,26 +280,26 @@ export const createChatRoom = (roomName, userIds) => {
  * @returns {Promise<string|null>} - 추천 태그 문자열 또는 null (무시해야 할 경우)
  */
 export const getAiTagSuggestion = async (userMessage) => {
-  // 메시지가 너무 짧으면 API 호출 자체를 생략 (비용 절약)
-  if (!userMessage || userMessage.trim().length < 5) {
-    return null;
-  }
-
-  try {
-    const response = await api.post('/ai', { prompt: userMessage });
-
-    // 응답 본문이 비어있지 않다면 (추천 태그가 있다면) 태그를 반환
-    if (response.data) {
-      console.log('AI 추천 태그:', response.data);
-      return response.data;
-    } else {
-      // 응답 본문이 비어있다면 (AI가 'IGNORE'한 경우)
-      console.log('AI가 일상 대화로 판단하여 무시했습니다.');
-      return null;
+    // 메시지가 너무 짧으면 API 호출 자체를 생략 (비용 절약)
+    if (!userMessage || userMessage.trim().length < 5) {
+        return null;
     }
-  } catch (error) {
-    console.error('AI 태그 추천 API 호출 중 오류 발생:', error);
-    // 2xx가 아닌 상태 코드(5xx 등)는 axios에서 에러로 처리됩니다.
-    return null;
-  }
+
+    try {
+        const response = await api.post('/ai', {prompt: userMessage});
+
+        // 응답 본문이 비어있지 않다면 (추천 태그가 있다면) 태그를 반환
+        if (response.data) {
+            console.log('AI 추천 태그:', response.data);
+            return response.data;
+        } else {
+            // 응답 본문이 비어있다면 (AI가 'IGNORE'한 경우)
+            console.log('AI가 일상 대화로 판단하여 무시했습니다.');
+            return null;
+        }
+    } catch (error) {
+        console.error('AI 태그 추천 API 호출 중 오류 발생:', error);
+        // 2xx가 아닌 상태 코드(5xx 등)는 axios에서 에러로 처리됩니다.
+        return null;
+    }
 };
