@@ -2,7 +2,7 @@ import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useLocation, useNavigate} from 'react-router-dom';
 import {useJournal} from '../../../contexts/JournalContext';
 import {message} from "antd";
-import {getPostLikers, toggleLike} from "../../../api.js";
+import {getJournalByDate, getPostLikers} from "../../../api.js";
 import {
     JournalViewWrapper,
     ViewContainer,
@@ -36,6 +36,7 @@ const JournalView = () => {
 
     // ✅ [수정] location.state의 데이터를 useState로 관리하여 업데이트가 가능하도록 합니다.
     const [journal, setJournal] = useState(location.state?.journalData);
+    const [isLoading, setIsLoading] = useState(false); // ✅ [추가] 데이터 재로딩 시 사용할 로딩 상태
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
     const [isCommentOpen, setIsCommentOpen] = useState(false); // ✅ [신규] 댓글 창 열림/닫힘 상태
@@ -56,6 +57,40 @@ const JournalView = () => {
             });
         }
     }, [journal, navigate, location]);
+
+    // ✅ [핵심 수정] '수정 후 복귀' 시에만 최신 데이터를 다시 불러옵니다.
+    useEffect(() => {
+        // 1. sessionStorage에서 '수정 후 복귀' 플래그를 확인합니다.
+        const needsRefresh = sessionStorage.getItem('journal-needs-refresh');
+
+        // 2. 플래그가 없으면 아무것도 하지 않고 종료합니다. (성능 최적화)
+        if (!needsRefresh || !journal?.logDate) {
+            return;
+        }
+
+        // 3. 플래그가 있으면, 사용했으므로 즉시 제거합니다. (무한 재조회 방지)
+        sessionStorage.removeItem('journal-needs-refresh');
+
+        const fetchLatestJournal = async () => {
+            setIsLoading(true);
+            try {
+                // 날짜를 'YYYY-MM-DD' 형식으로 변환합니다.
+                const dateStr = new Date(journal.logDate).toISOString().split('T')[0];
+                const response = await getJournalByDate(dateStr);
+                // 상태를 최신 데이터로 업데이트합니다.
+                setJournal(response.data);
+                message.success('일기 내용이 업데이트되었습니다.');
+            } catch (error) {
+                console.error("Failed to refresh journal data:", error);
+                message.error("최신 일기 정보를 불러오는 데 실패했습니다.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchLatestJournal();
+
+    }, [journal?.logDate, navigate]); // journal 데이터가 처음 설정될 때 이 로직을 실행합니다.
 
 
     // --- 좋아요 목록 모달 관련 상태 추가 ---
@@ -86,7 +121,7 @@ const JournalView = () => {
     const formattedDate = useMemo(() => {
         if (!journal?.logDate) return '';
         return new Date(journal.logDate).toLocaleDateString('en-US', {month: 'short', day: '2-digit', year: 'numeric'});
-    }, [journal.logDate]);
+    }, [journal?.logDate]);
 
     const imageUrls = useMemo(() => {
         if (journal && Array.isArray(journal.images)) {
@@ -112,6 +147,9 @@ const JournalView = () => {
 
     // ✅ [추가] 수정 버튼 클릭 핸들러
     const handleEdit = useCallback((journalToEdit) => {
+        // ✅ [핵심 추가] 수정 페이지로 이동하기 직전, '수정 후 복귀' 플래그를 남깁니다.
+        sessionStorage.setItem('journal-needs-refresh', 'true');
+
         navigate('/i-log/write', {
             state: {
                 journalToEdit: journalToEdit,
@@ -171,7 +209,13 @@ const JournalView = () => {
         }
     }, [currentPostId, handleLikeCountClick]);
 
-    if (!journal) {
+    // ✅ [수정] 로딩 중이거나 journal 데이터가 없을 때의 UI 처리
+    if (isLoading) {
+        // 로딩 스피너 컴포넌트를 사용하거나 간단한 텍스트를 보여줍니다.
+        return <ViewContainer>Loading...</ViewContainer>;
+    }
+
+    if (!journal) { // 로딩이 끝났는데도 데이터가 없으면 에러 메시지 표시
         return <ViewContainer className="no-image"><p>Could not load journal information. Please try again from the
             list.</p>
         </ViewContainer>
